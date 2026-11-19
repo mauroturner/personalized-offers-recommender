@@ -1,0 +1,13 @@
+[data] lines read before 2011-08-01; latest 2011-07-31 16:04:00
+[cohort] customers with a purchase in the 365 days before 2011-04-04: 4320; bulk buyers 362; strata 18 (smallest 15)
+[balance simple] seed 0: recency_days +0.033, invoices_365 -0.017, spend_365 +0.047, tenure_days +0.029, bulk +0.003; over 500 seeds max |SMD| median 0.058, p95 0.095, share over 0.10 3.6 %
+[balance stratified] seed 0: recency_days -0.020, invoices_365 -0.022, spend_365 -0.053, tenure_days -0.062, bulk -0.006; over 500 seeds max |SMD| median 0.041, p95 0.073, share over 0.10 0.0 %
+[outcomes] m1_purchase_week_share_mean 0.053, m1_sd 0.0966, m1_sd_cuped 0.0669, m1_theta 0.7875, m1_any_purchase_share 0.4243, m2_spend_mean_gbp 476.05, m2_spend_median_gbp 0.0, m2_sd_gbp 2354.97, m2_sd_cuped_gbp 1541.05, m2_theta 0.7439, corr_m1_pre 0.7216, corr_m2_pre 0.7562
+[A/A seed 0, stratified] m1_raw {'diff': 0.0071, 'ci95_normal': [0.0005, 0.0136]}; m1_cuped {'diff': 0.0043, 'ci95_normal': [-0.0005, 0.0092], 'permutation_p': 0.0878}; m2_raw {'diff': 165.6498, 'ci95_normal': [58.7357, 272.5639]}; m2_cuped {'diff': 56.4239, 'ci95_normal': [-15.0329, 127.8807], 'permutation_p': 0.3134}
+[A/A calibration] 500 stratified holdouts: m1_normal_raw 2.6 %, m1_normal_cuped 4.2 %, m1_permutation_cuped 4.2 %, m2_normal_raw 7.8 %, m2_normal_cuped 2.4 %, m2_permutation_cuped 4.4 %; 76.67 s
+[MDE] holdout 10% (432): holdout_size 432, m1_points_raw 1.37, m1_points_cuped 0.95, m1_relative_to_mean_cuped 0.1795, m2_gbp_raw 334.6, m2_gbp_cuped 218.96, m2_relative_to_mean_cuped 0.4599
+[MDE] holdout 20% (864): holdout_size 864, m1_points_raw 1.03, m1_points_cuped 0.71, m1_relative_to_mean_cuped 0.1346, m2_gbp_raw 250.95, m2_gbp_cuped 164.22, m2_relative_to_mean_cuped 0.345
+[MDE] holdout 30% (1296): holdout_size 1296, m1_points_raw 0.9, m1_points_cuped 0.62, m1_relative_to_mean_cuped 0.1175, m2_gbp_raw 219.05, m2_gbp_cuped 143.34, m2_relative_to_mean_cuped 0.3011
+[MDE 20 % from the permutation distribution] {'m1_points': 0.71, 'm2_gbp': 162.97}
+[timing] total 77.51 s
+[out] data/interim/plan/p02.json
