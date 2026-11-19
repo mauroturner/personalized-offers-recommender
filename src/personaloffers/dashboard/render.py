@@ -111,6 +111,9 @@ def _missing(value) -> bool:
     return value is None or bool(pd.isna(value))
 
 
+# ``_fmt``, ``_int`` and ``_pct`` show any missing value (``None`` or NaN) as «oculta», on purpose: in the exported tables a missing number is a cell that was hidden for having fewer customers than the minimum
+# (D30; the marts write NULL there, and Parquet reads it back as NaN) and the design never draws it as a number, a zero or a blank. A number that is absent for another reason would be shown as hidden too:
+# a column that can be empty for another reason needs its own formatter.
 def _fmt(value, digits: int = 3) -> str:
     return HIDDEN if _missing(value) else texts.es(float(value), digits)
 
