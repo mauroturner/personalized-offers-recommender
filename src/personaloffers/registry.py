@@ -40,6 +40,10 @@ class SealExistsError(SealError):
     """The launch part of the seal exists: it is written once and never rewritten."""
 
 
+class LaunchSealMissingError(SealError):
+    """The launch part of the seal is not there: the test does not start before it (RNF07e, runbook R7)."""
+
+
 class SealMismatchError(SealError):
     """What the launch recomputed is not what the seal says (runbook R7)."""
 
@@ -133,3 +137,14 @@ def check_launch(sealed: Mapping[str, Any], recomputed: Mapping[str, str]) -> No
             different.append(name)
     if different:
         raise SealMismatchError(f"lo que el lanzamiento recalculó no es lo sellado en: {', '.join(different)} (runbook R7)")
+
+
+def require_launch_seal(seal_path: Path, config_sha256: str) -> dict[str, Any]:
+    """The launch part of the seal, for a weekly delivery to go on: a ``LaunchSealMissingError`` without it (the test starts only after the launch is sealed) and a ``SealMismatchError`` when the seal is of
+    another configuration (a weekly round is made with the sealed recipe, and an analysis with another configuration starts in a folder of its own, runbook R12)."""
+    document = read_seal(seal_path)
+    if document is None:
+        raise LaunchSealMissingError("no hay sello del lanzamiento: la prueba no empieza antes de sellar el lanzamiento (runbook R7)")
+    if document["launch"].get("config_sha256") != config_sha256:
+        raise SealMismatchError("el sello del lanzamiento es de otra configuración que la de esta corrida: una ronda semanal se arma con la receta sellada (runbook R12)")
+    return document["launch"]

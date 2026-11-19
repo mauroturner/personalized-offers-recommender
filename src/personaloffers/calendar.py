@@ -16,6 +16,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Any
 
 PERIODS = ("validation", "test", "censored")
+DAYS_PER_ROUND = 7            # a round is a week: the next Monday is this many days on (the length of a window is ``[calendar] window_days``)
 ROUND_PREFIX = "R"
 _ROUND_ID = re.compile(r"R(\d{4})-(\d{2})-(\d{2})", re.ASCII)
 

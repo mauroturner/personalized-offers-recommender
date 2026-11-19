@@ -53,3 +53,24 @@ def copy_world(template: Path, workbook, quick_cfg, destination: Path, *, open_w
 def lines_of(world) -> object:
     """The lines the warehouse holds, as the tasks read them."""
     return warehouse.read_lines(world.conn)
+
+
+def load_next_delivery(world, run_key: str):
+    """Validate and load the next delivery of the plan that is not loaded (what the tasks ``validate`` and ``load`` do, in this order); returns its spec."""
+    spec = dv.next_to_load(world.plan, val.loaded_ids(world.conn))
+    path = dv.delivery_path(world.cfg, spec)
+    report = val.validate_delivery(spec, path, world.conn, world.view, run_key=run_key)
+    load_delivery(world.conn, spec, dv.read_delivery(path), report, run_key, started_at=STARTED, config_sha256=CONFIG_SHA)
+    return spec
+
+
+def replay(world) -> list:
+    """From a folder in which the launch ran: the lists of the first round, then each weekly delivery and the close, loaded and run in order (``run-2``, ``run-3``...); returns what each gave."""
+    from personaloffers import weekly
+
+    results = [weekly.emit_round(world.conn, world.view, RUN_KEY, world.view.calendar.test_first_round, models_dir=world.models_dir, seal_path=world.seal_path)]
+    for number in range(2, len(world.plan) + 1):
+        run_key = f"run-{number}"
+        spec = load_next_delivery(world, run_key)
+        results.append(weekly.run_round(world.conn, world.view, run_key, spec, models_dir=world.models_dir, seal_path=world.seal_path))
+    return results

@@ -102,7 +102,7 @@ def test_a_manifest_that_lists_a_pickle_or_a_npz_or_a_path_is_refused_even_with_
             artifacts.read_component(folder, files.sha256_file(folder / "artifact.json"))
 
 
-def test_an_object_array_is_refused_when_written_and_never_loaded_without_pickle(tmp_path):
+def test_a_pickle_or_object_array_is_refused(tmp_path):
     with pytest.raises(ArtifactError, match="objeto"):
         artifacts.write_component(tmp_path / "m", "R2011-08-01", "als", {"bad": np.array([{"a": 1}, None], dtype=object)}, {})
     assert not (tmp_path / "m").exists(), "nothing was written"

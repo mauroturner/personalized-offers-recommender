@@ -161,3 +161,17 @@ def launched(launch_template, workbook, quick_cfg, tmp_path_factory: pytest.Temp
     result = launch.run_launch(world.conn, world.view, world.run_key, models_dir=world.models_dir, seal_path=world.seal_path)
     world.conn.close()
     return types.SimpleNamespace(root=world.root, result=result, seal=registry.read_seal(world.seal_path))
+
+
+@pytest.fixture(scope="session")
+def replayed(launched, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The launch, the first round's lists, the three weekly deliveries and the close run in order, once per session (U12 on): ``root`` is the folder (a test copies it with ``copy_world``) and
+    ``results`` what each step gave."""
+    import types
+
+    from tests.fixtures.worlds import copy_world, replay
+
+    world = copy_world(launched.root, workbook, quick_cfg, tmp_path_factory.mktemp("replayed"))
+    results = replay(world)
+    world.conn.close()
+    return types.SimpleNamespace(root=world.root, results=results)

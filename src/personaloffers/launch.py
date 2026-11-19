@@ -70,7 +70,7 @@ def _recipe_dict(recipe: Recipe) -> dict[str, Any]:
     return {"model": recipe.model, "size": recipe.size, "regularization": recipe.regularization, "weight": recipe.weight, "name": recipe.name}
 
 
-def _components(data: Any, recipe: Recipe, model: Any, view: Any) -> dict[str, tuple[dict[str, np.ndarray], dict[str, Any]]]:
+def round_components(data: Any, recipe: Recipe, model: Any, view: Any) -> dict[str, tuple[dict[str, np.ndarray], dict[str, Any]]]:
     """The two components of the round: its popularity (the counts and the orders every list needs) and the chosen model, each with its arrays and its parameters."""
     popularity_arrays = {"codes": data.codes, "popularity": data.popularity, "recent": data.recent, "trend": data.trend, "tie_rank": data.tie_rank, "fallback": data.fallback}
     popularity_params = {"fallback_days": view.recommend.fallback_days, "trend_days": view.grid.blend_trend_days, "products": int(len(data.codes)), "customers": int(len(data.customers))}
@@ -143,7 +143,7 @@ def run_launch(conn: Any, view: Any, run_key: str, *, models_dir: Path, seal_pat
                                        "lists_fingerprint": part["lists"]["fingerprint"]})
 
     candidates = candidates_folder(models_dir, run_key)
-    components = _components(data, recipe, model, view)
+    components = round_components(data, recipe, model, view)
     written = {component: artifacts.write_component(candidates, round_id, component, arrays, params) for component, (arrays, params) in components.items()}
     sealed_now = False
     if mode == "fresh" and state == "none":
