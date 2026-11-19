@@ -66,6 +66,8 @@ class ValidationReport:
     run_key: str
     results: tuple[RuleResult, ...]
     skipped: tuple[str, ...] = ()           # the rules that were not evaluated because the file could not be trusted
+    rows: int | None = None                 # the rows and the SHA-256 of the file that V11 found to be the manifest's (None when it was not)
+    sha256: str | None = None
 
     @property
     def blocking_failed(self) -> tuple[str, ...]:
@@ -77,7 +79,7 @@ class ValidationReport:
 
     def to_jsonable(self) -> dict[str, Any]:
         return {
-            "delivery_id": self.delivery_id, "run_key": self.run_key, "skipped": list(self.skipped),
+            "delivery_id": self.delivery_id, "run_key": self.run_key, "skipped": list(self.skipped), "rows": self.rows, "sha256": self.sha256,
             "results": [{"rule_id": r.rule_id, "name_es": r.name_es, "severity": r.severity, "scope": r.scope, "aggregation": r.aggregation, "passed": r.passed,
                          "rows_affected": r.rows_affected, "examples": list(r.examples), "detail": r.detail} for r in self.results],
         }
@@ -148,10 +150,10 @@ def _known(conn: sqlite3.Connection | None) -> tuple[set[int], set[str]]:
 # --- V11 ----------------------------------------------------------------------------------------------------------------------------
 
 
-def _v11(spec: DeliverySpec, path: Path) -> tuple[RuleResult, pd.DataFrame | None]:
-    """The result of V11 and, when the file is the manifest's and can be read, its lines."""
-    def failed(reason: str) -> tuple[RuleResult, None]:
-        return _result("V11", False, reason=reason), None
+def _v11(spec: DeliverySpec, path: Path) -> tuple[RuleResult, pd.DataFrame | None, dict[str, Any] | None]:
+    """The result of V11 and, when the file is the manifest's and can be read, its lines and its manifest entry."""
+    def failed(reason: str) -> tuple[RuleResult, None, None]:
+        return _result("V11", False, reason=reason), None, None
 
     try:
         entry = read_manifest(manifest_path_of(path))["deliveries"].get(spec.delivery_id)
@@ -175,7 +177,7 @@ def _v11(spec: DeliverySpec, path: Path) -> tuple[RuleResult, pd.DataFrame | Non
         return failed("unreadable")
     if table.num_rows != entry["rows"]:
         return failed("rows")
-    return _result("V11", True), wb.frame_of(table)
+    return _result("V11", True), wb.frame_of(table), entry
 
 
 # --- the validation -----------------------------------------------------------------------------------------------------------------
@@ -187,7 +189,7 @@ def validate_delivery(spec: DeliverySpec, path: Path, conn: sqlite3.Connection |
     path = Path(path)
     expected = next_to_load(delivery_plan(view), loaded_ids(conn))
     results = [_result("V10", expected == spec, expected=expected.delivery_id if expected is not None else None)]
-    v11, frame = _v11(spec, path)
+    v11, frame, entry = _v11(spec, path)
     results.append(v11)
     skipped: tuple[str, ...] = ()
     if frame is None:
@@ -216,7 +218,7 @@ def validate_delivery(spec: DeliverySpec, path: Path, conn: sqlite3.Connection |
         new_customers = set(purchases["customer_id"].dropna().astype(int)) - known_customers
         new_products = set(baskets["stock_code"].dropna().astype(str)) - known_products
         results.append(_result("V18", True, new_customers=len(new_customers), new_products=len(new_products)))
-    report = ValidationReport(spec.delivery_id, run_key, tuple(results), skipped)
+    report = ValidationReport(spec.delivery_id, run_key, tuple(results), skipped, rows=entry["rows"] if entry else None, sha256=entry["sha256"] if entry else None)
     if not report.passed:
         raise ValidationError(report)
     return report

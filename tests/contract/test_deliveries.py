@@ -20,6 +20,7 @@ from personaloffers import validate as val
 from personaloffers import workbook as wb
 from personaloffers.config import SealedConfig, load_config
 from tests.fixtures.configs import config_for, tree_of
+from tests.fixtures.hand_lines import hand_frame
 
 BLOCKING_RULES = ("V10", "V11", "V12", "V13")
 EVERY_RULE = ("V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18")
@@ -43,19 +44,6 @@ def warehouse_with(path, loaded: list[str] = (), lines: pd.DataFrame | None = No
         rows = [(int(r.line_key), None if pd.isna(r.customer_id) else int(r.customer_id), str(r.stock_code), str(r.role)) for r in lines.itertuples()]
         conn.executemany("INSERT INTO lines VALUES (?, ?, ?, ?)", rows)
     return conn
-
-
-def hand_frame(*rows: dict) -> pd.DataFrame:
-    """Lines with the columns of the canonical file; each row says only what it needs and the rest is an ordinary purchase."""
-    base = dict(invoice="500001", stock_code="95000", description="PRODUCTO SINTÉTICO 1", quantity=1, price=2.5, customer_id=90001, country="United Kingdom",
-                internal_repeat=False, role="purchase", invoice_date=datetime(2011, 3, 29, 10, 0))
-    data = [base | row | {"line_key": row.get("line_key", 20_000_001 + i)} for i, row in enumerate(rows)]
-    frame = pd.DataFrame(data)
-    frame["customer_id"] = pd.array(frame["customer_id"], dtype="Int64")
-    for column in ("invoice", "stock_code", "description", "country", "role"):
-        frame[column] = pd.array(frame[column], dtype="string")
-    frame["invoice_date"] = frame["invoice_date"].astype("datetime64[us]")
-    return frame[list(wb.LINE_COLUMNS)]
 
 
 def spec_of(world, delivery_id: str) -> dv.DeliverySpec:
