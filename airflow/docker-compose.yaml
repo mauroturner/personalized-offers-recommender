@@ -1,0 +1,225 @@
+# Airflow 3.4.0 with the LocalExecutor, from the official docker-compose.yaml of that version
+# (https://airflow.apache.org/docs/apache-airflow/3.4.0/docker-compose.yaml), as project 03 corrected it and projects 05 to 07 adapted it, with these changes (D26):
+#   - LocalExecutor: no redis, no celery worker and no flower (less memory; one task at a time anyway);
+#   - build the image of Dockerfile (Airflow plus the libraries of the pipeline, with the same == pins as the command line) from the project folder instead of using the plain one; only the
+#     airflow-init service has the `build` key (see there);
+#   - the DAGs, the plugins and the initialization script are mounted read-only (./dags, ./plugins, ./init.sh): no task can rewrite the file that defines the next one, nor drop code that Airflow
+#     would load; ./logs and ./config stay writable because Airflow writes them (the logs, and the airflow.cfg it creates in the folder of AIRFLOW_CONFIG when it is missing; project 03, D80);
+#   - the project is mounted at /opt/personaloffers piece by piece: src/, sql/ and config/ read-only, data/ read-write except data/raw/ (the owner puts the UCI zip there; no task writes it), and
+#     outputs/, reports/ and dashboard/ read-write; the pipeline reads it through PYTHONPATH, PERSONALOFFERS_HOME and PERSONALOFFERS_CONFIG;
+#   - no env_file: a container gets only the variables its service names (the file airflow/.env is read by compose to fill them in, not handed whole to every container);
+#   - the interface is published on 127.0.0.1 only, and every secret has no default and comes from the environment: the password of the metadata database (in the PostgreSQL service and in the
+#     connection string of every Airflow service), the Fernet key, the JWT secret, the admin password and the token of the CRM stand-in. The file refuses to start until airflow/.env (or the
+#     environment) sets each one;
+#   - one more service of the same image on the internal network of the project, with no published port: `crm`, the stand-in of the CRM (the only writer of data/crm/standin.sqlite in Docker;
+#     the DAG reaches it with config/pipeline.docker.toml, [crm] mode = "http", base_url = "http://crm:8001"). It gets only its own token, not the Airflow secrets, and uvicorn listens on 0.0.0.0
+#     inside the container because `serve-crm` refuses it (D27); there is no entry API (D27);
+#   - the external images are pinned by version and by digest, the same ones as projects 04 to 07;
+#   - the example DAGs are off.
+# To run it: copy .env.example to .env and fill the five secrets (the file says how), then `docker compose build`, `docker compose up airflow-init` and `docker compose up -d`; the interface is
+# http://localhost:8080 (user airflow, the password you set). The pipeline needs memory: RNF03 allows its working set a peak of 6 GB, so Docker needs at least 8 GB for its containers (Docker
+# Desktop: Settings, Resources).
+# The quick mode runs inside the container too: PERSONALOFFERS_CONFIG=/opt/personaloffers/config/pipeline.quick.toml and the fixture in data/quick/ (`python -m personaloffers make-fixture
+# data/quick/online_retail_fixture.zip` writes it; docs/runbook.md). A relative path of a configuration resolves against /opt/personaloffers (PERSONALOFFERS_HOME).
+
+# A project name of its own: the volume and the network never share a name with another Airflow compose project of this machine.
+name: personaloffers-airflow
+
+x-airflow-common:
+  &airflow-common
+  image: personaloffers-airflow:3.4.0
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg://airflow:${PERSONALOFFERS_DB_PASSWORD:?set PERSONALOFFERS_DB_PASSWORD in airflow/.env (see .env.example)}@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ${PERSONALOFFERS_FERNET_KEY:?set PERSONALOFFERS_FERNET_KEY in airflow/.env (see .env.example)}
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
+    AIRFLOW__API_AUTH__JWT_SECRET: ${PERSONALOFFERS_JWT_SECRET:?set PERSONALOFFERS_JWT_SECRET in airflow/.env (see .env.example)}
+    AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    PYTHONPATH: /opt/personaloffers/src
+    PERSONALOFFERS_HOME: /opt/personaloffers
+    PERSONALOFFERS_CONFIG: ${PERSONALOFFERS_CONFIG:-/opt/personaloffers/config/pipeline.docker.toml}
+    PERSONALOFFERS_CRM_TOKEN: ${PERSONALOFFERS_CRM_TOKEN:?set PERSONALOFFERS_CRM_TOKEN in airflow/.env (see .env.example)}
+  volumes:
+    - ./dags:/opt/airflow/dags:ro
+    - ./logs:/opt/airflow/logs
+    - ./config:/opt/airflow/config
+    - ./plugins:/opt/airflow/plugins:ro
+    - ./init.sh:/opt/airflow/init.sh:ro
+    - ../src:/opt/personaloffers/src:ro
+    - ../sql:/opt/personaloffers/sql:ro
+    - ../config:/opt/personaloffers/config:ro
+    - ../data:/opt/personaloffers/data
+    - ../data/raw:/opt/personaloffers/data/raw:ro
+    - ../outputs:/opt/personaloffers/outputs
+    - ../reports:/opt/personaloffers/reports
+    - ../dashboard:/opt/personaloffers/dashboard
+  # The user of every Airflow container. On Linux, set AIRFLOW_UID in airflow/.env to your own id (`id -u`): the folders the bind mounts
+  # create (logs, config, plugins) then belong to you and not to the uid 50000, which you could not delete or edit afterwards. Docker
+  # Desktop on Windows and macOS maps the files to your user and does not need it (runbook; project 03, D80).
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16.9@sha256:ddfe3e8713e3ee5b8f286082cb12512488dfbf3f5a1ecb0b74a42e6055af0a5f
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${PERSONALOFFERS_DB_PASSWORD:?set PERSONALOFFERS_DB_PASSWORD in airflow/.env (see .env.example)}
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    # The only service that builds the image (the others use its tag): five services building the same tag at once fail on a cold cache
+    # with `image ... already exists` (project 03, D74).
+    build:
+      context: ..
+      dockerfile: airflow/Dockerfile
+    # The other services start only when this one exits 0, so init.sh stops at its first failed command (`set -euo pipefail`). The script is
+    # read without carriage returns, so a Windows checkout that turned its line ends into CRLF still runs, and the pipe fails if the file is
+    # missing (pipefail).
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "set -o pipefail; tr -d '\\r' < /opt/airflow/init.sh | /bin/bash -s"
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${PERSONALOFFERS_ADMIN_PASSWORD:?set PERSONALOFFERS_ADMIN_PASSWORD in airflow/.env (see .env.example)}
+    user: "0:0"
+
+  # The stand-in of the CRM (crm/standin.py): the lists of each round over a SQLite file, the only writer of data/crm/standin.sqlite in Docker. The DAG reaches it at http://crm:8001
+  # (config/pipeline.docker.toml) with PERSONALOFFERS_CRM_TOKEN. It publishes no port: only the services of this project reach it. It needs no database, no Fernet key and no JWT secret, so it gets none.
+  crm:
+    image: personaloffers-airflow:3.4.0
+    command:
+      - python
+      - -m
+      - uvicorn
+      - --factory
+      - personaloffers.crm.standin:create_app_from_environment
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+    environment:
+      CONNECTION_CHECK_MAX_COUNT: "0"
+      PYTHONPATH: /opt/personaloffers/src
+      PERSONALOFFERS_HOME: /opt/personaloffers
+      PERSONALOFFERS_CONFIG: ${PERSONALOFFERS_CONFIG:-/opt/personaloffers/config/pipeline.docker.toml}
+      PERSONALOFFERS_CRM_TOKEN: ${PERSONALOFFERS_CRM_TOKEN:?set PERSONALOFFERS_CRM_TOKEN in airflow/.env (see .env.example)}
+    volumes:
+      - ../src:/opt/personaloffers/src:ro
+      - ../sql:/opt/personaloffers/sql:ro
+      - ../config:/opt/personaloffers/config:ro
+      - ../data:/opt/personaloffers/data
+      - ../data/raw:/opt/personaloffers/data/raw:ro
+      - ../outputs:/opt/personaloffers/outputs
+      - ../reports:/opt/personaloffers/reports
+      - ../dashboard:/opt/personaloffers/dashboard
+    user: "${AIRFLOW_UID:-50000}:0"
+    restart: always
+
+  # `docker compose --profile debug run --rm airflow-cli airflow dags test personaloffers_weekly`
+  # `airflow dags test` runs the DAG in this container, outside the scheduler and so outside its max_active_runs=1 and max_active_tasks=1:
+  # next to a scheduler that is running the daily run there would be two writers of the SQLite warehouse in ../data. Every task holds the
+  # writer lock ../data/interim/pipeline.lock while it runs, so a task of one is refused while a task of the other is running (D29),
+  # but between two tasks of the scheduler's run nobody holds it. Run it with the scheduler stopped (`docker compose stop airflow-scheduler`,
+  # and `docker compose start airflow-scheduler` after); ../data stays writable here because `dags test` writes the warehouse (runbook;
+  # project 03, D80 and D82).
+  airflow-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    command:
+      - bash
+      - -c
+      - airflow
+    depends_on:
+      <<: *airflow-common-depends-on
+
+volumes:
+  postgres-db-volume:
