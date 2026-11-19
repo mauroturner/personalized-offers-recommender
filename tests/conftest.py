@@ -249,7 +249,10 @@ def before_close(workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
     from tests.fixtures.configs import config_for
     from tests.fixtures.worlds import sealed_view_of
 
+    from tests.fixtures.piped import write_config_file
+
     root = tmp_path_factory.mktemp("before_close")
+    write_config_file(root, workbook)
     cfg = config_for(quick_cfg, workbook, root)
     from personaloffers import deliveries
 

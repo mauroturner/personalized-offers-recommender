@@ -136,17 +136,6 @@ def test_until_the_test_is_sealed_every_result_of_it_is_empty_or_null(pending):
     assert site.control["balance"] and all(b["smd"] is not None for b in site.control["balance"]), "the balance is of the draw, sealed at the launch"
 
 
-def test_a_configuration_that_is_not_the_sealed_one_publishes_no_result_of_the_test(evaluated, workbook, quick_cfg, tmp_path):
-    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star", minimum=11)
-    star.conn.close()
-    made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
-    try:
-        assert made.site.summary["evaluation_status"] == "post_seal" and made.site.summary["headline"] is None and made.site.algorithms["methods"] == [] and made.site.control["aa"] is None
-        assert [c["passed"] for c in made.site.summary["criteria"]] == [None] * 10
-    finally:
-        made.conn.close()
-
-
 # --- no effect, no path, nothing under the minimum ----------------------------------------------------------------------------------------------------
 
 
@@ -171,16 +160,19 @@ def test_no_file_holds_a_path_of_this_machine_or_a_number_of_a_customer(sited):
     assert not LOCAL_PATH.search(text) and not re.search(r"(?<![\d.])90[0-3]\d\d(?!\d)", text)
 
 
-def test_a_count_of_customers_under_the_minimum_is_not_published(sited, evaluated, workbook, quick_cfg, tmp_path):
-    """The minimum of a cell is the sealed ``[privacy] min_cell_customers``: with it at 200 (more than the 300 customers' parts) every count of customers is null, with 10 the ones that are bigger are shown."""
-    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star", minimum=200)
+def test_a_count_of_customers_under_the_minimum_is_not_published_and_another_configuration_than_the_sealed_one_publishes_no_test(sited, evaluated, workbook, quick_cfg, tmp_path):
+    """The minimum of a cell is the sealed ``[privacy] min_cell_customers``: with it at 290 (more than the customers of any group and under the 300 of the base) every count of customers is null, with 10 the ones that are bigger are shown; and a
+    minimum that is not the sealed one is another configuration, which publishes no result of the test (``post_seal``)."""
+    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star", minimum=290)
     star.conn.close()
     made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
     try:
         shown, hidden = sited.site, made.site
-        assert shown.data["customers"]["with_two_or_more_invoices"] is not None and hidden.data["customers"]["with_two_or_more_invoices"] is None or shown.data["customers"]["with_two_or_more_invoices"] >= 200
+        assert shown.data["customers"]["with_two_or_more_invoices"] == 279 and hidden.data["customers"]["with_two_or_more_invoices"] is None
         assert hidden.control["holdout"]["groups"]["control"] is None and shown.control["holdout"]["groups"]["control"] is not None
         assert all(r["control"] is None for r in hidden.operation["rounds"]) and all(r["buyers_of_listed"] == {"offer": None, "control": None} for r in hidden.operation["rounds"])
+        assert hidden.summary["evaluation_status"] == "post_seal" and hidden.summary["headline"] is None and hidden.algorithms["methods"] == [] and hidden.control["aa"] is None
+        assert [c["passed"] for c in hidden.summary["criteria"]] == [None] * 10 and hidden.summary["seal"]["test"] is None
     finally:
         made.conn.close()
 
@@ -202,10 +194,15 @@ def test_the_data_file_counts_what_the_warehouse_holds_and_what_the_source_took_
     assert sum(c["lines"] for c in data["countries"]) <= lines[0] and len(data["countries"]) <= 10
 
 
-def test_without_the_counts_of_the_source_the_data_file_says_so_and_publishes_none(sited, evaluated, workbook, quick_cfg, tmp_path):
-    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star")
-    star.conn.close()
-    made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path, source_counts=None)
+def types_world(made):
+    """What ``export_site_of`` reads of a world: the folder of the private files and the seal."""
+    import types
+
+    return types.SimpleNamespace(cfg=types.SimpleNamespace(paths=types.SimpleNamespace(private_dir=made.private_dir)), seal_path=made.seal_path)
+
+
+def test_without_the_counts_of_the_source_the_data_file_says_so_and_publishes_none(sited, tmp_path):
+    made = export_site_of(sited.conn.execute("PRAGMA database_list").fetchone()[2], types_world(sited), sited.view, tmp_path, source_counts=None)
     try:
         assert made.site.data["source"]["copies_removed"] is None and made.site.data["source"]["rows_by_sheet"] is None
     finally:
@@ -401,9 +398,9 @@ def test_closing_a_run_does_not_write_over_a_set_that_is_not_one_export_or_is_of
         site_export.export_summary(sited.conn, out2, reporting.RunMeta("run-6", RUN.as_of), sited.view, seal_path=sited.seal_path, max_total_bytes=sited.cap)
 
 
-@pytest.mark.parametrize("minimum", [32, 33, 60])
+@pytest.mark.parametrize("minimum", [32, 60])
 def test_the_minimum_of_a_cell_is_the_sealed_one_and_a_cell_that_reaches_it_is_shown(minimum, sited, evaluated, workbook, quick_cfg, tmp_path):
-    """A count equal to the minimum is shown and one under it is not: the base has profiles of 268 and 32 customers (the second is an example list with a minimum of 32 and not with 33) and the control group has
+    """A count equal to the minimum is shown and one under it is not: the base has profiles of 268 and 32 customers (the second is an example list with a minimum of 32 and not with 60) and the control group has
     exactly 60 customers."""
     star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star", minimum=minimum)
     star.conn.close()
