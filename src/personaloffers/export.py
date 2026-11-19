@@ -177,8 +177,8 @@ def _arrow_table(columns: list[tuple], table: Table) -> pa.Table:
 
 
 def _serialize(conn: sqlite3.Connection, table: Table, meta: dict[str, str]) -> bytes:
-    names, order = (", ".join(f'"{name}"' for name in names) for names in (table.column_names, table.key))
-    rows = conn.execute(f"SELECT {names} FROM {STAR_PREFIX}{table.name} ORDER BY {order}").fetchall()
+    selected, order = (", ".join(f'"{name}"' for name in group) for group in (table.column_names, table.key))
+    rows = conn.execute(f"SELECT {selected} FROM {STAR_PREFIX}{table.name} ORDER BY {order}").fetchall()
     arrow = _arrow_table(list(zip(*rows, strict=True)) if rows else [()] * len(table.columns), table)
     arrow = arrow.replace_schema_metadata({**(arrow.schema.metadata or {}), **{k.encode(): v.encode("utf-8") for k, v in meta.items()}})
     sink = pa.BufferOutputStream()
