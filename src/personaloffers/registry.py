@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from personaloffers.config import PipelineConfig, SealedConfig
-from personaloffers.files import write_exclusive
+from personaloffers.files import write_atomic, write_exclusive
 
 SEAL_VERSION = 1
 LAUNCH_KEYS = frozenset({"config_sha256", "config", "run_key", "as_of", "validation", "recipe", "baselines", "holdout", "lists"})
@@ -148,3 +148,108 @@ def require_launch_seal(seal_path: Path, config_sha256: str) -> dict[str, Any]:
     if document["launch"].get("config_sha256") != config_sha256:
         raise SealMismatchError("el sello del lanzamiento es de otra configuración que la de esta corrida: una ronda semanal se arma con la receta sellada (runbook R12)")
     return document["launch"]
+
+
+# --- the test part of the seal (U14; RF18, AC16, AC24; risk item 1: the test is evaluated once) ------------------------------------------------------------------------------------------
+
+
+TEST_KEYS = frozenset({"config_sha256", "run_key", "as_of", "criteria", "metrics", "operation"})
+NOT_COMPARED = ("run_key", "as_of")     # what a repetition of the close does not reproduce: the key of its run and the hour of its delivery plan
+
+
+class EvaluationRefusedError(SealError):
+    """The test cannot be evaluated: there is no seal, or the seal has no test part yet and the configuration is not the sealed one (runbook R7)."""
+
+
+def _rounded(value: Any) -> Any:
+    """A sealed number to the six decimals that a seal is compared at (a dictionary or a list is rounded inside)."""
+    if isinstance(value, float):
+        return round(value, 6)
+    if isinstance(value, Mapping):
+        return {key: _rounded(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_rounded(item) for item in value]
+    return value
+
+
+def _flat(document: Any, prefix: str = "") -> dict[str, Any]:
+    if isinstance(document, Mapping):
+        found: dict[str, Any] = {}
+        for key, value in document.items():
+            found.update(_flat(value, f"{prefix}{key}."))
+        return found
+    if isinstance(document, (list, tuple)):
+        found = {}
+        for index, value in enumerate(document):
+            found.update(_flat(value, f"{prefix}{index}."))
+        return found
+    return {prefix[:-1]: document}
+
+
+def differing_keys(sealed: Mapping[str, Any], current: Mapping[str, Any]) -> list[str]:
+    """The keys (``section.key``) in which two plain configurations differ, sorted: what the refusal of an evaluation names."""
+    a, b = _flat(sealed), _flat(current)
+    absent = object()
+    return sorted(key for key in set(a) | set(b) if a.get(key, absent) != b.get(key, absent))
+
+
+def check_test_evaluation(seal_path: Path, view: SealedConfig) -> Literal["first", "repeat", "post_seal"]:
+    """What evaluating the test with the configuration `view` means, decided **before** anything is read or written (D21).
+
+    ``first``: the seal has the launch part with this configuration and no test part, so this evaluation is the one that is sealed. ``repeat``: the seal has its test part and this is the same configuration:
+    the evaluation must reproduce it. ``post_seal``: the test is sealed and this is another configuration: it is computed apart and never replaces the sealed one. With another configuration and **no** test part
+    the evaluation is refused (``EvaluationRefusedError`` naming the keys that differ), and so it is without a seal or with a launch part that is not a seal's."""
+    document = read_seal(seal_path)
+    if document is None:
+        raise EvaluationRefusedError("no hay sello: el lanzamiento lo escribe antes de que se evalúe la prueba, y no se evalúa sin él (runbook R7)")
+    fingerprint = config_fingerprint(view)
+    sealed = document["launch"].get("config_sha256")
+    if document.get("test") is not None:
+        return "repeat" if sealed == fingerprint else "post_seal"
+    if sealed != fingerprint:
+        keys = differing_keys(document["launch"].get("config", {}), view_to_dict(view))
+        raise EvaluationRefusedError("la prueba no se evalúa con otra configuración que la sellada mientras el sello no tiene su parte de la prueba: la primera evaluación es la que se sella "
+                                     f"(D21); las claves que difieren: {', '.join(keys) or '(ninguna que se pueda nombrar)'}. No se escribió nada (runbook R7)")
+    return "first"
+
+
+def _check_test_part(test: Mapping[str, Any]) -> None:
+    keys = set(test)
+    if keys != TEST_KEYS:
+        raise SealError(f"la parte de la prueba debe tener exactamente {sorted(TEST_KEYS)}; le faltan {sorted(TEST_KEYS - keys)} y le sobran {sorted(keys - TEST_KEYS)}")
+    digest = test["config_sha256"]
+    if not (isinstance(digest, str) and len(digest) == _HEX64_LENGTH and all(ch in "0123456789abcdef" for ch in digest)):
+        raise SealError("config_sha256 de la parte de la prueba debe ser un SHA-256 de 64 dígitos hexadecimales")
+    if not (isinstance(test["run_key"], str) and test["run_key"]):
+        raise SealError("la parte de la prueba necesita la clave de la corrida que la escribe")
+    try:
+        json.dumps(dict(test), allow_nan=False)
+    except (TypeError, ValueError) as error:
+        raise SealError(f"la parte de la prueba tiene un valor que no es JSON o no es finito: {error}") from error
+
+
+def write_test_seal(seal_path: Path, test: Mapping[str, Any]) -> Literal["written", "unchanged", "post_seal"]:
+    """Add the test part to the seal once. ``written``: the seal had only its launch part, which is kept exactly as it was, and now has `test` too (the file is read back and must say what was written).
+    ``unchanged``: it already has a test part whose values, rounded to 6 decimals, are these. ``post_seal``: `test` was evaluated with another configuration than the sealed one; the seal is left as it is.
+    Any other difference is a ``SealMismatchError`` that names the values (runbook R7): every key that can change a sealed value is in ``config_sha256``, so there is no third case."""
+    _check_test_part(test)
+    path = Path(seal_path)
+    document = read_seal(path)
+    if document is None:
+        raise SealError("no hay sello: la parte de la prueba se escribe después de la del lanzamiento")
+    if test["config_sha256"] != document["launch"].get("config_sha256"):
+        return "post_seal"
+    if document.get("test") is not None:
+        then, now = (_flat(_rounded({k: v for k, v in part.items() if k not in NOT_COMPARED})) for part in (document["test"], test))
+        absent = object()
+        differ = sorted(key for key in set(then) | set(now) if then.get(key, absent) != now.get(key, absent))
+        if not differ:
+            return "unchanged"
+        named = "; ".join(f"{key}: {then.get(key)!r} sellado, {now.get(key)!r} en esta corrida" for key in differ[:6])
+        raise SealMismatchError(f"la evaluación de la prueba con la configuración sellada no reproduce los valores sellados, redondeados a 6 decimales: {named}{' y otros' if len(differ) > 6 else ''} (runbook R7)")
+    text = json.dumps({**document, "test": dict(test)}, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
+    write_atomic(path, text)
+    kept = read_seal(path) or {}
+    if kept.get("launch") != document["launch"] or _rounded(kept.get("test")) != _rounded(dict(test)):
+        raise SealMismatchError("lo que consta en el sello no es lo que esta corrida escribió: otra escritura lo cambió (runbook R7)")
+    return "written"

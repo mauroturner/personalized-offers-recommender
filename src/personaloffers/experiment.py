@@ -217,6 +217,9 @@ def _normal_p(diff: float, error: float) -> float:
     return 2.0 * (1.0 - NormalDist().cdf(abs(diff) / error))
 
 
+normal_p = _normal_p        # the name that ``evaluation`` uses for the p of the two normal tests that are shown beside the preregistered one
+
+
 def calibration_draw(outcomes_by_metric: Mapping[str, Outcome], cov: pd.DataFrame, view: Any, seed: int) -> dict[str, float]:
     """The p-value of every test on the draw of the control group made with `seed` (``<metric>_<test>`` -> p): the draw is ``holdout.assign_cohort`` with that seed, the preregistered test uses
     ``calibration_permutations`` permutations of the generator seeded ``PERMUTATION_SEED_BASE + seed`` (shared by the metrics of the draw) and the two normal tests are the ones C10 shows beside it."""
