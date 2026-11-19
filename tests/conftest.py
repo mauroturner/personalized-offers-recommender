@@ -272,3 +272,14 @@ def piped(before_close, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFa
     made = copy_piped(before_close, workbook, quick_cfg, tmp_path_factory.mktemp("piped"))
     runs = pipeline.replay(made.cfg)
     return types.SimpleNamespace(cfg=made.cfg, runs=[*before_close.runs, *runs], plan=before_close.plan, root=made.root)
+
+
+@pytest.fixture(scope="session")
+def sited_pending(delivered, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The site files of the delivered replay before the test is evaluated (U17 on): nothing evaluated, the seal without its test part; the contract tests and the figures tests read it."""
+    from tests.fixtures.sites import export_site_of
+    from tests.fixtures.stars import export_world
+
+    star = export_world(delivered.root, workbook, quick_cfg, tmp_path_factory.mktemp("pending_star"))
+    star.conn.close()
+    return export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path_factory.mktemp("pending_site"))

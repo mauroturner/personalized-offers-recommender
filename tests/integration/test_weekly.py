@@ -136,25 +136,24 @@ def test_the_follow_up_counts_the_control_group_too_and_never_a_customer_outside
 # --- repeating a round ----------------------------------------------------------------------------------------------------------------------------------
 
 
-def test_repeating_a_round_gives_the_same_lists_byte_for_byte(world, quick_view, workbook, quick_cfg, launched, tmp_path):
-    """AC17: a round that was issued, run again, is recomputed, found the same and not written (the file is not touched); and a second replay from the launch, in another folder, issues the same
-    lists, baselines, follow-up and artifacts (the same rows and the same hashes, whatever the run keys)."""
+def test_repeating_a_round_gives_the_same_lists_byte_for_byte(world, quick_view, piped):
+    """AC17: a round that was issued, run again, is recomputed, found the same and not written (the file is not touched); and a second replay from the launch, which the pipeline ran by itself in another folder
+    with other run keys, issued the same lists, baselines, follow-up and artifacts (the same rows and the same hashes, whatever the run keys)."""
     before = digest(world)
     for round_id in ROUNDS:
         again = weekly.emit_round(world.conn, world.view, "run-9", cal.monday_of(round_id), models_dir=world.models_dir, seal_path=world.seal_path)
         assert again.status == "done" and again.lists == 3000
     assert digest(world) == before
-    other = copy_world(launched.root, workbook, quick_cfg, tmp_path / "second")
+    other = warehouse.connect(piped.cfg.paths.warehouse)
     try:
-        replay(other)
         for table, columns in (("offer_lists", "round_id, customer_id, rank, stock_code, source, score, grp"), ("baseline_lists", "round_id, method, variant, customer_id, rank, stock_code"),
                                ("round_outcomes", "round_id, customer_id, bought, products, products_in_offer, spend, days_observed"), ("contact_base", "*"),
                                ("holdout_assignments", "customer_id, grp, method, stratum, assigned_round"),
                                ("model_registry", "round_id, component, params_json, artifact_path, artifact_sha256, fit_lines")):
             query = f"SELECT {columns} FROM {table} ORDER BY 1, 2, 3, 4, 5"
-            assert world.conn.execute(query).fetchall() == other.conn.execute(query).fetchall(), table
+            assert world.conn.execute(query).fetchall() == other.execute(query).fetchall(), table
     finally:
-        other.conn.close()
+        other.close()
 
 
 def test_a_round_that_was_issued_is_not_rewritten_when_what_is_recomputed_is_different(world, monkeypatch):

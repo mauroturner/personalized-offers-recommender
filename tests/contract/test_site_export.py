@@ -115,13 +115,9 @@ def test_every_figure_of_the_site_is_the_figure_of_the_star_model(sited, exporte
 
 
 @pytest.fixture
-def pending(delivered, workbook, quick_cfg, tmp_path):
-    """The delivered replay (nothing evaluated, the seal without its test part) exported and its site written."""
-    star = export_world(delivered.root, workbook, quick_cfg, tmp_path / "star")
-    star.conn.close()
-    made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
-    yield made
-    made.conn.close()
+def pending(sited_pending):
+    """The site of the delivered replay (nothing evaluated, the seal without its test part)."""
+    return sited_pending
 
 
 def test_until_the_test_is_sealed_every_result_of_it_is_empty_or_null(pending):
@@ -254,17 +250,21 @@ def test_the_balance_and_the_calibration_and_the_minimum_detectable_difference(s
     assert control["mde"][0]["holdout_size"] == 30 and control["mde"][0]["mde"] is not None
 
 
-def test_cumulative_rules_are_read_once_from_the_latest_loaded_run(sited, evaluated, workbook, quick_cfg, tmp_path):
-    """A rule that counts something cumulative (``source``, ``latest``) is read once, from the latest loaded run that recorded it, and never summed over the runs (project 03, D94)."""
-    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star")
-    conn = star.conn
+def test_cumulative_rules_are_read_once_from_the_latest_loaded_run(sited, tmp_path):
+    """A rule that counts something cumulative (``source``, ``latest``) is read once, from the latest loaded run that recorded it, and never summed over the runs (project 03, D94). It runs over a copy of the
+    warehouse the star model was exported to, so no model is exported again."""
+    import shutil
+
+    copy = tmp_path / "warehouse-copy"
+    shutil.copyfile(sited.conn.execute("PRAGMA database_list").fetchone()[2], copy)
+    conn = connect(copy)
     try:
         conn.execute("DROP TRIGGER validation_results_no_update")
         conn.execute("DROP TRIGGER validation_results_no_delete")
         conn.execute("UPDATE validation_results SET aggregation = 'latest', rows_affected = 5 WHERE rule_id = 'V14'")
         conn.commit()
         v14 = lambda rules: next(r for r in rules if r["rule_id"] == "V14")   # noqa: E731
-        made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
+        made = export_site_of(copy, types_world(sited), sited.view, tmp_path)
         try:
             runs = conn.execute("SELECT COUNT(*) FROM validation_results v JOIN deliveries d ON d.run_key = v.run_key AND d.status = 'loaded' WHERE v.rule_id = 'V14'").fetchone()[0]
             assert runs == 5 and v14(made.site.validation_rules["rules"])["rows_affected"] == 5, "five runs recorded the rule, and the count is the latest's alone"
@@ -272,7 +272,7 @@ def test_cumulative_rules_are_read_once_from_the_latest_loaded_run(sited, evalua
             made.conn.close()
         conn.execute("UPDATE validation_results SET aggregation = 'per_run' WHERE rule_id = 'V14'")
         conn.commit()
-        again = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path / "again")
+        again = export_site_of(copy, types_world(sited), sited.view, tmp_path / "again")
         try:
             assert v14(again.site.validation_rules["rules"])["rows_affected"] == 25, "a per-run rule is the sum of its runs"
         finally:

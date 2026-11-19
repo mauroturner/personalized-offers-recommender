@@ -9,8 +9,6 @@ import pytest
 from personaloffers import figures
 from personaloffers.site_export import SiteSetError, read_site
 from tests.contract.test_site_export import copy_of  # noqa: F401  (a helper of the contract tests)
-from tests.fixtures.sites import export_site_of
-from tests.fixtures.stars import export_world
 
 PNG = b"\x89PNG\r\n\x1a\n"
 
@@ -34,17 +32,11 @@ def test_the_numbers_of_a_figure_are_the_ones_of_the_site(sited):
     assert [c["candidate"] for c in site.algorithms["choice"]] == data["choice"]["candidate"]
 
 
-def test_before_the_seal_the_figures_of_the_test_say_that_it_is_evaluated_at_the_close(delivered, workbook, quick_cfg, tmp_path):
-    star = export_world(delivered.root, workbook, quick_cfg, tmp_path / "star")
-    star.conn.close()
-    made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
-    try:
-        data = figures.figure_data(made.site)
-        assert data["hit_by_method"]["scope"] == "pending" and data["hit_by_method"]["hit_rate"] == [] and data["calibration"]["scope"] == "pending"
-        written = figures.write_figures(made.out, tmp_path / "figs")
-        assert all(p.read_bytes().startswith(PNG) for p in written)
-    finally:
-        made.conn.close()
+def test_before_the_seal_the_figures_of_the_test_say_that_it_is_evaluated_at_the_close(sited_pending, tmp_path):
+    data = figures.figure_data(sited_pending.site)
+    assert data["hit_by_method"]["scope"] == "pending" and data["hit_by_method"]["hit_rate"] == [] and data["calibration"]["scope"] == "pending"
+    written = figures.write_figures(sited_pending.out, tmp_path / "figs")
+    assert all(p.read_bytes().startswith(PNG) for p in written)
 
 
 def test_a_folder_that_is_not_one_export_draws_and_writes_nothing(sited, tmp_path):
