@@ -1,0 +1,55 @@
+# Quick mode (plan, section 4; D44): the same pipeline on the synthetic workbook of the tests (about 6,000 lines, 300 invented customers), a calendar of
+# its own (a launch, three test rounds and a short close) and everything under data/quick/.
+# Nothing here is written outside data/quick/: personaloffers.config refuses an empty accepted hash unless the zip is under it.
+# The accepted hashes are empty on purpose: the first view of the zip and of the workbook is recorded in data/quick/source.lock.json (as project 07 does).
+extends = "pipeline.toml"
+
+[source]
+zip_path = "data/quick/online_retail_fixture.zip"
+zip_bytes = 0
+zip_sha256 = ""
+member_bytes = 0
+member_sha256 = ""
+first_date = 2010-12-06                    # the fixture's first and last day
+last_date = 2011-04-22
+
+[calendar]                                 # the fixture's history is 16 weeks; two validation rounds, three test rounds and a five-day close
+history_start = 2010-12-06
+launch_last_day = 2011-03-27
+validation_first_round = 2011-03-14
+validation_last_round = 2011-03-21
+test_first_round = 2011-03-28
+test_last_round = 2011-04-11
+close_first_day = 2011-04-18
+close_last_day = 2011-04-22
+
+[grid]                                     # one option per axis, except the trend weight, so that the choice has something to choose
+als_factors = [8]
+als_regularization = [0.1]
+cosine_k = [20]
+rules_min_invoices = [3]
+blend_trend_weights = [0.0, 1.0]
+
+[evaluation]
+resamples = 200
+
+[experiment]
+permutations = 200
+calibration_seeds = 40
+calibration_permutations = 100
+cuped_weeks = 3                            # the same number of weeks as the three test rounds
+
+[paths]
+raw_dir = "data/quick/raw"
+interim_dir = "data/quick/interim"
+warehouse = "data/quick/personaloffers.sqlite"
+models_dir = "data/quick/models"
+crm_db = "data/quick/crm.sqlite"
+outputs_dir = "data/quick/outputs/powerbi"
+private_dir = "data/quick/outputs/private"
+site_dir = "data/quick/outputs/site"
+reports_dir = "data/quick/reports"
+seal = "data/quick/reports/model_seal.json"
+dashboard_html = "data/quick/dashboard/powerbi-design.html"
+readme = "data/quick/README.md"
+figures_dir = "data/quick/figures"

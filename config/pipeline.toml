@@ -1,0 +1,116 @@
+# Pipeline configuration (plan, section 4). Read by personaloffers.config.load_config: every key is checked, and an unknown one is refused by name.
+# Relative paths are resolved against the project folder ($PERSONALOFFERS_HOME), never against the working directory.
+# Which keys enter the seal's fingerprint and which do not is declared in personaloffers/config.py (FINGERPRINT_KEYS, UNSEALED_KEYS).
+
+[source]                                   # D02
+zip_path = "data/raw/online_retail_ii.zip"
+zip_bytes = 45622418
+zip_sha256 = "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb"
+member = "online_retail_II.xlsx"
+member_bytes = 45622278
+member_sha256 = "bcbe73b35f5b7babf197fb0cb983a11f5d9ff929078d4aa53d171b1f2df2e980"
+max_part_bytes = 400000000                 # uncompressed bytes of each part of the workbook (V03) [Verificar en U04 con el real]
+max_rows = 1200000                         # rows of one sheet (V06); the real sheets hold 525,461 and 541,910
+sheets = ["Year 2009-2010", "Year 2010-2011"]
+columns = ["Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price", "Customer ID", "Country"]
+first_date = 2009-12-01                    # V07: every InvoiceDate is between these two days
+last_date = 2011-12-09
+
+[catalogue]                                # D04
+product_code_regex = '^\d{5}[A-Za-z]{0,3}$'
+
+[calendar]                                 # D05
+history_start = 2009-12-01
+launch_last_day = 2011-07-31
+validation_first_round = 2011-05-02
+validation_last_round = 2011-07-25
+test_first_round = 2011-08-01
+test_last_round = 2011-11-28
+close_first_day = 2011-12-05
+close_last_day = 2011-12-09
+window_days = 7
+
+[base]                                     # D06, D07
+lookback_days = 365
+bulk_min_median_qty = 24
+bulk_min_lines = 3
+
+[holdout]                                  # D14
+share = 0.20
+seed = 20110801
+salt = "personal-offers-holdout-v1"
+recency_bands = 3
+frequency_bands = 3
+
+[recommend]                                # D09, D10
+k = 10
+repeat_slots = 7
+discovery_slots = 3
+fallback_days = 28
+repeat_recency_weight = 0.5
+repeat_recency_days = 90
+
+[grid]                                     # D12
+als_factors = [32, 64, 128]
+als_regularization = [0.01, 0.1]
+als_iterations = 15
+als_alpha = 20.0
+cosine_k = [50, 100, 200]
+rules_min_invoices = [5, 10, 20]
+rules_min_lift = 1.0
+blend_trend_weights = [0.0, 0.5, 1.0, 2.0]
+blend_trend_days = 28
+choice_tolerance = 0.005                   # half a point of hit@10
+seed = 0
+
+[evaluation]                               # D20
+resamples = 2000
+seed = 0
+
+[experiment]                               # D15
+permutations = 2000
+calibration_seeds = 500
+calibration_permutations = 500
+cuped_weeks = 18
+alpha = 0.05
+mde_power = 0.80
+mde_shares = [0.10, 0.20, 0.30]
+
+[criteria]                                 # preregistered (requirements.md, section 8.1)
+c01_min_diff_low = 0.0
+c02_min_diff_low = -0.05
+c03_min_diff_low = 0.0
+c04_min_diff_low = 0.0
+c05_min_coverage = 0.10
+c06_max_abs_smd = 0.10
+c07_rejection_band = [0.031, 0.069]
+c08_min_p = 0.05
+
+[crm]                                      # D25, D27
+mode = "standin"                           # "standin" (in process) or "http"
+base_url = ""
+token_env = "PERSONALOFFERS_CRM_TOKEN"
+batch_size = 500
+timeout_s = 30
+max_body_bytes = 2000000
+
+[privacy]                                  # D30
+min_cell_customers = 10
+
+[site]
+max_total_bytes = 204800
+
+[paths]
+raw_dir = "data/raw"
+interim_dir = "data/interim"
+warehouse = "data/warehouse/personaloffers.sqlite"
+models_dir = "data/models"
+crm_db = "data/crm/standin.sqlite"
+outputs_dir = "outputs/powerbi"
+private_dir = "outputs/private"
+site_dir = "outputs/site"
+reports_dir = "reports"
+seal = "reports/model_seal.json"
+dashboard_html = "dashboard/powerbi-design.html"
+readme = "README.md"
+figures_dir = "docs/figures"

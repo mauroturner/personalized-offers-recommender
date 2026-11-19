@@ -1,0 +1,7 @@
+# The compose's configuration (plan, sections 2 and 22; D26): the same as pipeline.toml, but the lists go to the CRM stand-in over HTTP, a service of the
+# compose on its internal network, and not in process. The token comes from the environment ($PERSONALOFFERS_CRM_TOKEN), never from this file.
+extends = "pipeline.toml"
+
+[crm]
+mode = "http"
+base_url = "http://crm:8001"
