@@ -30,6 +30,7 @@ class Recipe:
     def __post_init__(self) -> None:
         if self.model not in MODELS:
             raise ValueError(f"modelo desconocido: {self.model!r}; se esperaba uno de {', '.join(MODELS)}")
+        # written as ``not weight >= 0`` and not ``weight < 0`` on purpose: every comparison with NaN is false, so only the negated form refuses a weight that is not a number
         if self.size < 1 or not self.weight >= 0:
             raise ValueError(f"la receta necesita un tamaño de 1 o más y un peso desde 0, se recibió {self.size} y {self.weight}")
         if (self.model == "als") != (self.regularization is not None):

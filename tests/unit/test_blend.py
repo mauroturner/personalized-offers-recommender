@@ -46,6 +46,12 @@ def test_a_recipe_has_a_name_from_its_parts_and_refuses_what_is_not_a_model_or_a
             blend.Recipe(*bad)
 
 
+def test_a_recipe_whose_weight_is_not_a_number_is_refused():
+    """``weight < 0`` is false for NaN, so the check is written as ``not weight >= 0``: a NaN weight would give a NaN score to every product."""
+    with pytest.raises(ValueError, match="peso"):
+        blend.Recipe("rules", 10, float("nan"))
+
+
 @pytest.fixture(scope="module")
 def round_data(fixture_lines, quick_view, quick_cfg):
     monday = quick_cfg.calendar.test_first_round

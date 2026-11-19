@@ -296,3 +296,15 @@ def test_an_adopted_launch_refuses_a_warehouse_with_a_line_of_the_test_too(launc
         assert state_of(made) == before
     finally:
         made.conn.close()
+
+
+def test_an_artifact_that_is_installed_with_another_hash_is_not_replaced_by_the_launch(world):
+    """The refusal of ``_install`` (runbook R6): a folder in the final place with other content than the candidate is what a registered round would have, so it is kept, the registry gets no row, and the launch
+    says so. The seal that was written before stays, so the next fit adopts it once the folder is dealt with."""
+    planted = artifacts.write_component(world.models_dir, "R2011-03-28", "popularity", {"codes": np.arange(3)}, {"planted": True})
+    before = tree(world.models_dir / "R2011-03-28")
+    with pytest.raises(artifacts.ArtifactError, match="ya está en su lugar"):
+        go(world)
+    assert tree(world.models_dir / "R2011-03-28") == before and artifacts.artifact_sha256(planted.path) == planted.sha256, "the folder that was there is as it was"
+    assert world.conn.execute("SELECT COUNT(*) FROM model_registry").fetchone()[0] == 0 and world.seal_path.exists()
+    assert launch.candidates_folder(world.models_dir, RUN_KEY).exists(), "the candidates are kept for the next attempt"

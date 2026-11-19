@@ -218,7 +218,7 @@ def test_the_score_of_a_listed_product_is_the_one_of_its_source(fixture_lines, q
             product, source, score = int(found.products[i, rank]), int(found.sources[i, rank]), found.scores[i, rank]
             seen_sources.add(source)
             expected = (data.repeat[i, product], discovery[i, product], data.recent[product])[source]
-            assert score == pytest.approx(float(expected)), (i, rank, SOURCE and NAME[source])
+            assert score == pytest.approx(float(expected)), (i, rank, NAME[source])
     assert seen_sources == {0, 1, 2}, "the fixture has lists with the three sources"
 
 
@@ -242,3 +242,31 @@ def test_the_fingerprint_of_the_lists_is_the_hash_of_customer_rank_code_and_sour
     other.sources[3, 9] = (other.sources[3, 9] + 1) % 3
     assert offers.lists_fingerprint(other, data.codes) != expected, "and so is the source"
     assert offers.lists_fingerprint(offers.round_lists(data, blend.Recipe("rules", 3, 1.0), quick_view), data.codes) == expected, "the same lists again, the same fingerprint"
+
+
+def test_a_view_whose_slots_do_not_add_up_to_the_length_of_the_list_is_refused(quick_view):
+    """The configuration refuses ``repeat_slots + discovery_slots != k``; the list reads only the repeat slots, so a view built around that rule must not give a list that disagrees with its own slots."""
+    repeat, discovery, seen = matrices(hc.LIST_CASES["rich"])
+    fallback = np.array(hc.LIST_FALLBACK)
+    for repeat_slots, discovery_slots in ((5, 2), (7, 4), (0, 0)):
+        bad = with_recommend(quick_view, repeat_slots=repeat_slots, discovery_slots=discovery_slots)
+        with pytest.raises(ValueError, match=r"repeat_slots \+ discovery_slots"):
+            offers.build_list(repeat, discovery, seen, fallback, bad)
+    good = with_recommend(quick_view, repeat_slots=7, discovery_slots=3)
+    assert offers.build_list(repeat, discovery, seen, fallback, good)[0].shape == (1, 10)
+
+
+def test_a_catalogue_too_wide_for_the_tie_order_is_refused_and_the_widest_that_fits_is_not():
+    """The tie order has 16 bits under the score: 65,535 products fit and 65,536 do not (the real catalogue has about 4,600)."""
+    fits = offers.RANK_LIMIT - 1
+    keys = offers.order_keys(np.zeros((1, fits), dtype=np.float32), np.arange(fits))
+    assert keys.shape == (1, fits) and len(set(keys[0].tolist())) == fits, "every key is different in its row"
+    with pytest.raises(ValueError, match="no cabe en el orden de desempate"):
+        offers.order_keys(np.zeros((1, offers.RANK_LIMIT), dtype=np.float32), np.arange(offers.RANK_LIMIT))
+
+
+def test_a_score_that_is_not_a_number_cannot_be_ordered():
+    with pytest.raises(ValueError, match="no es un número"):
+        offers.order_keys(np.array([[1.0, np.nan, 2.0]], dtype=np.float32), np.arange(3))
+    with pytest.raises(ValueError, match="no es un número"):
+        offers.top_k(np.array([[np.nan, 0.0]], dtype=np.float32), np.arange(2), 1)

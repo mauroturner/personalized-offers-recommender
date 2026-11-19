@@ -22,7 +22,6 @@ class RoundData:
     """The shared data of a round; see the module. Everything is read-only by use."""
 
     def __init__(self, history: pd.DataFrame, monday: date, customers: np.ndarray, view: Any) -> None:
-        check_no_leak(history, monday)
         people = np.asarray(customers, dtype="int64")
         if len(people) > 1 and not (np.diff(people) > 0).all():
             raise ValueError("los clientes de la base deben venir en orden ascendente y sin repetidos")
@@ -54,5 +53,5 @@ class RoundData:
 
 def prepare(history: pd.DataFrame, monday: date, customers: np.ndarray, view: Any) -> RoundData:
     """The shared data of the round of `monday` for the base `customers` (see the module)."""
-    check_no_leak(history, monday)
+    check_no_leak(history, monday)       # the one check of the cut: ``RoundData`` is built here only (the static test of the guard names this function)
     return RoundData(history, monday, customers, view)

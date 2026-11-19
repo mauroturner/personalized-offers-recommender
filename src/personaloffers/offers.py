@@ -62,7 +62,10 @@ def build_list(repeat_scores: np.ndarray, discovery_scores: np.ndarray, seen: np
 
     `repeat_scores` is read only where `seen` says the customer bought the product, `discovery_scores` only where it did not and the score is above zero, and `fallback_order` is the products
     in the order of the reserve. `tie_rank` is the fixed order of the ties (``popularity.tie_rank``); without it the order of the catalogue decides them."""
-    k, slots = view.recommend.k, min(view.recommend.repeat_slots, view.recommend.k)
+    k, slots = view.recommend.k, view.recommend.repeat_slots
+    if slots + view.recommend.discovery_slots != k:
+        # the configuration refuses this too; the list reads only the repeat slots, and the discovery ones are what is left of ``k``, so a view that does not add up would give a list that contradicts its own slots
+        raise ValueError(f"[recommend] repeat_slots + discovery_slots debe ser k ({k}), se recibió {slots} + {view.recommend.discovery_slots}")
     customers, products = repeat_scores.shape
     if products < k:
         raise ValueError(f"el catálogo tiene {products} productos y una lista necesita {k} distintos")

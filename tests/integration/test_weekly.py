@@ -281,3 +281,70 @@ def test_a_registered_artifact_that_is_not_what_is_recomputed_stops_the_round_be
         assert made.conn.execute("SELECT COUNT(*) FROM offer_lists").fetchone()[0] == 0
     finally:
         made.conn.close()
+
+
+# --- a round cut between its artifacts and its transaction -------------------------------------------------------------------------------------------
+
+
+def _cut_before_the_transaction(made, monkeypatch, run_key: str = "run-2"):
+    """The second round in hand (its delivery loaded and followed up) with its artifacts on disk and the process cut before the transaction that stores the round and registers them."""
+    weekly.emit_round(made.conn, made.view, RUN_KEY, made.view.calendar.test_first_round, models_dir=made.models_dir, seal_path=made.seal_path)
+    first = load_next_delivery(made, run_key)
+    weekly.track_round(made.conn, made.view, run_key, first.first_day)
+    original = warehouse.store_round_base
+
+    def cut(*args, **kwargs):
+        raise KeyboardInterrupt("the process was cut")
+
+    monkeypatch.setattr(warehouse, "store_round_base", cut)
+    with pytest.raises(KeyboardInterrupt):
+        weekly.emit_round(made.conn, made.view, run_key, cal.monday_of("R2011-04-04"), models_dir=made.models_dir, seal_path=made.seal_path)
+    monkeypatch.setattr(warehouse, "store_round_base", original)
+    assert not made.conn.in_transaction
+    return made.models_dir / "R2011-04-04"
+
+
+def _assert_issued_and_verified(made, result) -> None:
+    assert result.status == "fresh" and result.lists > 0
+    registered = warehouse.registered_models(made.conn, "R2011-04-04")
+    assert sorted(registered) == sorted(["popularity", registry.read_seal(made.seal_path)["launch"]["recipe"]["model"]])
+    for component, (path, digest_, _params) in registered.items():
+        artifacts.verify_component(made.models_dir / path, digest_)
+        assert sorted(p.name for p in (made.models_dir / path).parent.iterdir()) == sorted(registered), "no folder besides the registered components"
+    assert made.conn.execute("SELECT COUNT(*) FROM offer_lists WHERE round_id = 'R2011-04-04'").fetchone()[0] == result.lists
+
+
+def test_a_round_cut_after_its_artifacts_and_before_its_transaction_is_issued_by_the_next_run(launched, workbook, quick_cfg, tmp_path, monkeypatch):
+    """The warning of the review of U12: the components were on disk and nothing in the database. The next run issues the round, and what it registers is what is on disk, byte for byte."""
+    made = copy_world(launched.root, workbook, quick_cfg, tmp_path / "cut")
+    try:
+        folder = _cut_before_the_transaction(made, monkeypatch)
+        assert folder.is_dir() and len(list(folder.iterdir())) == 2 and made.conn.execute("SELECT COUNT(*) FROM offer_lists WHERE round_id = 'R2011-04-04'").fetchone()[0] == 0
+        left = {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+        result = weekly.emit_round(made.conn, made.view, "run-2", cal.monday_of("R2011-04-04"), models_dir=made.models_dir, seal_path=made.seal_path)
+        _assert_issued_and_verified(made, result)
+        assert {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob("*") if p.is_file()} == left, "the refit is the same bytes as what was left"
+    finally:
+        made.conn.close()
+
+
+@pytest.mark.parametrize("damage", ["other_content", "manifest_missing", "extra_file"])
+def test_a_component_folder_nobody_registered_is_replaced_by_the_next_run_whatever_it_holds(damage, launched, workbook, quick_cfg, tmp_path, monkeypatch):
+    """What a cut leaves is not registered, so nothing depends on it: a folder with other content (a manifest that is not what the round writes), one cut inside its own write (arrays and no
+    manifest) or one with a stray file is removed and written again, and the round is issued; it never stays stuck on a folder the database does not know."""
+    made = copy_world(launched.root, workbook, quick_cfg, tmp_path / damage)
+    try:
+        folder = _cut_before_the_transaction(made, monkeypatch)
+        popularity = folder / "popularity"
+        if damage == "other_content":
+            manifest = popularity / "artifact.json"
+            manifest.write_text(manifest.read_text(encoding="utf-8").replace('"products"', '"products_other"'), encoding="utf-8")
+        elif damage == "manifest_missing":
+            (popularity / "artifact.json").unlink()
+        else:
+            (popularity / "stray.npy").write_bytes(b"stray")
+        result = weekly.emit_round(made.conn, made.view, "run-2", cal.monday_of("R2011-04-04"), models_dir=made.models_dir, seal_path=made.seal_path)
+        _assert_issued_and_verified(made, result)
+        assert not (popularity / "stray.npy").exists()
+    finally:
+        made.conn.close()

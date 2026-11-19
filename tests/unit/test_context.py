@@ -62,3 +62,18 @@ def test_the_customers_must_be_sorted_and_without_repeats(fixture_lines, quick_v
     for bad in ([90002, 90001], [90001, 90001]):
         with pytest.raises(ValueError, match="orden|repet"):
             context.prepare(history, monday, np.array(bad), quick_view)
+
+
+def test_the_cut_of_the_history_is_checked_once_for_the_round(fixture_lines, quick_view, quick_cfg, monkeypatch):
+    """``prepare`` and the data it builds both asked for the same check, which walks the whole history: once is enough, and a history that is not the cut is still refused."""
+    monday = quick_cfg.calendar.test_first_round
+    history = base.history_before(fixture_lines, monday)
+    customers = base.contact_base(history, monday, quick_view)["customer_id"].to_numpy()
+    calls = []
+    original = context.check_no_leak
+    monkeypatch.setattr(context, "check_no_leak", lambda *args: (calls.append(args), original(*args))[1])
+    context.prepare(history, monday, customers, quick_view)
+    assert len(calls) == 1
+    with pytest.raises(LeakageError):
+        context.prepare(fixture_lines, monday, customers, quick_view)
+    assert len(calls) == 2, "a refused history is refused by the same one check"

@@ -15,6 +15,7 @@ that it is the same (AC17) instead of writing it. ``write_round_ops`` is the las
 
 from __future__ import annotations
 
+import shutil
 import time
 from dataclasses import dataclass
 from datetime import timedelta
@@ -194,6 +195,7 @@ def emit_round(conn: Any, view: Any, run_key: str, monday: Any, *, models_dir: P
 
     components = launch_module.round_components(data, chosen, model, view)
     registered = warehouse.registered_models(conn, round_id)
+    _clear_unregistered(Path(models_dir), round_id, components, registered)
     written = {component: artifacts.write_component(Path(models_dir), round_id, component, arrays, params) for component, (arrays, params) in components.items()}
     for component, artifact in written.items():
         if component in registered and registered[component][1] != artifact.sha256:
@@ -217,6 +219,15 @@ def emit_round(conn: Any, view: Any, run_key: str, monday: Any, *, models_dir: P
     seconds["total"] = round(time.perf_counter() - started, 3)
     control = int((groups == "control").sum())
     return RoundResult(round_id, "fresh", len(cov), len(cov) - control, control, len(entering) if created else 0, len(offer_rows), len(built) * len(lists.customers) * view.recommend.k, fingerprint, seconds)
+
+
+def _clear_unregistered(models_dir: Path, round_id: str, components: Any, registered: dict[str, Any]) -> None:
+    """Remove the folder of a component of the round that the registry does not hold: it is what a run cut after writing its artifacts and before its transaction left, and nothing depends on it. Without this
+    a folder with other content (or a stray file) would stop the round for good, because ``write_component`` never rewrites what is there. A registered component is never touched."""
+    for component in components:
+        folder = models_dir / round_id / component
+        if component not in registered and folder.exists():
+            shutil.rmtree(folder)
 
 
 def _take(iterator: Any, count: int):
