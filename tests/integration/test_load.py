@@ -156,7 +156,7 @@ def seed_flow(conn) -> None:
     conn.execute("INSERT INTO offer_lists VALUES ('R2011-03-28', 90001, 1, '95000', 'repeat', 2.5, 'offer', 'run-1')")
     conn.execute("INSERT INTO baseline_lists VALUES ('R2011-03-28', 'b2', 'unrestricted', 90001, 1, '95000', 'run-1')")
     conn.execute("INSERT INTO round_outcomes VALUES ('R2011-03-28', 90001, 1, 2, 1, '12.50', 7, 'run-1')")
-    conn.execute("INSERT INTO crm_deliveries VALUES ('R2011-03-28', 1, 2, 2, 0, 0, 1, 0.5, 'run-1')")
+    conn.execute("INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'ok', 2, 2, 0, 0, 1, 1, 0.5, 'run-1')")
     conn.execute("INSERT INTO round_ops VALUES ('R2011-03-28', 3, 2, 1, 0, 3, 2, 0.1, 4.5, 'run-1')")
 
 
@@ -169,7 +169,7 @@ CASES = {
     "offer_lists": ("customer_id = 90001", "stock_code = '95012'", "INSERT INTO offer_lists VALUES ('R2011-03-28', 90001, 1, '95012', 'discovery', 1.0, 'control', 'run-1')"),
     "baseline_lists": ("customer_id = 90001", "stock_code = '95012'", "INSERT INTO baseline_lists VALUES ('R2011-03-28', 'b2', 'unrestricted', 90001, 1, '95012', 'run-1')"),
     "round_outcomes": ("customer_id = 90001", "bought = 0", "INSERT INTO round_outcomes VALUES ('R2011-03-28', 90001, 0, 0, 0, '0.00', 7, 'run-1')"),
-    "crm_deliveries": ("batch = 1", "conflicts = 3", "INSERT INTO crm_deliveries VALUES ('R2011-03-28', 1, 9, 5, 0, 4, 0, 1.0, 'run-1')"),
+    "crm_deliveries": ("batch = 1", "conflicts = 3", "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'failed', 9, 5, 0, 4, 1, 0, 1.0, 'run-1')"),
     "round_ops": ("round_id = 'R2011-03-28'", "offer = 9", "INSERT INTO round_ops VALUES ('R2011-03-28', 9, 5, 4, 0, 9, 5, 0.9, 9.0, 'run-1')"),
 }
 
@@ -213,9 +213,19 @@ def test_every_flow_table_takes_its_row_once_and_a_row_with_another_key_is_anoth
     loaded.conn.execute("INSERT INTO offer_lists VALUES ('R2011-03-28', 90001, 2, '95012', 'discovery', 1.0, 'offer', 'run-1')")
     loaded.conn.execute("INSERT INTO baseline_lists VALUES ('R2011-03-28', 'b2', 'new_only', 90001, 1, '95012', 'run-1')")
     loaded.conn.execute("INSERT INTO baseline_lists VALUES ('R2011-03-28', 'b3', 'unrestricted', 90001, 1, '95012', 'run-1')")
-    loaded.conn.execute("INSERT INTO crm_deliveries VALUES ('R2011-03-28', 2, 1, 1, 0, 0, 1, 0.1, 'run-1')")
+    loaded.conn.execute("INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 2, 1, 'ok', 1, 1, 0, 0, 1, 1, 0.1, 'run-1')")
     loaded.conn.execute(f"INSERT INTO model_registry VALUES ('R2011-03-28', 'cosine', '{{}}', 'x', '{SHA}', 1, 0.1)")
     assert [loaded.conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("contact_base", "offer_lists", "baseline_lists", "crm_deliveries", "model_registry")] == [2, 2, 3, 2, 2]
+
+
+def test_a_batch_that_failed_can_be_tried_again_as_another_attempt_and_each_attempt_is_written_once(loaded):
+    seed_flow(loaded.conn)
+    columns = "(round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key)"
+    loaded.conn.execute(f"INSERT INTO crm_deliveries {columns} VALUES ('R2011-03-28', 3, 1, 'failed', 2, 0, 0, 0, 2, 0, 0.5, 'run-1')")
+    loaded.conn.execute(f"INSERT INTO crm_deliveries {columns} VALUES ('R2011-03-28', 3, 2, 'ok', 2, 2, 0, 0, 1, 1, 0.5, 'run-1')")
+    assert loaded.conn.execute("SELECT batch, attempt, status FROM crm_deliveries WHERE batch = 3 ORDER BY attempt").fetchall() == [(3, 1, "failed"), (3, 2, "ok")]
+    with pytest.raises(sqlite3.DatabaseError, match="solo inserción"):
+        loaded.conn.execute(f"INSERT INTO crm_deliveries {columns} VALUES ('R2011-03-28', 3, 2, 'ok', 2, 0, 2, 0, 1, 1, 0.5, 'run-1')")
 
 
 def test_the_schema_constrains_what_it_can_so_a_wrong_row_is_refused_at_the_door(loaded):
@@ -246,8 +256,14 @@ def test_the_schema_constrains_what_it_can_so_a_wrong_row_is_refused_at_the_door
         "INSERT INTO round_outcomes VALUES ('R2011-03-28', 90001, 0, 0, 1, '0.00', 7, 'run-1')",                                           # a product of the list that was not bought
         "INSERT INTO round_outcomes VALUES ('R2011-03-28', 90001, 1, 1, 1, '1.00', 8, 'run-1')",                                            # more days than a week
         "INSERT INTO round_outcomes VALUES ('R2011-03-28', 90001, 0, 0, 0, '0.00', 0, 'run-1')",
-        "INSERT INTO crm_deliveries VALUES ('R2011-03-28', 1, 2, 3, 0, 0, 1, 0.5, 'run-1')",                                                # more created than contacts
-        "INSERT INTO crm_deliveries VALUES ('R2011-03-28', 1, 2, 2, 0, 0, 2, 0.5, 'run-1')",
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'ok', 2, 3, 0, 0, 1, 1, 0.5, 'run-1')",                       # more created than contacts
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'ok', 2, 2, 0, 0, 1, 2, 0.5, 'run-1')",
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 0, 'ok', 2, 2, 0, 0, 1, 1, 0.5, 'run-1')",                                                     # attempts start at 1
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'sent', 2, 2, 0, 0, 1, 1, 0.5, 'run-1')",                                                   # a status nobody defined
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'ok', 2, 2, 0, 0, 3, 1, 0.5, 'run-1')",                                                     # a batch is sent once, or twice when the answer was lost
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'ok', 2, 1, 0, 1, 1, 1, 0.5, 'run-1')",                                                     # a delivered batch has no conflict
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'failed', 2, 2, 0, 0, 1, 0, 0.5, 'run-1')",                                                 # a failed batch created nothing
+        "INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) VALUES ('R2011-03-28', 1, 1, 'failed', 2, 0, 0, 0, 1, 1, 0.5, 'run-1')",                                                 # and was not read back equal
         "INSERT INTO round_ops VALUES ('R2011-03-28', 3, 2, 1, 0, 3, 2, 1.5, 4.5, 'run-1')",                                                # a share over one
         "INSERT INTO round_ops VALUES ('R2011-03-28', 3, 2, 2, 0, 3, 2, 0.1, 4.5, 'run-1')",                                                # offer + control over the base
     ]

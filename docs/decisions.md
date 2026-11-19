@@ -153,6 +153,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `holdout.py`; RF09; AC09, AC10; C06-C08; `control.json`.
 - **Quién**: agente de planificación.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 4).
+- **Nota (2026-11-19, U13)**: M05 tiene dos mitades. `check_deliverable` mira a quién se va a entregar (que todos estén asignados a la oferta); `check_round_groups` mira que el grupo que dice cada lista de la ronda sea el de la asignación de su cliente, porque lo que sale se elige por el grupo de la lista: una lista que dice `control` para un cliente que las asignaciones pusieron en la oferta es un cliente al que nunca se le escribe, y es tan defecto como el inverso.
 
 ## D15 Las métricas y la prueba del experimento: semanas con compra y gasto en las 18 semanas, con CUPED y permutación estratificada; calibración con 500 sorteos
 
@@ -268,6 +269,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `crm/*`; RF15, RF23; AC19, AC20; C09; el sitio (fila 6).
 - **Quién**: agente de planificación.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 9).
+- **Nota (2026-11-19, U13)**: el token va como `Authorization: Bearer <token>` (no `token <clave>:<secreto>` como el ERP del 07), se pide antes de mirar la ruta y se compara con `hmac.compare_digest`; todo error es una palabra fija (`unauthorized`, `not_found`, `bad_request`, `payload_too_large`, `list_conflict`, `internal_error`). Un 409 rechaza el lote entero sin aplicar nada de él, y el cliente cuenta todos los contactos del lote en `conflicts`. Una respuesta perdida (sin respuesta o un 5xx) se reenvía una vez con el mismo cuerpo (`sends` = 2) y el CRM contesta `unchanged`; un 4xx no se reenvía. `crm_deliveries` pasó a una fila por intento: `(round_id, batch, attempt)` con `status` (`ok` o `failed`) y `sends`, porque una tabla de solo inserción no puede reescribir el lote que falló cuando se reintenta; un lote está entregado cuando tiene una fila `ok` con `readback_equal = 1`, y repetir la tarea manda solo los que faltan. Una lectura de vuelta que no se pudo hacer no escribe filas `ok` (solo las de los lotes que fallaron al enviarse), así la siguiente corrida repite esos lotes. `deliver_round` no recibe la vista sellada (el plan la nombraba): `[crm]` no entra en la huella (D21), así que el tamaño del lote es un argumento. `repeat_round` manda otra vez los lotes de una ronda entregada y no escribe nada: es la prueba de la tercera cláusula de C09. `serve-crm` vive en `crm/serve.py` (`serve_crm(argv)`), que U19 enchufa en la línea de comandos; en Docker sirve la misma aplicación `crm.standin.create_app_from_environment` con uvicorn `--factory`.
 
 ## D26 Orquestación: un DAG de Airflow en Docker que corre la misma tupla de tareas que la CLI, como los proyectos 01 a 07
 
@@ -470,3 +472,5 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `email_export.py`; RF16; AC10.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U13)**: el archivo se escribe entero con `write_atomic`, en UTF-8 sin marca de orden de bytes y con `
+`, y pide `holdout.check_deliverable` (M05) y `holdout.check_round_groups` antes de armar un solo byte. Una descripción que una planilla correría como fórmula (empieza con `=`, `+`, `-` o `@`) lleva un `'` delante, y un carácter de control dentro de una descripción se vuelve un espacio (un retorno de carro suelto parte la fila para algunos lectores y el escritor de CSV de Python no lo entrecomilla). Cada lista debe tener los `k` productos del plan o no se escribe nada.

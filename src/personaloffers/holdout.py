@@ -200,3 +200,12 @@ def check_deliverable(conn: sqlite3.Connection, customer_ids: Any) -> None:
         raise ControlLeakError(f"{in_control} clientes del grupo de control iban en lo que se iba a entregar: ninguno se entrega (M05, D14)")
     if len(found) != len(ids):
         raise ControlLeakError(f"{len(ids) - len(found)} clientes que se iban a entregar no tienen asignación: sin saber su grupo no se entrega (M05, D14)")
+
+
+def check_round_groups(conn: sqlite3.Connection, round_id: str) -> None:
+    """M05, the other half: ``ControlLeakError`` when a list of the round says a group other than the assignment of its customer. What goes out is chosen by the group of the list and checked against the
+    assignment, so a list that says ``control`` for a customer the assignments put in the offer group (a customer who would never be mailed) is as much a defect as the reverse; the error counts the
+    lists and never names a customer."""
+    differing = conn.execute("SELECT COUNT(DISTINCT o.customer_id) FROM offer_lists o JOIN holdout_assignments h ON h.customer_id = o.customer_id WHERE o.round_id = ? AND o.grp <> h.grp", (round_id,)).fetchone()[0]
+    if differing:
+        raise ControlLeakError(f"las listas de {differing} clientes dicen un grupo y las asignaciones, otro: ninguna lista de la ronda sale (M05, D14)")

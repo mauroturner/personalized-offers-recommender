@@ -85,18 +85,25 @@ CREATE TABLE IF NOT EXISTS round_outcomes (
     CHECK (products_in_offer <= products AND (bought = 1 OR products = 0))
 );
 
+-- One row for each time a batch of a round was tried (plan section 12; decision D25): a batch that failed stays as it was, and its next try is another attempt. The batch that is delivered
+-- is the one with an 'ok' row that was read back equal; the batches are the contacts of the round in the order of their number, ``[crm] batch_size`` at a time.
 CREATE TABLE IF NOT EXISTS crm_deliveries (
     round_id TEXT NOT NULL REFERENCES rounds (round_id),
     batch INTEGER NOT NULL CHECK (batch >= 1),
+    attempt INTEGER NOT NULL CHECK (attempt >= 1),
+    status TEXT NOT NULL CHECK (status IN ('ok', 'failed')),
     contacts INTEGER NOT NULL CHECK (contacts >= 0),
     created INTEGER NOT NULL CHECK (created >= 0),
     unchanged INTEGER NOT NULL CHECK (unchanged >= 0),
-    conflicts INTEGER NOT NULL CHECK (conflicts >= 0),
+    conflicts INTEGER NOT NULL CHECK (conflicts >= 0),                -- a batch the CRM refused (409) counts all its contacts: nothing of it was applied
+    sends INTEGER NOT NULL CHECK (sends IN (1, 2)),                   -- 2 when the answer to the first send was lost and the same batch was sent again
     readback_equal INTEGER NOT NULL CHECK (readback_equal IN (0, 1)),
     seconds REAL NOT NULL CHECK (seconds >= 0),
     run_key TEXT NOT NULL REFERENCES pipeline_runs (run_key),
-    PRIMARY KEY (round_id, batch),
-    CHECK (created + unchanged + conflicts <= contacts)
+    PRIMARY KEY (round_id, batch, attempt),
+    CHECK (created + unchanged + conflicts <= contacts),
+    CHECK (status = 'failed' OR conflicts = 0),
+    CHECK (status = 'ok' OR (created = 0 AND readback_equal = 0))
 );
 
 CREATE TABLE IF NOT EXISTS round_ops (
@@ -190,8 +197,8 @@ CREATE TRIGGER IF NOT EXISTS crm_deliveries_no_delete BEFORE DELETE ON crm_deliv
 BEGIN SELECT RAISE(ABORT, 'crm_deliveries es de solo inserción: un lote entregado al CRM no se borra'); END;
 
 CREATE TRIGGER IF NOT EXISTS crm_deliveries_no_second_insert BEFORE INSERT ON crm_deliveries
-WHEN EXISTS (SELECT 1 FROM crm_deliveries WHERE round_id = NEW.round_id AND batch = NEW.batch)
-BEGIN SELECT RAISE(ABORT, 'crm_deliveries es de solo inserción: ese lote ya se entregó'); END;
+WHEN EXISTS (SELECT 1 FROM crm_deliveries WHERE round_id = NEW.round_id AND batch = NEW.batch AND attempt = NEW.attempt)
+BEGIN SELECT RAISE(ABORT, 'crm_deliveries es de solo inserción: ese intento de ese lote ya se escribió'); END;
 
 CREATE TRIGGER IF NOT EXISTS round_ops_no_update BEFORE UPDATE ON round_ops
 BEGIN SELECT RAISE(ABORT, 'round_ops es de solo inserción: la operación de una ronda no se cambia'); END;
