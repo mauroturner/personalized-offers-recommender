@@ -164,3 +164,25 @@ def test_the_headline_is_the_figures_of_the_test_as_the_warehouse_holds_them(wor
     assert headline["mde_m2_gbp_20"] == pytest.approx(world.conn.execute("SELECT mde FROM eval_mde WHERE metric = 'm2' AND holdout_share = 0.2").fetchone()[0])
     assert headline["rounds"] == 3 and headline["pairs"] == world.conn.execute("SELECT pairs FROM eval_methods WHERE method = 'offer_list' AND round_id = 'all'").fetchone()[0]
     assert headline["diff_list_b2_low"] == pytest.approx(world.conn.execute("SELECT tested_value FROM eval_criteria WHERE criterion_id = 'C01'").fetchone()[0])
+
+
+def test_a_seal_without_its_launch_part_or_with_a_criterion_more_is_not_taken_and_the_entries_are_compared_at_six_decimals(evaluated):
+    """L128: the happy rebuild and the refusals of ``criteria_from_seal`` that were not run: no launch part, a set of ids that is not C01 to C10, and the edge of the six decimals."""
+    document = copy.deepcopy(evaluated.seal)
+    assert [c.criterion_id for c in evaluation.criteria_from_seal(document)] == [f"C{n:02d}" for n in range(1, 11)]
+    with pytest.raises(SealError, match="parte de la prueba"):
+        evaluation.criteria_from_seal({"test": document["test"]})
+    with pytest.raises(SealError, match="parte de la prueba"):
+        evaluation.criteria_from_seal({})
+    extra = copy.deepcopy(document)
+    extra["test"]["criteria"].append({**extra["test"]["criteria"][0], "id": "C11"})
+    with pytest.raises(SealError, match="C01 a C10"):
+        evaluation.criteria_from_seal(extra)
+    index = next(i for i, entry in enumerate(document["test"]["criteria"]) if entry["point_value"] is not None)
+    near, over = copy.deepcopy(document), copy.deepcopy(document)
+    base = round(document["test"]["criteria"][index]["point_value"], 6)
+    near["test"]["criteria"][index]["point_value"] = base + 0.0000004      # under half of a millionth: the same sealed number
+    over["test"]["criteria"][index]["point_value"] = base + 0.0000006      # over it: another one
+    assert [c.criterion_id for c in evaluation.criteria_from_seal(near)] == [f"C{n:02d}" for n in range(1, 11)]
+    with pytest.raises(SealError, match=document["test"]["criteria"][index]["id"]):
+        evaluation.criteria_from_seal(over)

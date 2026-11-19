@@ -161,14 +161,15 @@ class EvaluationRefusedError(SealError):
     """The test cannot be evaluated: there is no seal, or the seal has no test part yet and the configuration is not the sealed one (runbook R7)."""
 
 
-def _rounded(value: Any) -> Any:
-    """A sealed number to the six decimals that a seal is compared at (a dictionary or a list is rounded inside)."""
+def rounded(value: Any) -> Any:
+    """A sealed number to the six decimals that a seal is compared at (a dictionary or a list is rounded inside). The one rule of every comparison with the seal: the repetition of the test and the rebuild of its
+    criteria (``evaluation.criteria_from_seal``) decide "the same number" with it."""
     if isinstance(value, float):
         return round(value, 6)
     if isinstance(value, Mapping):
-        return {key: _rounded(item) for key, item in value.items()}
+        return {key: rounded(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_rounded(item) for item in value]
+        return [rounded(item) for item in value]
     return value
 
 
@@ -240,7 +241,7 @@ def write_test_seal(seal_path: Path, test: Mapping[str, Any]) -> Literal["writte
     if test["config_sha256"] != document["launch"].get("config_sha256"):
         return "post_seal"
     if document.get("test") is not None:
-        then, now = (_flat(_rounded({k: v for k, v in part.items() if k not in NOT_COMPARED})) for part in (document["test"], test))
+        then, now = (_flat(rounded({k: v for k, v in part.items() if k not in NOT_COMPARED})) for part in (document["test"], test))
         absent = object()
         differ = sorted(key for key in set(then) | set(now) if then.get(key, absent) != now.get(key, absent))
         if not differ:
@@ -250,6 +251,6 @@ def write_test_seal(seal_path: Path, test: Mapping[str, Any]) -> Literal["writte
     text = json.dumps({**document, "test": dict(test)}, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
     write_atomic(path, text)
     kept = read_seal(path) or {}
-    if kept.get("launch") != document["launch"] or _rounded(kept.get("test")) != _rounded(dict(test)):
+    if kept.get("launch") != document["launch"] or rounded(kept.get("test")) != rounded(dict(test)):
         raise SealMismatchError("lo que consta en el sello no es lo que esta corrida escribió: otra escritura lo cambió (runbook R7)")
     return "written"

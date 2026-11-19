@@ -118,3 +118,22 @@ def test_a_test_part_cannot_be_written_without_a_launch_part_and_a_seal_that_can
 def test_the_diff_of_two_configurations_names_the_keys_by_section_and_name():
     assert registry.differing_keys({"a": {"x": 1, "y": [1, 2]}, "b": 2}, {"a": {"x": 1, "y": [1, 3]}, "b": 2, "c": 3}) == ["a.y.1", "c"]
     assert registry.differing_keys({"a": 1}, {"a": 1}) == []
+
+
+def test_the_six_decimal_rule_rounds_every_float_inside_a_mapping_a_list_or_a_tuple_and_touches_nothing_else():
+    """L128's warning: a seal is compared at six decimals by one rule, whoever asks (the repetition of the test and the rebuild of the criteria)."""
+    value = {"a": 0.1234567891, "b": [1, 2.0000004, (3.0000006, {"c": 0.9999996})], "d": "0.1234567891", "e": None, "f": True, "g": 7}
+    assert registry.rounded(value) == {"a": 0.123457, "b": [1, 2.0, [3.000001, {"c": 1.0}]], "d": "0.1234567891", "e": None, "f": True, "g": 7}
+    assert registry.rounded(0.0000004) == 0.0 and registry.rounded(-0.0000006) == -0.000001 and registry.rounded("x") == "x" and registry.rounded([]) == [] and registry.rounded({}) == {}
+    assert value["a"] == 0.1234567891 and value["b"][1] == 2.0000004, "the input is not changed"
+
+
+def test_a_repetition_that_differs_by_one_millionth_is_a_different_value_and_by_less_than_half_of_it_is_the_same_one(sealed, quick_view):
+    registry.write_test_seal(sealed, make_part(quick_view, criteria=[{**TEST_PART["criteria"][0], "point_value": 0.22}]))
+    written = sealed.read_bytes()
+    same = make_part(quick_view, run_key="run-10", criteria=[{**TEST_PART["criteria"][0], "point_value": 0.2200004}])
+    assert registry.write_test_seal(sealed, same) == "unchanged" and sealed.read_bytes() == written
+    other = make_part(quick_view, run_key="run-11", criteria=[{**TEST_PART["criteria"][0], "point_value": 0.2200006}])
+    with pytest.raises(SealMismatchError, match="criteria.0.point_value") as caught:
+        registry.write_test_seal(sealed, other)
+    assert "R7" in str(caught.value) and sealed.read_bytes() == written

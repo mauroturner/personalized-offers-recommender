@@ -33,6 +33,7 @@ import pandas as pd
 from personaloffers import base, baselines, experiment, holdout, metrics, texts, warehouse
 from personaloffers import calendar as cal
 from personaloffers.lines import PRODUCT_ROLES
+from personaloffers.registry import SealError, rounded
 
 LIST_METHOD = "offer_list"
 CATALOGUE_DAYS = 365
@@ -427,21 +428,9 @@ def evaluate_criteria(figures: Mapping[str, Any], view: Any) -> list[Criterion]:
     return criteria_of(figures, limits)
 
 
-def _rounded(value: Any) -> Any:
-    if isinstance(value, float):
-        return round(value, 6)
-    if isinstance(value, Mapping):
-        return {k: _rounded(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_rounded(v) for v in value]
-    return value
-
-
 def criteria_from_seal(seal: Mapping[str, Any]) -> list[Criterion]:
     """C01 to C10 rebuilt from the test part of the seal with ``criteria_of``; each must give back its own entry of the seal to 6 decimals, or the seal is not taken (``SealError``): a seal that the code no
     longer knows how to rebuild is never published (D21)."""
-    from personaloffers.registry import SealError
-
     test, launch = seal.get("test"), seal.get("launch")
     if not test or not launch:
         raise SealError("el sello no tiene la parte de la prueba: no hay criterios sellados")
@@ -450,7 +439,7 @@ def criteria_from_seal(seal: Mapping[str, Any]) -> list[Criterion]:
     if set(sealed) != {c.criterion_id for c in rebuilt}:
         raise SealError("los criterios del sello no son C01 a C10: lo sellado no se toma (runbook R7)")
     for criterion in rebuilt:
-        if _rounded(criterion.seal_entry()) != _rounded(sealed[criterion.criterion_id]):
+        if rounded(criterion.seal_entry()) != rounded(sealed[criterion.criterion_id]):
             raise SealError(f"el criterio {criterion.criterion_id} del sello no se reconstruye desde sus cifras: lo sellado no se toma (runbook R7)")
     return rebuilt
 
