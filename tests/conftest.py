@@ -137,3 +137,27 @@ def fixture_lines(workbook, fixture_cfg, tmp_path_factory: pytest.TempPathFactor
 
     xlsx = sources.extract_workbook(fixture_cfg, tmp_path_factory.mktemp("fixture_lines"))
     return wb.canonical_lines(wb.read_workbook(xlsx, fixture_cfg), fixture_cfg)
+
+
+@pytest.fixture(scope="session")
+def launch_template(workbook, quick_cfg, fixture_lines, tmp_path_factory: pytest.TempPathFactory):
+    """A folder with the deliveries of the fixture published and a warehouse in which ``run-1`` loaded the launch, built once per session (U11 on): a test copies it with
+    ``tests.fixtures.worlds.copy_world`` and changes the copy."""
+    from tests.fixtures.worlds import build_launch_template
+
+    return build_launch_template(workbook, quick_cfg, fixture_lines, tmp_path_factory.mktemp("launch_template"))
+
+
+@pytest.fixture(scope="session")
+def launched(launch_template, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The launch run once (U11 on): a folder in which ``run-1`` loaded the launch delivery and ``run_launch`` chose, sealed and registered; ``root`` is the folder (a test copies it with
+    ``tests.fixtures.worlds.copy_world``), ``result`` the ``LaunchResult`` and ``seal`` the seal that was written."""
+    import types
+
+    from personaloffers import launch, registry
+    from tests.fixtures.worlds import copy_world
+
+    world = copy_world(launch_template, workbook, quick_cfg, tmp_path_factory.mktemp("launched"))
+    result = launch.run_launch(world.conn, world.view, world.run_key, models_dir=world.models_dir, seal_path=world.seal_path)
+    world.conn.close()
+    return types.SimpleNamespace(root=world.root, result=result, seal=registry.read_seal(world.seal_path))

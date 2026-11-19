@@ -89,9 +89,9 @@ def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def read_component(folder: Path, expected_sha256: str) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
-    """The arrays and the parameters of the artifact in `folder`, only if its manifest has the registered hash and every file is the one it lists; ``ArtifactError`` otherwise, before any file
-    is deserialized."""
+def verify_component(folder: Path, expected_sha256: str) -> dict[str, Any]:
+    """The manifest of the artifact in `folder`, only if it has the registered hash and every file is the one it lists (names, sizes, hashes, and nothing else in the folder); ``ArtifactError``
+    otherwise. Nothing is deserialized."""
     folder = Path(folder)
     if artifact_sha256(folder) != expected_sha256:
         raise ArtifactError(f"la huella del artefacto {folder.name} no es la registrada: no se lee")
@@ -115,6 +115,14 @@ def read_component(folder: Path, expected_sha256: str) -> tuple[dict[str, np.nda
             raise ArtifactError(f"falta el archivo «{name}» que lista el manifiesto de {folder.name}")
         if path.stat().st_size != entry.get("bytes") or sha256_file(path) != entry.get("sha256"):
             raise ArtifactError(f"el archivo «{name}» no es el que lista el manifiesto de {folder.name} (tamaño o huella)")
+    return manifest
+
+
+def read_component(folder: Path, expected_sha256: str) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    """The arrays and the parameters of the artifact in `folder`, only if ``verify_component`` accepts it; ``ArtifactError`` otherwise, before any file is deserialized."""
+    folder = Path(folder)
+    manifest = verify_component(folder, expected_sha256)
+    listed, params = manifest["files"], manifest["params"]
     arrays: dict[str, np.ndarray] = {}
     for name in sorted(listed):
         try:

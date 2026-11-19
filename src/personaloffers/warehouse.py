@@ -23,13 +23,16 @@ import re
 import sqlite3
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
+import pyarrow as pa
 
+from personaloffers import holdout
+from personaloffers import workbook as wb
 from personaloffers.deliveries import DeliverySpec
 from personaloffers.lines import PRODUCT_ROLES
 from personaloffers.validate import BLOCKING, ValidationReport
@@ -337,3 +340,122 @@ def load_delivery(conn: sqlite3.Connection, spec: DeliverySpec, lines: pd.DataFr
         raise
     logger.info("load %s: delivery=%s lines=%d products=%d controls=%d", run_key, spec.delivery_id, len(lines), len(products), len(checks))
     return LoadResult(spec.delivery_id, run_key, len(lines), len(products), checks)
+
+
+
+# --- what the launch and the weekly rounds read and write (U11) --------------------------------------------------------------------------------
+
+
+class RoundConflictError(RuntimeError):
+    """A round is already stored with another base than the one offered: what was issued for a round is not redone (D14, D24)."""
+
+
+def _text_columns_as_string(frame: pd.DataFrame) -> pd.DataFrame:
+    """The text columns with the ``string`` type that a delivery file gives them (its pandas metadata says so; a table made here has none)."""
+    return frame.astype({column: "string" for column in ("invoice", "stock_code", "description", "country", "role")})
+
+
+def read_lines(conn: sqlite3.Connection) -> pd.DataFrame:
+    """Every line the warehouse holds, as the canonical frame of ``personaloffers.workbook`` (the columns, the types and the order of the line key), which is what a task cuts a round's history
+    from: the warehouse has only the deliveries that were loaded, so nothing of the future can be in it. A warehouse without lines gives an empty frame with the columns."""
+    columns = ["line_key", "invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country", "internal_repeat", "role"]
+    rows = conn.execute(f"SELECT {', '.join(columns)} FROM lines ORDER BY line_key").fetchall() if _table_exists(conn, "lines") else []
+    if not rows:
+        return _text_columns_as_string(wb.frame_of(wb.LINES_SCHEMA.empty_table()))
+    stored = list(zip(*rows, strict=True))
+    by_name = dict(zip(columns, stored, strict=True))
+    typed = {
+        "line_key": pa.array(by_name["line_key"], pa.int64()), "invoice": pa.array(by_name["invoice"], pa.string()), "stock_code": pa.array(by_name["stock_code"], pa.string()),
+        "description": pa.array(by_name["description"], pa.string()), "quantity": pa.array(by_name["quantity"], pa.int64()),
+        "invoice_date": pa.array(pd.to_datetime(list(by_name["invoice_date"]), format="%Y-%m-%d %H:%M:%S").to_numpy("datetime64[us]"), pa.timestamp("us")),
+        "price": pa.array([float(text) for text in by_name["price"]], pa.float64()), "customer_id": pa.array(by_name["customer_id"], pa.int64()),
+        "country": pa.array(by_name["country"], pa.string()), "internal_repeat": pa.array([bool(flag) for flag in by_name["internal_repeat"]], pa.bool_()),
+        "role": pa.array(by_name["role"], pa.string()),
+    }
+    return _text_columns_as_string(wb.frame_of(pa.table(typed, schema=wb.LINES_SCHEMA)))
+
+
+def _insert_base_rows(conn: sqlite3.Connection, rows: list[tuple]) -> None:
+    conn.executemany("INSERT INTO contact_base (round_id, customer_id, recency_days, invoices_365, spend_365, tenure_days, bulk, invoices_before, segment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", rows)
+
+
+def store_round_base(conn: sqlite3.Connection, round_id: str, monday: date, period: str, run_key: str, table: pd.DataFrame, new_assignments: pd.DataFrame) -> bool:
+    """Store the base of a round in one transaction: its row in ``rounds`` (with the size of the base and of each group), the assignments of the customers that have none yet
+    (`new_assignments`: those of the launch, or the hash assignments of the ones that enter) and the ``contact_base`` rows of `table` (``personaloffers.base.base_table``). Every customer of the base
+    must have a group, stored before or in `new_assignments`, or it is a ``ValueError`` that writes nothing. Returns True if it wrote, and False, writing nothing, if the round is stored with this
+    same base; another base for a stored round is a ``RoundConflictError``. Joins the transaction of the caller if there is one."""
+    own = not conn.in_transaction
+    if own:
+        conn.execute("BEGIN IMMEDIATE")
+    try:
+        stored_round = conn.execute("SELECT base_size FROM rounds WHERE round_id = ?", (round_id,)).fetchone()
+        if stored_round is not None:
+            in_base = conn.execute("SELECT COUNT(*) FROM contact_base WHERE round_id = ?", (round_id,)).fetchone()[0]
+            if stored_round[0] != len(table) or in_base != len(table):
+                raise RoundConflictError(f"la ronda {round_id} ya está guardada con otra base ({stored_round[0]} clientes, no {len(table)}): una ronda armada no se rehace")
+            if not holdout.stored_assignments_agree(conn, new_assignments):
+                raise RoundConflictError(f"la ronda {round_id} ya está guardada y las asignaciones que se ofrecen no son las que tiene: una asignación no se rehace (D14)")
+            if own:
+                conn.execute("ROLLBACK")
+            return False
+        customers = table["customer_id"].astype("int64").tolist()
+        groups = {int(c): g for c, g in zip(new_assignments["customer_id"], new_assignments["grp"], strict=True)}
+        for start in range(0, len(customers), 500):
+            chunk = [c for c in customers[start:start + 500] if c not in groups]
+            marks = ", ".join("?" * len(chunk))
+            groups.update(dict(conn.execute(f"SELECT customer_id, grp FROM holdout_assignments WHERE customer_id IN ({marks})", chunk)) if chunk else {})
+        without = sum(1 for c in customers if c not in groups)
+        if without:
+            raise ValueError(f"{without} clientes de la base de {round_id} no tienen un grupo: sin asignación no se arma la ronda")
+        control = sum(1 for c in customers if groups[c] == "control")
+        conn.execute("INSERT INTO rounds (round_id, monday, period, built_by_run, base_size, offer_size, control_size) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     (round_id, monday.isoformat(), period, run_key, len(customers), len(customers) - control, control))
+        holdout.store_assignments(conn, new_assignments, run_key)
+        rows = [(round_id, int(r.customer_id), float(r.recency_days), int(r.invoices_365), float(r.spend_365), float(r.tenure_days), int(r.bulk), int(r.invoices_before), str(r.segment))
+                for r in table.itertuples(index=False)]
+        _insert_base_rows(conn, rows)
+        if own:
+            conn.execute("COMMIT")
+        return True
+    except BaseException:
+        if own and conn.in_transaction:
+            conn.execute("ROLLBACK")
+        raise
+
+
+def insert_model(conn: sqlite3.Connection, round_id: str, component: str, params: dict, artifact_path: str, artifact_sha256: str, fit_lines: int, seconds: float) -> None:
+    """Register one fitted component of a round (``model_registry``, insert-only). Joins the transaction of the caller if there is one."""
+    own = not conn.in_transaction
+    if own:
+        conn.execute("BEGIN IMMEDIATE")
+    try:
+        conn.execute("INSERT INTO model_registry (round_id, component, params_json, artifact_path, artifact_sha256, fit_lines, seconds) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     (round_id, component, json.dumps(params, sort_keys=True), artifact_path, artifact_sha256, fit_lines, seconds))
+        if own:
+            conn.execute("COMMIT")
+    except BaseException:
+        if own and conn.in_transaction:
+            conn.execute("ROLLBACK")
+        raise
+
+
+def register_models(conn: sqlite3.Connection, round_id: str, models: Iterable[tuple[str, dict, str, str, int, float]]) -> None:
+    """Register every ``(component, params, artifact_path, artifact_sha256, fit_lines, seconds)`` of `models` for the round, all or none."""
+    own = not conn.in_transaction
+    if own:
+        conn.execute("BEGIN IMMEDIATE")
+    try:
+        for component, params, path, digest, fit_lines, seconds in models:
+            insert_model(conn, round_id, component, params, path, digest, fit_lines, seconds)
+        if own:
+            conn.execute("COMMIT")
+    except BaseException:
+        if own and conn.in_transaction:
+            conn.execute("ROLLBACK")
+        raise
+
+
+def registered_models(conn: sqlite3.Connection, round_id: str) -> dict[str, tuple[str, str, dict]]:
+    """``{component: (artifact_path, artifact_sha256, params)}`` of the models registered for the round."""
+    rows = conn.execute("SELECT component, artifact_path, artifact_sha256, params_json FROM model_registry WHERE round_id = ? ORDER BY component", (round_id,)).fetchall()
+    return {component: (path, digest, json.loads(params)) for component, path, digest, params in rows}

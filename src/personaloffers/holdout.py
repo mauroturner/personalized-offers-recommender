@@ -179,6 +179,13 @@ def store_assignments(conn: sqlite3.Connection, assignment: pd.DataFrame, run_ke
         raise
 
 
+def stored_assignments_agree(conn: sqlite3.Connection, assignment: pd.DataFrame) -> bool:
+    """True if every customer of `assignment` is stored with exactly the group, the method, the stratum and the round it has there (nothing is written)."""
+    stored = {row[0]: row[1:] for row in conn.execute("SELECT customer_id, grp, method, stratum, assigned_round FROM holdout_assignments")}
+    rows = [(int(c), g, m, None if pd.isna(s) else int(s), r) for c, g, m, s, r in zip(*(assignment[column] for column in COLUMNS), strict=True)]
+    return all(row[0] in stored and stored[row[0]] == row[1:] for row in rows)
+
+
 def check_deliverable(conn: sqlite3.Connection, customer_ids: Any) -> None:
     """M05: ``ControlLeakError`` unless every customer of `customer_ids` is assigned to the offer group. Run before any batch goes to the CRM or any row to the e-mail file; the
     error counts the customers and never names one."""
