@@ -112,3 +112,28 @@ def small_workbook(tmp_path_factory: pytest.TempPathFactory):
     from tests.fixtures.make_workbook import make_workbook
 
     return make_workbook(tmp_path_factory.mktemp("small_workbook"), customers=20)
+
+
+@pytest.fixture(scope="session")
+def fixture_cfg(workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The quick configuration made to accept the session's workbook, every path under a folder of the session (nothing is written in the tree)."""
+    from tests.fixtures.configs import config_for
+
+    return config_for(quick_cfg, workbook, tmp_path_factory.mktemp("fixture_cfg"))
+
+
+@pytest.fixture(scope="session")
+def quick_view(fixture_cfg):
+    """The sealed view of the quick configuration (what the base, the control group and the recommenders receive), with made-up hashes of what was read."""
+    from personaloffers.config import SealedConfig
+
+    return SealedConfig.of(fixture_cfg, "a" * 64, "b" * 64, "c" * 64)
+
+
+@pytest.fixture(scope="session")
+def fixture_lines(workbook, fixture_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The canonical lines of the session's workbook (copies dropped, repeats flagged, roles), read once. Shared by the session: a test that changes it copies it."""
+    from personaloffers import sources, workbook as wb
+
+    xlsx = sources.extract_workbook(fixture_cfg, tmp_path_factory.mktemp("fixture_lines"))
+    return wb.canonical_lines(wb.read_workbook(xlsx, fixture_cfg), fixture_cfg)

@@ -13,7 +13,8 @@ file (an invoice or a code as a number or as text, a quantity as an integer, a p
 ``canonical_lines`` drops the copies and flags the repeats (RF03): the days that both sheets hold (from the first day of the second sheet to the last day of the
 first) are in both, and the second sheet's copy of each row there is dropped; a row that appears twice inside a sheet is kept and flagged ``internal_repeat``. The
 canonical lines are written once, to ``data/interim/lines.parquet``, and their manifest (``lines_manifest.json``) is written last: a reader refuses a file the
-manifest does not describe. The roles of the lines (RF04) are the next unit's.
+manifest does not describe. Each canonical line also carries its role (RF04, ``personaloffers.lines``): the manifest is version 2 since the roles were added, and lines
+written before that are refused by every reader and rebuilt by the task.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ import pyarrow.parquet as pq
 
 from personaloffers.config import LINE_KEY_SHEET_FACTOR, PipelineConfig
 from personaloffers.files import atomic_path, sha256_file, write_atomic
+from personaloffers.lines import assign_roles
 from personaloffers.sources import SourceError, rule
 
 MAX_COMPRESSION_RATIO = 100          # the real sheets are 7 to 1; a part that is mostly one repeated byte is a thousand to one
@@ -50,15 +52,16 @@ MASKED_COLUMNS = ("Invoice", "Customer ID")           # identifiers (D30): an ex
 COLUMN_ORDER = ("Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price", "Customer ID", "Country")   # the names the problems use
 REQUIRED_COLUMNS = ("Invoice", "StockCode", "Quantity", "InvoiceDate", "Price")                                          # a cell that is never empty
 RAW_COLUMNS = ("sheet", "source_row", "invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country")
-LINE_COLUMNS = ("line_key", "invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country", "internal_repeat")
+LINE_COLUMNS = ("line_key", "invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country", "internal_repeat", "role")
 KEY_COLUMNS = ["invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country"]   # what makes two rows the same row
 LINES_NAME = "lines.parquet"
 LINES_MANIFEST = "lines_manifest.json"
-MANIFEST_VERSION = 1
+MANIFEST_VERSION = 2          # 2: the lines carry their role (U05)
 ATTRIBUTION = "Chen, D. (2012). Online Retail II [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0)"
 LINES_SCHEMA = pa.schema([
     ("line_key", pa.int64()), ("invoice", pa.string()), ("stock_code", pa.string()), ("description", pa.string()), ("quantity", pa.int64()),
     ("invoice_date", pa.timestamp("us")), ("price", pa.float64()), ("customer_id", pa.int64()), ("country", pa.string()), ("internal_repeat", pa.bool_()),
+    ("role", pa.string()),
 ])
 _HEX64 = re.compile(r"[0-9a-f]{64}")
 
@@ -322,6 +325,7 @@ def canonical_lines(raw: pd.DataFrame, cfg: PipelineConfig) -> pd.DataFrame:
         **{column: kept[column] for column in KEY_COLUMNS},
         "internal_repeat": kept.duplicated(subset=KEY_COLUMNS, keep="first").to_numpy(),
     })
+    out["role"] = assign_roles(out, cfg)
     return out[list(LINE_COLUMNS)]
 
 
@@ -332,11 +336,16 @@ class InterimError(ValueError):
     """The canonical lines are not the file their manifest names: missing, changed, or without a manifest."""
 
 
+def table_of(frame: pd.DataFrame) -> pa.Table:
+    """The lines as a Parquet table with the schema of ``LINES_SCHEMA`` (what a delivery is written with too)."""
+    return pa.Table.from_pandas(frame[list(LINE_COLUMNS)], schema=LINES_SCHEMA, preserve_index=False)
+
+
 def write_lines(frame: pd.DataFrame, interim_dir: Path, digests: dict[str, str]) -> str:
     """Write ``lines.parquet`` atomically and then ``lines_manifest.json`` with its hash and the zip's and the workbook's: a failure between the two leaves a file that
     does not match its manifest, which every reader refuses and the task rebuilds. Returns the SHA-256 of the Parquet file."""
     interim_dir = Path(interim_dir)
-    table = pa.Table.from_pandas(frame[list(LINE_COLUMNS)], schema=LINES_SCHEMA, preserve_index=False)
+    table = table_of(frame)
     metadata = {**(table.schema.metadata or {}), b"personaloffers.zip_sha256": digests["zip"].encode("ascii"), b"personaloffers.attribution": ATTRIBUTION.encode("utf-8")}
     target = interim_dir / LINES_NAME
     with atomic_path(target) as temporary:
@@ -378,6 +387,10 @@ def read_lines(cfg: PipelineConfig) -> pd.DataFrame:
     problem, _manifest = lines_state(interim)
     if problem is not None:
         raise InterimError(problem)
-    table = pq.read_table(interim / LINES_NAME)
+    return frame_of(pq.read_table(interim / LINES_NAME))
+
+
+def frame_of(table: pa.Table) -> pd.DataFrame:
+    """The canonical lines of a Parquet table (``LINE_COLUMNS``): the customer stays a nullable integer, the line key and the quantity are plain integers."""
     frame = table.to_pandas(types_mapper=lambda kind: pd.Int64Dtype() if kind == pa.int64() else None)
     return frame.astype({"line_key": "int64", "quantity": "int64"})[list(LINE_COLUMNS)]

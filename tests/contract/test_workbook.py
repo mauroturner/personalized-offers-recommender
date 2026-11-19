@@ -199,12 +199,41 @@ def test_the_lines_are_written_with_their_manifest_last_and_a_second_run_changes
     interim = cfg.paths.interim_dir
     assert sorted(path.name for path in interim.iterdir()) == ["lines.parquet", "lines_manifest.json"]
     manifest = json.loads((interim / "lines_manifest.json").read_text(encoding="utf-8"))
-    assert manifest == {"version": 1, "zip_sha256": small_workbook.zip_sha256, "member_sha256": small_workbook.member_sha256, "rows": small_workbook.truth.canonical_lines,
+    assert manifest == {"version": 2, "zip_sha256": small_workbook.zip_sha256, "member_sha256": small_workbook.member_sha256, "rows": small_workbook.truth.canonical_lines,
                         "files": {"lines.parquet": result["lines_sha256"]}}
     before = tree_of(tmp_path / "project")
     again = fetch_source(cfg)
     assert again["built"] is False and again["lines_sha256"] == result["lines_sha256"] and again["lines"] == result["lines"]
     assert tree_of(tmp_path / "project") == before
+
+
+def test_the_canonical_lines_keep_their_ten_columns_in_their_order_and_add_the_role_last(fixture_lines, workbook):
+    """U05 added ``role``: what was there before is still there, in the same order and with the same values (the counts of the copies and the repeats are the fixture's)."""
+    assert tuple(wb.LINE_COLUMNS[:10]) == ("line_key", "invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country", "internal_repeat")
+    assert wb.LINE_COLUMNS[10:] == ("role",) and list(fixture_lines.columns) == list(wb.LINE_COLUMNS)
+    assert len(fixture_lines) == workbook.truth.canonical_lines and int(fixture_lines["internal_repeat"].sum()) == workbook.truth.internal_repeats
+    assert fixture_lines["role"].map(type).eq(str).all() and fixture_lines["role"].notna().all()
+
+
+def test_lines_written_before_the_roles_existed_are_refused_and_rebuilt_with_them(small_workbook, quick_cfg, tmp_path):
+    cfg, result = built(small_workbook, quick_cfg, tmp_path)
+    interim = cfg.paths.interim_dir
+    old = json.loads((interim / "lines_manifest.json").read_text(encoding="utf-8"))
+    old["version"] = 1
+    (interim / "lines_manifest.json").write_text(json.dumps(old), encoding="utf-8")
+    with pytest.raises(wb.InterimError, match="manifiesto"):
+        wb.read_lines(cfg)
+    again = fetch_source(cfg)
+    assert again["built"] is True and again["lines_sha256"] == result["lines_sha256"]
+    assert json.loads((interim / "lines_manifest.json").read_text(encoding="utf-8"))["version"] == 2
+    assert "role" in wb.read_lines(cfg).columns
+
+
+def test_the_task_counts_the_roles_it_wrote_and_the_file_holds_them(small_workbook, quick_cfg, tmp_path):
+    cfg, result = built(small_workbook, quick_cfg, tmp_path)
+    lines = wb.read_lines(cfg)
+    assert result["roles"] == small_workbook.truth.roles == {role: int((lines["role"] == role).sum()) for role in small_workbook.truth.roles}
+    assert fetch_source(cfg)["built"] is False
 
 
 def test_lines_that_do_not_match_their_manifest_are_refused_and_rebuilt_by_the_task(small_workbook, quick_cfg, tmp_path):

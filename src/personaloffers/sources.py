@@ -26,6 +26,7 @@ from typing import Any
 
 from personaloffers.config import PipelineConfig
 from personaloffers.files import sha256_file, write_atomic
+from personaloffers.lines import ROLES
 
 LOCK_NAME = "source.lock.json"
 LOCK_VERSION = 1
@@ -225,6 +226,7 @@ def fetch_source(cfg: PipelineConfig) -> dict[str, Any]:
         lines_sha256 = workbook.write_lines(frame, interim, digests)
         result |= {
             "built": True, "lines": len(frame), "lines_sha256": lines_sha256, "copies": len(raw) - len(frame), "repeats": int(frame["internal_repeat"].sum()),
+            "roles": {role: int((frame["role"] == role).sum()) for role in ROLES},
             "rows_by_sheet": {name: int((raw["sheet"] == number).sum()) for number, name in enumerate(cfg.source.sheets, start=1)},
         }
     pinned = bool(cfg.source.zip_sha256 and cfg.source.member_sha256)
