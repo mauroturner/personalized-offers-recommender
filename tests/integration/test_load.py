@@ -510,7 +510,10 @@ def test_run_checks_names_its_group_and_its_controls(loaded):
     with pytest.raises(ValueError, match="chk_nope"):
         run_checks(loaded.conn, "load", only=["chk_nope"])
     assert [c.check_id for c in run_checks(loaded.conn, "load", only=["chk_validation_passed"])] == ["chk_validation_passed"]
-    assert run_checks(loaded.conn, "model") == [], "the controls of the star schema came with the star schema (U15)"
+    names = [p.stem for p in sorted((warehouse.SQL_DIR / "checks" / "model").glob("chk_*.sql"))]
+    assert len(names) == 27 and names[0].startswith("chk_K01") and sum(n.startswith("chk_R") for n in names) == 20, "the controls of the star schema came with the star schema (U15): its 20 relationships and its 7 rules"
+    with pytest.raises(ValueError, match="chk_nope"):
+        run_checks(loaded.conn, "model", only=["chk_nope"])
 
 
 def test_a_control_file_must_be_one_select(world, tmp_path, monkeypatch):

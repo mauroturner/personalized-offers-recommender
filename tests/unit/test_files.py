@@ -194,6 +194,7 @@ WRITER_CALLS_OF_MODULES = {("shutil", "copy"), ("shutil", "copy2"), ("shutil", "
 # Modules that may write a file without write_atomic, each with the reason (unversioned state or a file that is not a result). A unit that adds one says why
 # here; ``files.py`` is the one place that renames and syncs.
 ALLOWED_RAW_WRITERS: dict[str, str] = {
+    "export.py": "pq.write_table serializes a table to an in-memory buffer (a BufferOutputStream) and the bytes go to disk through files.write_atomic: no file is opened here",
     "sources.py": "extract_workbook writes the workbook into a temporary folder of the run, which is removed when the read ends: a scratch file under a new "
                   "random name, created exclusively and hashed while it is written, that is never a result",
 }

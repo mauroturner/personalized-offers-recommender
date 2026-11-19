@@ -129,3 +129,25 @@ def verdict(cid: str, passed: bool, **f: Any) -> str:
         return (f"{es(f['equal'], 0)} de {es(f['lists'], 0)} listas entregadas se leyeron de vuelta del CRM iguales; {es(f['control_crm'], 0)} clientes del control llegaron al CRM y {es(f['control_csv'], 0)} a los archivos de correo; "
                 f"repetir la última ronda ({f['round']}, {es(f['contacts'], 0)} contactos) creó {es(f['repeat'], 0)} registros nuevos; debían leerse todas iguales y no llegar ni crearse ninguno.{mark}")
     raise KeyError(cid)
+
+
+# --- the labels of the dimensions of the star schema (plan section 19) ------------------------------------------------------------------------------------------------------
+
+ATTRIBUTION = ("Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). "
+               "Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.")
+METHOD_LABELS = {
+    "offer_list": ("La lista que se entrega", "La lista: hasta 7 productos de la recompra propia, el resto nuevos del modelo elegido y la reserva de lo más vendido de 28 días"),
+    "chosen_discovery": ("Modelo elegido (descubrimiento)", "El modelo de la lista solo, sin la recompra, para medir si descubre productos nuevos"),
+    "b0": ("B0 al azar", "Línea base: productos al azar"), "b1": ("B1 popularidad global", "Línea base: lo más comprado de toda la historia"),
+    "b2": ("B2 lo más vendido de 28 días", "Línea base: lo más vendido de las últimas cuatro semanas, igual para todos"),
+    "b3": ("B3 recompra propia", "Línea base: lo que el cliente ya compró, completado con B2"), "b4": ("B4 reglas de asociación", "Línea base: reglas de pares de productos, sin tendencia"),
+    "b5": ("B5 ALS", "Línea base: factorización implícita (ALS), sin tendencia"), "b6": ("B6 coseno entre productos", "Línea base: vecinos por similitud coseno, sin tendencia"),
+}
+VARIANT_LABELS = {"unrestricted": "Sin restricción: la lista tal cual", "new_only": "Solo productos nuevos: los que el cliente nunca compró"}
+SOURCE_LABELS = {"repeat": "Recompra propia", "discovery": "Descubrimiento del modelo", "fallback": "Reserva: lo más vendido de 28 días"}
+GROUP_LABELS = {"offer": "Recibe la oferta", "control": "Grupo de control"}
+SEGMENT_LABELS = {"bulk|repeat": "Mayorista con compras repetidas", "bulk|one_invoice": "Mayorista con una factura", "retail|repeat": "Minorista con compras repetidas", "retail|one_invoice": "Minorista con una factura"}
+COVARIATE_LABELS = {"recency_days": ("Recencia", "días"), "invoices_365": ("Facturas del año", "facturas"), "spend_365": ("Gasto del año", "libras"), "tenure_days": ("Antigüedad", "días"),
+                    "bulk": ("Marca mayorista", "0 o 1")}
+PERIOD_LABELS = {"history": "Historia", "validation": "Validación", "test": "Prueba", "close": "Cierre", "censored": "Censurada"}
+WEEKDAYS_ES = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")

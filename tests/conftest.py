@@ -205,3 +205,14 @@ def evaluated(delivered, workbook, quick_cfg, tmp_path_factory: pytest.TempPathF
     world.conn.close()
     return types.SimpleNamespace(root=world.root, outcome=outcome, crm=crm, seal=registry.read_seal(world.seal_path))
 
+
+@pytest.fixture(scope="session")
+def exported(evaluated, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The star model of the evaluated replay written once with the configured minimum of 10 customers a cell (U15 on): ``out`` is the published folder and ``private`` the private one; a test that changes anything
+    exports its own copy (``tests.fixtures.stars.export_world``)."""
+    from tests.fixtures.stars import export_world
+
+    star = export_world(evaluated.root, workbook, quick_cfg, tmp_path_factory.mktemp("exported"))
+    star.conn.close()
+    return star
+
