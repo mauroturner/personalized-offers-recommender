@@ -308,6 +308,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `pipeline.py`; AC29, AC30, AC34, AC36.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota** (2026-11-19, U18): las trece tareas de `pipeline.TASKS` son las de la sección 22. `deliver` publica la primera entrega del plan que no está cargada (no la primera sin publicar): una corrida que falló antes de `load` se repite con la misma entrega y los mismos bytes, no salta a la siguiente. `track` sigue la ronda de la semana que trae la entrega (el lanzamiento no trae ninguna); `build_base`, `fit_recipe` y `recommend` trabajan sobre la ronda que arma la entrega (la primera de la prueba para el lanzamiento, el lunes siguiente para una semanal, ninguna para el cierre): `fit_recipe` del lanzamiento es `launch.run_launch` y la de una semanal solo comprueba el sello y toma la receta sellada, y `recommend` es la única transacción de `weekly.emit_round` (el reajuste, las listas y las líneas base de una ronda no se parten: lo emitido no se rehace). `deliver_offers` entrega al CRM, escribe el CSV de correo y la operación de la ronda (una sola vez: repetir la tarea no la reescribe). El cierre es cuatro pasos (SQLite, tabla de corridas, resumen del sitio, HTML): el manifiesto de entregas no lleva estado, la entrega cargada la dice el almacén. `refuse_a_state_that_does_not_agree` rechaza (R11) un manifiesto con más de una entrega publicada sin cargar. Lo que la primera construcción de las líneas encontró en la fuente (copias quitadas, filas por hoja) se guarda en `data/interim/source_counts.json` para el sitio. El resultado de `recommend` guarda los segundos de cada paso de la ronda como `round_seconds`, porque `seconds` es el total de la tarea.
 
 ## D29 Un solo escritor: el bloqueo del proyecto 07
 
@@ -318,6 +319,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `lock.py`; AC31.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota** (2026-11-19, U18): `lock.py` es el del proyecto 07 con los nombres de este (`PERSONALOFFERS_*`, `python -m personaloffers`); `run_task`, `run_all` y `replay` toman el bloqueo antes de tocar el archivo de estado. La prueba de otro hilo que sostiene el bloqueo prueba la negativa de `run_task` y de `run_all` sin escribir; el resto de las pruebas del bloqueo son las del 07 (procesos reales con `subprocess.Popen`).
 
 ## D30 Privacidad: ningún número de cliente en lo versionado ni en lo publicado; ninguna celda de menos de 10 clientes
 
@@ -341,6 +343,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 13).
 - **Nota (2026-11-19, U13 y U14)**: la suite por defecto pasó de unos 37 s (U12) a 44,3 s con U13 (+7,3 s; previstos 5), a 52,0 s con U14 (+7,7 s; previstos 5), a unos 55 s con U15 (+3 s; previstos 3) y a 57,5 s con U16 (+2,5 s; previstos 3). U13 y U14 pasan 1,5 veces lo previsto: lo que suman son los accesorios de sesión nuevos (`delivered`, que entrega las cuatro rondas del repaso al CRM, y `evaluated`, que corre el cierre una vez) y los mundos que copia cada prueba que cambia algo; ninguna prueba sola pasa de 3,4 s. El disparador de 100 s no se alcanzó.
 - **Nota** (2026-11-19, U17): la suite por defecto pasó de 62 s a 67,6 s y 70,1 s (1.072 pruebas), unos 7 s contra los 4 previstos: cada prueba del sitio que cambia el mínimo de una celda, la configuración o la corrida exporta su propio modelo estrella (cerca de 1 s cada una), y las del sitio comparten un solo conjunto de archivos por sesión (`sited`). Quedan unos 30 s hasta el disparador de 100 s con U18 a U22 por venir.
+- **Nota** (2026-11-19, U18): la suite por defecto pasó de 70 s a 87,4 s y 86,7 s (1.120 pasaron, 1 se salta: el identificador de arranque de Linux), unos 17 s contra los 5 previstos, 3,4 veces. Por qué: la repetición completa por el flujo (cinco corridas de trece tareas, 8 s) es un accesorio de sesión que cuesta lo que cuesta correr de verdad la exportación, el CRM y el diseño cinco veces, y quince pruebas copian su carpeta para cambiar algo (cada copia es una base SQLite, los Parquet y el sello); las pruebas del bloqueo (4,5 s) arrancan procesos reales como las del 07. Con U19 a U22 por venir el disparador de 100 s queda a 13 s: si U19 lo pasa, la unidad siguiente es la de velocidad (copias de plantillas más chicas, `piped` armado desde `before_close` sin repetir lo que ya corrió).
 
 ## D32 `pytest-xdist` no se fija
 

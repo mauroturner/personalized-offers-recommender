@@ -237,3 +237,35 @@ def sited(exported, tmp_path_factory: pytest.TempPathFactory):
     from tests.fixtures.sites import export_site_of
 
     return export_site_of(exported.world.warehouse_path, exported.world, exported.view, tmp_path_factory.mktemp("sited"))
+
+
+@pytest.fixture(scope="session")
+def before_close(workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The quick replay run by the pipeline itself up to the last weekly delivery, once per session (U18 on): everything but the close. ``cfg`` is its configuration, ``runs`` what each run returned, ``plan`` the plan of
+    deliveries and ``root`` the folder: a test that changes anything copies it with ``tests.fixtures.piped.copy_piped``."""
+    import types
+
+    from personaloffers import pipeline
+    from tests.fixtures.configs import config_for
+    from tests.fixtures.worlds import sealed_view_of
+
+    root = tmp_path_factory.mktemp("before_close")
+    cfg = config_for(quick_cfg, workbook, root)
+    from personaloffers import deliveries
+
+    plan = deliveries.delivery_plan(sealed_view_of(cfg))
+    runs = pipeline.replay(cfg, until=plan[-2].delivery_id)
+    return types.SimpleNamespace(cfg=cfg, runs=runs, plan=plan, root=root)
+
+
+@pytest.fixture(scope="session")
+def piped(before_close, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The whole quick replay, every delivery through every task, once per session (U18 on): the folder of ``before_close`` and the close run on top of it."""
+    import types
+
+    from personaloffers import pipeline
+    from tests.fixtures.piped import copy_piped
+
+    made = copy_piped(before_close, workbook, quick_cfg, tmp_path_factory.mktemp("piped"))
+    runs = pipeline.replay(made.cfg)
+    return types.SimpleNamespace(cfg=made.cfg, runs=[*before_close.runs, *runs], plan=before_close.plan, root=made.root)
