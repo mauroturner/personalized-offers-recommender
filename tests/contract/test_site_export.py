@@ -14,6 +14,7 @@ import pytest
 from personaloffers import registry, reporting, site_export
 from personaloffers.site_export import SITE_FILES, SiteExportError, SiteSetError
 from personaloffers.warehouse import connect
+from tests.fixtures.published import LOCAL_PATH, customer_numbers_in
 from tests.fixtures.sites import SOURCE_COUNTS, export_site_of
 from tests.fixtures.stars import RUN, export_world
 
@@ -29,7 +30,6 @@ KEYS = {
 HEADLINE = ("rounds", "base_mean", "offer_mean", "control_mean", "hit_offer_list", "hit_b2", "hit_b3", "hit_new_chosen", "hit_new_b2", "coverage", "max_abs_smd", "aa_p_m1", "aa_p_m2", "mde_m1_points_20", "mde_m2_gbp_20")
 ALLOWED = re.compile(r"menor efecto detectable|no es el efecto de nada|no es un efecto|permite medir el efecto de una oferta")
 EFFECT_WORDS = re.compile(r"efecto|aumento|uplift|lift|incremental|causal", re.IGNORECASE)
-LOCAL_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/(?:home|Users)/|\\Users\\")
 
 
 def text_of(path: Path) -> str:
@@ -50,6 +50,13 @@ def walk(node, where=""):
 
 
 # --- the set ----------------------------------------------------------------------------------------------------------------------------------------
+
+
+def test_the_envelope_that_the_contract_pins_is_the_one_the_export_and_its_verification_use():
+    """The seven members are written here on purpose, as the site copies them; the production tuple is what ``export_site`` writes and ``verify_site`` compares, so the two must be one: a change of either is a change of
+    the contract that someone has to make on purpose in both places."""
+    assert ENVELOPE == site_export.ENVELOPE
+    assert len(set(ENVELOPE)) == len(ENVELOPE) == 7
 
 
 def test_the_six_files_and_the_manifest_are_one_export_with_the_same_envelope(sited):
@@ -153,7 +160,8 @@ def test_the_envelope_says_that_the_file_has_no_offers(sited):
 
 def test_no_file_holds_a_path_of_this_machine_or_a_number_of_a_customer(sited):
     text = "\n".join(text_of(sited.out / name) for name in (*SITE_FILES, "manifest.json"))
-    assert not LOCAL_PATH.search(text) and not re.search(r"(?<![\d.])90[0-3]\d\d(?!\d)", text)
+    assert not LOCAL_PATH.search(text)
+    assert not customer_numbers_in(text)
 
 
 def test_a_count_of_customers_under_the_minimum_is_not_published_and_another_configuration_than_the_sealed_one_publishes_no_test(sited, evaluated, workbook, quick_cfg, tmp_path):

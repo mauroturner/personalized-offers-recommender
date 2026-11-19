@@ -7,7 +7,6 @@ import dataclasses
 import hashlib
 import json
 import math
-import re
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -19,6 +18,7 @@ from personaloffers import evaluation, registry, reporting
 from personaloffers.crm.client import ContactOffers, Offer
 from personaloffers.evaluation import EvaluationError
 from personaloffers.registry import SealMismatchError
+from tests.fixtures.published import customer_numbers_in
 from tests.fixtures.worlds import copy_world, crm_client
 
 TEST_ROUNDS = ["R2011-03-28", "R2011-04-04", "R2011-04-11"]
@@ -295,7 +295,7 @@ def test_before_the_close_the_evaluation_is_refused_and_nothing_is_written(launc
 def test_the_launch_part_of_the_seal_is_the_one_of_the_launch_and_the_seal_holds_no_customer_number(evaluated, launched):
     assert evaluated.seal["launch"] == launched.seal["launch"], "the test part was added and the launch part is as it was"
     text = json.dumps(evaluated.seal["test"], sort_keys=True)
-    assert not re.search(r"(?<![\d.])90[0-3]\d\d(?!\d)", text), "no number of a customer of the fixture is in what the seal keeps of the test"
+    assert not customer_numbers_in(text), "no number of a customer of the fixture is in what the seal keeps of the test"
 
 
 def test_the_rows_of_the_validation_are_the_sealed_ones_of_the_launch_and_one_candidate_is_chosen(world, evaluated):

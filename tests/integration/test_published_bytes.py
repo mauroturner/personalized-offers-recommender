@@ -3,15 +3,15 @@ just one cell, because a total that is published would give it back by subtracti
 
 from __future__ import annotations
 
-import re
 
 import pandas as pd
 import pytest
 
 from personaloffers.dashboard.semantic_model import CUSTOMER_COUNT_COLUMNS, MODEL
+from tests.fixtures.make_workbook import CUSTOMER_FIRST, CUSTOMER_LAST, CUSTOMERS
+from tests.fixtures.published import LOCAL_PATH, customer_numbers_in
 from tests.fixtures.stars import export_world
 
-CUSTOMER_NUMBER = re.compile(r"(?<![\d.])90[0-3]\d\d(?!\d)")
 GROUPS = {"fact_round_group": ["round_key", "group_key"], "fact_method_round": ["method_key", "variant_key", "seal_state"], "fact_segment": ["method_key", "variant_key", "seal_state"]}
 
 
@@ -79,11 +79,11 @@ def test_no_customer_number_in_a_published_file_and_the_private_file_holds_them_
         for column in data.columns:
             if data[column].dtype == object:
                 text = " ".join(str(v) for v in data[column].dropna().unique())
-                assert not CUSTOMER_NUMBER.search(text), f"{table.name}[{column}] has what looks like a customer number"
+                assert not customer_numbers_in(text), f"{table.name}[{column}] has what looks like a customer number"
             elif pd.api.types.is_integer_dtype(data[column]):
-                assert not data[column].dropna().between(90001, 90300).any(), f"{table.name}[{column}] has a number in the range of the customers"
+                assert not data[column].dropna().between(CUSTOMER_FIRST, CUSTOMER_LAST).any(), f"{table.name}[{column}] has a number in the range of the customers"
     private = published(exported.private, "fact_offer_customer")
-    assert set(private["customer_id"]) == set(range(90001, 90301)) and private["bought"].notna().all()
+    assert set(private["customer_id"]) == set(CUSTOMERS) and private["bought"].notna().all()
     assert set(private["group_key"]) == {"offer", "control"} and set(private["source_key"]) <= {"repeat", "discovery", "fallback"}
 
 
@@ -122,7 +122,6 @@ def test_a_segment_is_judged_by_its_customers_and_not_by_its_pairs(evaluated, wo
 
 # --- the bytes of everything that is published (U17; AC28) -----------------------------------------------------------------------------------------------
 
-LOCAL_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/(?:home|Users)/|\\Users\\")
 
 
 def published_texts(sited, exported, rendered) -> dict[str, str]:
@@ -144,7 +143,7 @@ def published_texts(sited, exported, rendered) -> dict[str, str]:
 def test_no_customer_number_in_published_bytes(sited, exported, rendered):
     """No file of the site, no string of a Parquet file and no byte of the design is a customer number of the fixture (90001 to 90300)."""
     for name, text in published_texts(sited, exported, rendered).items():
-        assert not CUSTOMER_NUMBER.search(text), f"{name} holds what looks like a customer number: {CUSTOMER_NUMBER.search(text).group(0)}"
+        assert not customer_numbers_in(text), f"{name} holds what looks like a customer number: {customer_numbers_in(text)[0]}"
 
 
 def test_published_files_carry_no_local_path(sited, exported, rendered):

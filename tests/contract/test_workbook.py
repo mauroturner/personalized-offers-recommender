@@ -157,7 +157,7 @@ def test_overlap_copies_are_removed_and_internal_repeats_flagged(workbook, quick
     columns = ["invoice", "stock_code", "description", "quantity", "invoice_date", "price", "customer_id", "country"]
     assert lines.duplicated(subset=columns, keep="first").tolist() == lines["internal_repeat"].tolist()
     assert str(lines["customer_id"].dtype) == "Int64" and lines["customer_id"].isna().sum() > 100
-    assert set(lines["customer_id"].dropna()) <= set(range(90001, 90301))
+    assert set(lines["customer_id"].dropna()) <= set(mw.CUSTOMERS)
 
 
 def test_the_copies_removed_are_counted_as_a_multiset_and_only_inside_the_shared_days(quick_cfg, tmp_path):

@@ -69,7 +69,7 @@ def test_the_fixture_workbook_has_the_real_sheets_columns_and_every_role(workboo
         assert isinstance(description, str) and isinstance(country, str) and (customer is None or isinstance(customer, int))
         assert isinstance(stamp, datetime) and stamp.second == 0 and date(2010, 12, 6) <= stamp.date() <= date(2011, 4, 22)
     # invented customers and products: nothing that the real file holds
-    assert {row[6] for row in second} - {None} <= set(range(90001, 90301)) and len({row[6] for row in second} - {None}) == 300
+    assert {row[6] for row in second} - {None} <= set(mw.CUSTOMERS) and len({row[6] for row in second} - {None}) == 300
     products = {int(row[1]) for row in second if str(row[1]).isdigit()}
     assert products and min(products) >= 95000 and max(products) <= 99999 and len(products) <= 400
     described = {row[2] for row in second if str(row[1]).isdigit() and row[3] > 0}
@@ -201,3 +201,26 @@ def test_an_unknown_kind_is_refused_by_name(workbook, tmp_path):
     with pytest.raises(ValueError, match="no_such_kind"):
         mw.make_malformed(workbook, "no_such_kind", tmp_path)
     assert list(tmp_path.iterdir()) == []
+
+
+# --- what no published file may hold: one definition of the customers' range and of a path of this machine -------------------------------------------------
+
+
+def test_the_customers_of_the_fixture_are_one_range_that_every_check_of_what_is_published_uses():
+    """The range of the invented customers is written once (``mw.CUSTOMER_FIRST`` to ``mw.CUSTOMER_LAST``) and the finder of customer numbers in a text follows it, edge to edge, and nothing else."""
+    from tests.fixtures.published import customer_numbers_in
+
+    assert (mw.CUSTOMER_FIRST, mw.CUSTOMER_LAST) == (90001, 90300) and mw.CUSTOMERS == tuple(range(mw.CUSTOMER_FIRST, mw.CUSTOMER_LAST + 1))
+    assert customer_numbers_in("a 90001, b 90300 and 90150.") == ["90001", "90300", "90150"]
+    assert customer_numbers_in("90000 90301 18287 95000 12 900011 190001 0.90150") == [], "outside the range, inside a longer number or after a decimal point: not a customer"
+    assert customer_numbers_in('{"customer_id":90002,"rank":1}') == ["90002"]
+    assert customer_numbers_in("") == []
+
+
+def test_a_path_of_this_machine_is_a_drive_a_home_or_a_users_folder_and_nothing_else():
+    from tests.fixtures.published import LOCAL_PATH
+
+    for text in ("C:\\folder\\file", "d:/data/x", "see E:\\x", "/home/someone/x", "/Users/someone/x", "x\\Users\\y"):
+        assert LOCAL_PATH.search(text), text
+    for text in ("https://example.org/x", "ratio 12:30", "a:b", "R2011-03-28: /x", "users and homes", "/usr/local/x", ""):
+        assert not LOCAL_PATH.search(text), text

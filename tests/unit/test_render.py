@@ -17,6 +17,7 @@ from personaloffers.dashboard import render
 from personaloffers.dashboard.render import _bare_title, _makers, _preview, render_design
 from personaloffers.dashboard.semantic_model import LEGEND, MODEL, NOT_FILTERED, PAGES, Page, Visual
 from personaloffers.reporting import RunMeta
+from tests.fixtures.published import customer_numbers_in
 
 RUN = RunMeta("run-5", datetime(2011, 4, 23))
 
@@ -179,7 +180,7 @@ def test_the_private_list_is_never_read_even_when_it_is_in_the_same_folder(expor
     shutil.copytree(exported.out, folder)
     shutil.copy(exported.private / "fact_offer_customer.parquet", folder / "fact_offer_customer.parquet")
     html = render_design(MODEL, folder, tmp_path / "d.html", RUN).read_text(encoding="utf-8")
-    assert html == rendered.html and not re.search(r"(?<![\d.])90[0-3]\d\d(?!\d)", html), "no number of a customer in the design, with the private file beside the published ones"
+    assert html == rendered.html and not customer_numbers_in(html), "no number of a customer in the design, with the private file beside the published ones"
 
 
 def test_the_run_and_the_configuration_of_the_files_are_in_the_page(exported, rendered):
