@@ -94,3 +94,21 @@ def workbook(tmp_path_factory: pytest.TempPathFactory):
     from tests.fixtures.make_workbook import make_workbook
 
     return make_workbook(tmp_path_factory.mktemp("workbook"))
+
+
+@pytest.fixture(scope="session")
+def variants(workbook, tmp_path_factory: pytest.TempPathFactory):
+    """One damaged copy of the fixture for each rule of the source that a file can break (``make_malformed``), written once per session: kind -> ``Variant``."""
+    from tests.fixtures import make_workbook as mw
+
+    folder = tmp_path_factory.mktemp("variants")
+    return {kind: mw.make_malformed(workbook, kind, folder) for kind in mw.MALFORMED_KINDS}
+
+
+@pytest.fixture(scope="session")
+def small_workbook(tmp_path_factory: pytest.TempPathFactory):
+    """The same generator with twenty customers (about 450 lines, every role): for the tests that need a valid workbook and no more, since reading a
+    workbook costs about 60 microseconds a line."""
+    from tests.fixtures.make_workbook import make_workbook
+
+    return make_workbook(tmp_path_factory.mktemp("small_workbook"), customers=20)

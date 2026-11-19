@@ -27,6 +27,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `sources.py`, `workbook.py`; V01-V07; runbook R1 y R2; README «Cómo correrlo».
 - **Quién**: agente de planificación.
 - **Estado**: vigente; una descarga en el paquete no se pide.
+- **Nota (2026-11-19, U04)**: V03 agrega a lo decidido tres comprobaciones que no cambian el contrato: ninguna parte con nombre que salga del archivo, ninguna parte cifrada y ningún DTD ni entidad en las primeras 4.096 bytes de una parte XML. Con el archivo real, las dos hojas pesan 156.346.796 y 160.448.656 bytes descomprimidas a razón de 7,0, así que `max_part_bytes = 400.000.000` queda (2,5 veces la mayor) y el tope de razón es 100 a 1 para partes de 64 KiB o más (una parte de ceros se comprime mil a uno). Cada celda se convierte como la entrega openpyxl en el archivo real (verificado en las primeras 3.000 filas de cada hoja, de 2009 y 2010): factura y código como número o texto, descripción y país como texto (un número se guarda como su texto), cantidad entera, precio decimal o entero, cliente entero de cinco dígitos o vacío. `line_key` es hoja por 10.000.000 más la fila de la hoja. El rol de cada línea (RF04) es de U05: `lines.parquet` de U04 trae las líneas sin rol.
 
 ## D03 Copias, repeticiones y roles: se quitan las 22.523 copias del solapamiento, se marcan las 11.812 repeticiones internas y las anulaciones no se descuentan de las compras
 
@@ -357,6 +358,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `requirements*.txt`; AC38.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U01)**: `requirements.txt` y `requirements-dev.txt` fijan las versiones de la investigación y las de los proyectos 05 y 07 para los servicios. Seis versiones transitivas de la investigación tenían menos de 14 días y bajaron a la más nueva que cumple la regla: cloudpickle 3.1.3 a 3.1.2, narwhals 2.29.0 a 2.28.0, pydantic 2.14.4 a 2.14.2 (con pydantic-core 2.50.5 a 2.50.2), click 8.5.1 a 8.5.0, annotated-doc 0.0.7 a 0.0.5 y python-dateutil 4.0.0 a 2.9.0.post0 (con six). threadpoolctl 3.8.0 se subió el 2026-11-05, justo 14 días antes. `pydantic` queda transitivo hasta que U13 lo importe.
 
 ## D36 Idioma: documentación en español neutro; código, tablas y columnas en inglés; textos visibles en español
 
@@ -447,6 +449,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `tests/fixtures/*`, `cli.py`; AC02, AC33.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U03)**: la verificación que pedía esta decisión dio que cuatro códigos reales del archivo caen en 90000-99999 (90050, 90075, 90100 y 90150; el archivo llega hasta 90214 antes del 2011-08-01). Los productos ficticios son los 400 códigos `95000 + 12 n` (95000 a 99788); los clientes ficticios siguen siendo 90001 a 90300. Una prueba `real_data` lo comprueba contra los prefijos de cinco dígitos del archivo, con el filtro del planificador (nada desde el 2011-08-01).
 
 ## D45 El CSV para la herramienta de correo, fuera de lo versionado
 

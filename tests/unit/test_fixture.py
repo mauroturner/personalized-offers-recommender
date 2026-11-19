@@ -12,24 +12,14 @@ from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
 
-import openpyxl
 import pytest
 
 from tests.fixtures import make_workbook as mw
+from tests.fixtures.configs import read_sheets
 
 PROJECT = Path(__file__).resolve().parents[2]
 HEADER = ("Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price", "Customer ID", "Country")
 PRODUCT = re.compile(r"\d{5}[A-Za-z]{0,3}")
-
-
-def read_sheets(zip_path: Path, member: str = "online_retail_II.xlsx") -> dict[str, list[tuple]]:
-    with zipfile.ZipFile(zip_path) as archive:
-        data = archive.read(member)
-    book = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-    try:
-        return {name: [tuple(row) for row in book[name].iter_rows(values_only=True)] for name in book.sheetnames}
-    finally:
-        book.close()
 
 
 def role(invoice, code, quantity, price, customer) -> str:
@@ -155,12 +145,6 @@ def test_no_invented_code_is_a_real_code_before_the_test_window():
 # --- the damaged copies ----------------------------------------------------------------------------------------------------------
 
 
-@pytest.fixture(scope="module")
-def variants(workbook, tmp_path_factory):
-    folder = tmp_path_factory.mktemp("variants")
-    return {kind: mw.make_malformed(workbook, kind, folder) for kind in mw.MALFORMED_KINDS}
-
-
 def inner_names(path: Path, member: str = "online_retail_II.xlsx") -> list[str]:
     with zipfile.ZipFile(path) as archive, zipfile.ZipFile(io.BytesIO(archive.read(member))) as xlsx:
         return xlsx.namelist()
@@ -208,7 +192,7 @@ def test_each_variant_is_damaged_in_the_documented_way_and_carries_what_the_rule
     late = read_sheets(variants["date_out_of_range"].workbook.zip_path)[mw.SHEETS[1]]
     assert [row[4] for row in late[1:] if row[4].date() > date(2011, 4, 22)] == [datetime(2012, 1, 1, 10, 0)]
     rows = {name: len(sheet) - 1 for name, sheet in read_sheets(variants["too_many_rows"].workbook.zip_path).items()}
-    assert variants["too_many_rows"].overrides == {"max_rows": max(rows.values()) - 1} and variants["too_many_rows"].workbook.zip_bytes == workbook.zip_bytes
+    assert rows == {mw.SHEETS[0]: 250, mw.SHEETS[1]: 250} and variants["too_many_rows"].overrides == {"max_rows": 249}
     for kind in ("extra_sheet", "extra_column", "missing_column", "reordered_columns", "wrong_type", "date_out_of_range"):
         assert variants[kind].overrides == {}, kind
 

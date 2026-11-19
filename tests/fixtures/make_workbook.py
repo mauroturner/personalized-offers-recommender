@@ -317,8 +317,8 @@ def make_malformed(base: FixtureWorkbook, kind: str, out_dir: Path) -> Variant:
     extra_sheet / missing_sheet: a third sheet, or only the first one (V04).
     extra_column / missing_column / reordered_columns: a ninth column, no ``Country``, or ``Quantity`` and ``Price`` swapped in the header (V05).
     wrong_type: ``Quantity`` of one line is the text «ten» (V06).
-    too_many_rows: the valid workbook (all of it) with a limit of one row fewer than its longest sheet (V06).
-    The other damaged copies keep the first 250 rows of each sheet.
+    too_many_rows: the valid workbook with a limit of one row fewer than its sheets have (V06): the first sheet is the one that goes over.
+    Every damaged copy keeps the first 250 rows of each sheet.
     date_out_of_range: one line dated 2012-01-01, after the last day of the source (V07).
     """
     if kind not in MALFORMED_KINDS:
@@ -370,6 +370,7 @@ def make_malformed(base: FixtureWorkbook, kind: str, out_dir: Path) -> Variant:
         broken[len(broken) // 2][4] = datetime(2012, 1, 1, 10, 0)
         members = {MEMBER: build_xlsx({**sheets, SHEETS[1]: [tuple(row) for row in broken]})}
     elif kind == "too_many_rows":
-        overrides = {"max_rows": max((base.truth.sheet_rows if base.truth else {n: len(r) for n, r in _rows_of(base, 10**9).items()}).values()) - 1}
+        members = {MEMBER: build_xlsx(sheets)}
+        overrides = {"max_rows": SMALL_SHEET - 1}
     written = write_zip(path, members)
     return Variant(kind, EXPECTED_RULE[kind], written, overrides)

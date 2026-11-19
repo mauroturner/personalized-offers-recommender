@@ -122,9 +122,12 @@ def test_sha256_file_is_the_hash_of_the_bytes_whatever_the_block_size(tmp_path):
 
 WRITER_ATTRIBUTES = {"write_text", "write_bytes", "to_parquet", "to_csv", "to_json", "to_excel", "to_feather", "savefig", "write_table", "touch"}
 WRITER_CALLS_OF_MODULES = {("shutil", "copy"), ("shutil", "copy2"), ("shutil", "copyfile"), ("shutil", "move"), ("os", "rename"), ("os", "replace")}
-# Modules that may write a file without write_atomic, each with the reason (unversioned state or a file that is not a result): none yet. A unit that adds
-# one says why here; ``files.py`` is the one place that renames and syncs.
-ALLOWED_RAW_WRITERS: dict[str, str] = {}
+# Modules that may write a file without write_atomic, each with the reason (unversioned state or a file that is not a result). A unit that adds one says why
+# here; ``files.py`` is the one place that renames and syncs.
+ALLOWED_RAW_WRITERS: dict[str, str] = {
+    "sources.py": "extract_workbook writes the workbook into a temporary folder of the run, which is removed when the read ends: a scratch file under a new "
+                  "random name, created exclusively and hashed while it is written, that is never a result",
+}
 
 
 def _opens_for_writing(call: ast.Call) -> bool:
