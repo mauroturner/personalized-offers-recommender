@@ -433,6 +433,46 @@ def test_a_package_that_breaks_a_rule_of_v03_is_refused_by_its_reason(workbook, 
     assert wb.inspect_workbook(path, cfg).parts == len(small_package())
 
 
+def letters(count: int, seed: int = 1) -> bytes:
+    """`count` bytes of lowercase letters that do not compress (their ratio is far under the cap), so a long padding is never refused for its ratio."""
+    return np.random.default_rng(seed).integers(97, 123, count, dtype=np.uint8).tobytes()
+
+
+@pytest.mark.parametrize(("name", "before", "declaration"), [
+    ("after 5,000 bytes of comment", b"<!--" + letters(5000) + b"-->", b'<!DOCTYPE x [<!ENTITY a "b">]>'),
+    ("after 10,000 bytes of white space", b" \n" * 5000, b'<!ENTITY a "b">'),
+    ("at the end of a part of 200,000 bytes", b"<!--" + letters(199_900) + b"-->", b'<!DOCTYPE x>'),
+])
+def test_a_dtd_or_an_entity_is_refused_wherever_it_is_in_the_part(workbook, quick_cfg, tmp_path, name, before, declaration):
+    """The scan covers the whole part: the first 4,096 bytes were all it looked at, and a comment or white space in front of the declaration hid it from them."""
+    cfg = config_for(quick_cfg, workbook, tmp_path / "project", max_part_bytes=250_000)
+    padded = b'<?xml version="1.0"?>' + before + declaration + b"<styleSheet/>"
+    assert min(i for i in (padded.find(b"<!DOCTYPE"), padded.find(b"<!ENTITY")) if i >= 0) > 4096, name
+    path = tmp_path / "package.xlsx"
+    path.write_bytes(mw.repack(small_package({"xl/styles.xml": padded})))
+    with pytest.raises(SourceError) as caught:
+        wb.inspect_workbook(path, cfg)
+    assert caught.value.rule_id == "V03" and caught.value.problems[0]["reason"] == "dtd" and caught.value.problems[0]["part"] == "xl/styles.xml", name
+    # the same padding with no declaration is a valid part, so the refusal is for the declaration and not for the size
+    path.write_bytes(mw.repack(small_package({"xl/styles.xml": b'<?xml version="1.0"?>' + before + b"<styleSheet/>"})))
+    assert wb.inspect_workbook(path, cfg).parts == len(small_package())
+
+
+def test_a_declaration_that_crosses_the_edge_of_a_block_of_the_scan_is_found_at_every_alignment(workbook, quick_cfg, tmp_path, monkeypatch):
+    """The part is read in blocks; the declaration is cut by the edge of two of them at each of the places it can be cut."""
+    monkeypatch.setattr(wb, "DTD_SCAN_CHUNK", 1000, raising=False)
+    cfg = config_for(quick_cfg, workbook, tmp_path / "project", max_part_bytes=250_000)
+    path = tmp_path / "package.xlsx"
+    for word in (b"<!DOCTYPE", b"<!ENTITY"):
+        for start in range(4990 + 1, 5000 + 1):          # the block edge at 5,000 falls inside the word, after its first byte up to after its last
+            data = b"<?xml?>" + letters(start - 7) + word + b" x>" + letters(300)
+            assert data.find(word) == start
+            path.write_bytes(mw.repack(small_package({"xl/styles.xml": data})))
+            with pytest.raises(SourceError) as caught:
+                wb.inspect_workbook(path, cfg)
+            assert caught.value.problems[0]["reason"] == "dtd", (word, start)
+
+
 def test_the_edges_of_the_part_cap_the_ratio_the_parts_count_and_encryption(workbook, quick_cfg, tmp_path, monkeypatch):
     noise = np.random.default_rng(0).bytes(250_000)      # does not compress: its ratio is 1
     cfg = config_for(quick_cfg, workbook, tmp_path / "project", max_part_bytes=250_000)

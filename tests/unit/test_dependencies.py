@@ -214,6 +214,14 @@ def probe_project(tmp_path: Path, files: dict[str, str], drop: tuple[str, ...] =
     return probe
 
 
+def require_file(path: Path, needed_by: str) -> Path:
+    """`path`, which a rule of this file needs and which is not part of the code under test (the table of the landing's technologies beside the project, the research environment's
+    pins, the research scripts): a clear failure that names the file and the rule when it is not there, instead of a ``FileNotFoundError`` that says nothing about either."""
+    shown = path.relative_to(PROJECT.parent).as_posix() if PROJECT.parent in path.parents else path.as_posix()
+    assert path.exists(), f"{needed_by} needs {shown}, which is not there: restore it (it belongs to the portfolio or to the project's research, not to the code under test)"
+    return path
+
+
 # --- AC38: the imports and the pins ------------------------------------------------------------------------------------
 
 
@@ -230,10 +238,13 @@ def test_every_direct_import_is_a_pinned_requirement_and_documented(tmp_path):
         "pyarrow (pyarrow) is imported by src/personaloffers/parquet_probe.py but is pinned only as a transitive dependency"
     ]
     # and on the project as it is: src/, research/ and tests/ import nothing that is not a direct pin of its file
+    for folder in ("src", "research", "tests"):
+        require_file(PROJECT / folder, "test_every_direct_import_is_a_pinned_requirement_and_documented (AC38: every folder it checks)")
     assert dependency_problems(PROJECT) == []
     # documented: a direct pin the landing does not declare has a row of the table in LANDING-EXPANSION.md; SQLite is the standard library
     # and the table has its row too. The rows that add project 08 are U22's (PENDING_LANDING_ROWS says which are owed)
-    table = (PROJECT.parent / "LANDING-EXPANSION.md").read_text(encoding="utf-8").splitlines()
+    landing = require_file(PROJECT.parent / "LANDING-EXPANSION.md", "test_every_direct_import_is_a_pinned_requirement_and_documented (AC38: every direct pin is documented)")
+    table = landing.read_text(encoding="utf-8").splitlines()
     names = [line.split("|")[1].strip().lower() for line in table if line.startswith("| ")]
     pins = all_pins(PROJECT)
     direct = pins["requirements.txt"].direct | pins["requirements-dev.txt"].direct
@@ -325,9 +336,34 @@ def test_the_direct_pins_are_the_ones_decision_d35_names():
 
 def test_the_research_pins_are_the_runtime_and_development_pins_of_the_same_packages():
     """The research environment (docs/research.md) and the build one are the same versions: nothing new came in with the build."""
-    research = read_pins(PROJECT / "requirements-research.txt").all
+    research = read_pins(require_file(PROJECT / "requirements-research.txt", "test_the_research_pins_are_the_runtime_and_development_pins_of_the_same_packages (RNF01)")).all
     built = with_includes(all_pins(PROJECT), "requirements-dev.txt").all
     assert research and {name: (version, built.get(name)) for name, version in research.items() if built.get(name) != version} == {}
+
+
+def test_a_missing_file_outside_the_code_fails_naming_the_file_and_the_rule(tmp_path, monkeypatch):
+    """The three things the checks read that are not the project's own code (the landing's table, the research pins and the research scripts) fail with a message that says which file
+    and which rule, not with an exception about a path. The same test functions run on a copy of the project that lacks them, one at a time."""
+    (tmp_path / "first").mkdir()
+    (tmp_path / "second").mkdir()
+    portfolio = tmp_path / "portfolio"
+    copy = portfolio / "08-copy"
+    for name in REQUIREMENT_FILES:
+        (copy / name).parent.mkdir(parents=True, exist_ok=True)
+        (copy / name).write_text((PROJECT / name).read_text(encoding="utf-8"), encoding="utf-8")
+    for folder in ("src", "tests"):
+        (copy / folder).mkdir()
+    monkeypatch.setattr(sys.modules[__name__], "PROJECT", copy)
+    with pytest.raises(AssertionError, match=r"test_every_direct_import_is_a_pinned_requirement_and_documented.*needs 08-copy/research"):
+        test_every_direct_import_is_a_pinned_requirement_and_documented(tmp_path / "first")
+    (copy / "research").mkdir()
+    with pytest.raises(AssertionError, match=r"test_every_direct_import_is_a_pinned_requirement_and_documented.*needs LANDING-EXPANSION\.md"):
+        test_every_direct_import_is_a_pinned_requirement_and_documented(tmp_path / "second")
+    with pytest.raises(AssertionError, match=r"test_the_research_pins_are_the_runtime_and_development_pins_of_the_same_packages.*needs 08-copy/requirements-research\.txt"):
+        test_the_research_pins_are_the_runtime_and_development_pins_of_the_same_packages()
+    # and each of them passes when the files are there
+    (portfolio / "LANDING-EXPANSION.md").write_text("| pandas |\n", encoding="utf-8")
+    assert require_file(portfolio / "LANDING-EXPANSION.md", "any rule") == portfolio / "LANDING-EXPANSION.md"
 
 
 def test_every_transitive_pin_is_required_by_another_pin():

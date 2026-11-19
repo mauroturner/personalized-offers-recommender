@@ -2,7 +2,7 @@
 
 ``inspect_workbook`` is V03 and uses only ``zipfile``: before openpyxl sees a byte, every part of the package is checked by its name (no macros, no external links,
 no ActiveX, no path that leaves the archive), its declared size (at most ``[source] max_part_bytes``), its compression ratio (a zero-filled part is a thousand to one;
-the real sheets are seven to one), its encryption and its first bytes (no DTD, so no entity can expand). What it cannot see is a lie in a header: ``zipfile`` never
+the real sheets are seven to one), its encryption and its content (no DTD anywhere in an XML part, so no entity can expand). What it cannot see is a lie in a header: ``zipfile`` never
 hands out more bytes than the header declares and refuses a part whose CRC does not match, and openpyxl reads in read-only mode, one row at a time.
 
 ``read_workbook`` is V04 to V07: the two sheets with their exact names and no other, the eight columns in their order, every cell with its type, at most
@@ -43,7 +43,9 @@ from personaloffers.sources import SourceError, rule
 MAX_COMPRESSION_RATIO = 100          # the real sheets are 7 to 1; a part that is mostly one repeated byte is a thousand to one
 RATIO_FROM_BYTES = 64 * 1024         # a part under this size cannot hurt, whatever its ratio
 MAX_PARTS = 1000
-DTD_SCAN_BYTES = 4096
+DTD_SCAN_CHUNK = 64 * 1024         # the XML parts are scanned for a DTD in blocks of this size, the whole part, never only its start
+DTD_OVERLAP = 4096                 # the end of a block that the next one starts with, so a declaration cut by the edge of two is still seen
+_DTD = re.compile(rb"<!\s*(DOCTYPE|ENTITY)", re.IGNORECASE)
 FORBIDDEN_IN_PART_NAMES = ("vbaproject", "externallink", "activex")   # macros, external links and ActiveX controls, whatever the case of the name
 REQUIRED_PARTS = ("[Content_Types].xml", "xl/workbook.xml")
 CUSTOMER_ID_RANGE = (10_000, 99_999)                  # five digits (V06): the real numbers go from 12346 to 18287, the fixture's from 90001
@@ -79,6 +81,19 @@ class WorkbookCheck:
     max_ratio: float
 
 
+def _declares_dtd(stream: Any) -> bool:
+    """True if the XML in `stream` holds ``<!DOCTYPE`` or ``<!ENTITY`` anywhere. It reads the whole part, in blocks of ``DTD_SCAN_CHUNK``, each one preceded by the last ``DTD_OVERLAP`` bytes
+    of the one before, so that nothing in front of the declaration (a comment, white space, a long processing instruction) hides it and the edge of two blocks does not cut it. The part
+    is never held in memory whole. White space between ``<!`` and the name is allowed by the pattern; more than ``DTD_OVERLAP`` bytes of it is not XML that any parser reads as a declaration."""
+    carry = b""
+    while block := stream.read(DTD_SCAN_CHUNK):
+        data = carry + block
+        if _DTD.search(data):
+            return True
+        carry = data[-DTD_OVERLAP:]
+    return False
+
+
 def inspect_workbook(path: Path, cfg: PipelineConfig) -> WorkbookCheck:
     """V03: refuse a package that is not a plain workbook, before openpyxl opens it (see the module). Writes nothing."""
     path = Path(path)
@@ -111,10 +126,10 @@ def inspect_workbook(path: Path, cfg: PipelineConfig) -> WorkbookCheck:
             if lower.endswith((".xml", ".rels")):
                 try:
                     with archive.open(info) as part:
-                        head = part.read(DTD_SCAN_BYTES)
+                        declares_dtd = _declares_dtd(part)
                 except (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError, RuntimeError) as error:
                     raise rule("V03", f"la parte «{name}» está dañada o no se puede descomprimir ({type(error).__name__})", reason="unreadable", part=name) from error
-                if re.search(rb"<!\s*(DOCTYPE|ENTITY)", head, re.IGNORECASE):
+                if declares_dtd:
                     raise rule("V03", f"la parte «{name}» declara un DTD o una entidad, que un libro de datos no necesita", reason="dtd", part=name)
             largest, total, ratio = max(largest, info.file_size), total + info.file_size, max(ratio, part_ratio)
         names = {info.filename for info in infos}
