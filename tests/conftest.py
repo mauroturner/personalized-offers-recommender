@@ -240,38 +240,67 @@ def sited(exported, tmp_path_factory: pytest.TempPathFactory):
 
 
 @pytest.fixture(scope="session")
-def before_close(workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
-    """The quick replay run by the pipeline itself up to the last weekly delivery, once per session (U18 on): everything but the close. ``cfg`` is its configuration, ``runs`` what each run returned, ``plan`` the plan of
-    deliveries and ``root`` the folder: a test that changes anything copies it with ``tests.fixtures.piped.copy_piped``."""
+def quick_clone(tmp_path_factory: pytest.TempPathFactory):
+    """The quick replay from a clean clone of the project, run once per session (U19; D31's speed unit): ``make-fixture`` and ``replay`` through the command line with ``$PERSONALOFFERS_HOME`` on the clone and the
+    working directory elsewhere, exactly what ``tests/e2e/test_quick_mode.py`` checks, with what the folders held before and after. The clone is also the state of the pipeline tests: ``piped`` is it and ``before_close``
+    is a copy of it taken when the fourth run ended, so the folder of the replay that the tests share is the one that this run made and no other full replay is run for them."""
+    import os
+    import shutil
     import types
+    from unittest import mock
 
     from personaloffers import pipeline
-    from tests.fixtures.configs import config_for
-    from tests.fixtures.worlds import sealed_view_of
+    from personaloffers.config import ENV_CONFIG, ENV_HOME
+    from tests.e2e.cli_helpers import PROJECT_ROOT, cli, fingerprint
+    from tests.fixtures.piped import LOCK_NAME
 
-    from tests.fixtures.piped import write_config_file
+    base = tmp_path_factory.mktemp("quick_clone")
+    clone, elsewhere, before_close = base / "clone", base / "elsewhere", base / "before_close"
+    elsewhere.mkdir()
+    for name in ("config", "docs"):
+        shutil.copytree(PROJECT_ROOT / name, clone / name)
+    shutil.copyfile(PROJECT_ROOT / "README.md", clone / "README.md")
+    runs: list = []
+    real_run_all = pipeline.run_all
 
-    root = tmp_path_factory.mktemp("before_close")
-    write_config_file(root, workbook)
-    cfg = config_for(quick_cfg, workbook, root)
-    from personaloffers import deliveries
+    def run_all_and_keep(cfg, *args, **kwargs):
+        steps = real_run_all(cfg, *args, **kwargs)
+        runs.append(steps)
+        if len(runs) == 4:      # the run of the close is the fifth: what is here now is every delivery but the close
+            shutil.copytree(clone, before_close, copy_function=shutil.copyfile, ignore=shutil.ignore_patterns(LOCK_NAME))
+        return steps
 
-    plan = deliveries.delivery_plan(sealed_view_of(cfg))
-    runs = pipeline.replay(cfg, until=plan[-2].delivery_id)
-    return types.SimpleNamespace(cfg=cfg, runs=runs, plan=plan, root=root)
+    caller = os.getcwd()
+    with mock.patch.dict(os.environ), mock.patch.object(pipeline, "run_all", run_all_and_keep):
+        os.environ[ENV_HOME] = str(clone)
+        os.environ.pop(ENV_CONFIG, None)
+        os.chdir(elsewhere)
+        try:
+            project_before, clone_before, elsewhere_before = fingerprint(PROJECT_ROOT), fingerprint(clone), fingerprint(elsewhere)
+            fixture = cli("make-fixture", "data/quick/online_retail_fixture.zip")
+            replay = cli("replay", "--config", "config/pipeline.quick.toml")
+            project_after, clone_after, elsewhere_after = fingerprint(PROJECT_ROOT), fingerprint(clone), fingerprint(elsewhere)
+        finally:
+            os.chdir(caller)
+    return types.SimpleNamespace(clone=clone, elsewhere=elsewhere, before_close=before_close, runs=runs, fixture=fixture, replay=replay, project_before=project_before, project_after=project_after,
+                                 clone_before=clone_before, clone_after=clone_after, elsewhere_before=elsewhere_before, elsewhere_after=elsewhere_after)
 
 
 @pytest.fixture(scope="session")
-def piped(before_close, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
-    """The whole quick replay, every delivery through every task, once per session (U18 on): the folder of ``before_close`` and the close run on top of it."""
-    import types
+def before_close(quick_clone):
+    """The quick replay run by the pipeline itself up to the last weekly delivery: everything but the close (U18 on). ``cfg`` is its configuration, ``runs`` what each run returned, ``plan`` the plan of deliveries and
+    ``root`` the folder, a clone of the project: a test that changes anything copies it with ``tests.fixtures.piped.copy_piped``."""
+    from tests.fixtures.piped import clone_state
 
-    from personaloffers import pipeline
-    from tests.fixtures.piped import copy_piped
+    return clone_state(quick_clone.before_close, quick_clone.runs[:4])
 
-    made = copy_piped(before_close, workbook, quick_cfg, tmp_path_factory.mktemp("piped"))
-    runs = pipeline.replay(made.cfg)
-    return types.SimpleNamespace(cfg=made.cfg, runs=[*before_close.runs, *runs], plan=before_close.plan, root=made.root)
+
+@pytest.fixture(scope="session")
+def piped(quick_clone):
+    """The whole quick replay, every delivery through every task (U18 on): the clone of ``quick_clone`` after its replay, with the five runs that made it."""
+    from tests.fixtures.piped import clone_state
+
+    return clone_state(quick_clone.clone, quick_clone.runs)
 
 
 @pytest.fixture(scope="session")

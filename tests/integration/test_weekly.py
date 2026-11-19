@@ -303,6 +303,18 @@ def _cut_before_the_transaction(made, monkeypatch, run_key: str = "run-2"):
     return made.models_dir / "R2011-04-04"
 
 
+@pytest.fixture(scope="module")
+def cut_template(launched, workbook, quick_cfg, tmp_path_factory):
+    """The folder of ``_cut_before_the_transaction``, built once for the module (D31's speed unit): four tests start from a second round cut after its artifacts, and each used to emit two rounds to get there."""
+    made = copy_world(launched.root, workbook, quick_cfg, tmp_path_factory.mktemp("cut_template"))
+    try:
+        with pytest.MonkeyPatch.context() as patch:
+            _cut_before_the_transaction(made, patch)
+    finally:
+        made.conn.close()
+    return made.root
+
+
 def _assert_issued_and_verified(made, result) -> None:
     assert result.status == "fresh" and result.lists > 0
     registered = warehouse.registered_models(made.conn, "R2011-04-04")
@@ -313,11 +325,11 @@ def _assert_issued_and_verified(made, result) -> None:
     assert made.conn.execute("SELECT COUNT(*) FROM offer_lists WHERE round_id = 'R2011-04-04'").fetchone()[0] == result.lists
 
 
-def test_a_round_cut_after_its_artifacts_and_before_its_transaction_is_issued_by_the_next_run(launched, workbook, quick_cfg, tmp_path, monkeypatch):
+def test_a_round_cut_after_its_artifacts_and_before_its_transaction_is_issued_by_the_next_run(cut_template, workbook, quick_cfg, tmp_path):
     """The warning of the review of U12: the components were on disk and nothing in the database. The next run issues the round, and what it registers is what is on disk, byte for byte."""
-    made = copy_world(launched.root, workbook, quick_cfg, tmp_path / "cut")
+    made = copy_world(cut_template, workbook, quick_cfg, tmp_path / "cut")
     try:
-        folder = _cut_before_the_transaction(made, monkeypatch)
+        folder = made.models_dir / "R2011-04-04"
         assert folder.is_dir() and len(list(folder.iterdir())) == 2 and made.conn.execute("SELECT COUNT(*) FROM offer_lists WHERE round_id = 'R2011-04-04'").fetchone()[0] == 0
         left = {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
         result = weekly.emit_round(made.conn, made.view, "run-2", cal.monday_of("R2011-04-04"), models_dir=made.models_dir, seal_path=made.seal_path)
@@ -328,12 +340,12 @@ def test_a_round_cut_after_its_artifacts_and_before_its_transaction_is_issued_by
 
 
 @pytest.mark.parametrize("damage", ["other_content", "manifest_missing", "extra_file"])
-def test_a_component_folder_nobody_registered_is_replaced_by_the_next_run_whatever_it_holds(damage, launched, workbook, quick_cfg, tmp_path, monkeypatch):
+def test_a_component_folder_nobody_registered_is_replaced_by_the_next_run_whatever_it_holds(damage, cut_template, workbook, quick_cfg, tmp_path):
     """What a cut leaves is not registered, so nothing depends on it: a folder with other content (a manifest that is not what the round writes), one cut inside its own write (arrays and no
     manifest) or one with a stray file is removed and written again, and the round is issued; it never stays stuck on a folder the database does not know."""
-    made = copy_world(launched.root, workbook, quick_cfg, tmp_path / damage)
+    made = copy_world(cut_template, workbook, quick_cfg, tmp_path / damage)
     try:
-        folder = _cut_before_the_transaction(made, monkeypatch)
+        folder = made.models_dir / "R2011-04-04"
         popularity = folder / "popularity"
         if damage == "other_content":
             manifest = popularity / "artifact.json"

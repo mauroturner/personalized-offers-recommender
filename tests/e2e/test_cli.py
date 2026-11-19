@@ -128,7 +128,8 @@ def case_figures(state, tmp_path):
 
 
 def case_docs_sync(state, tmp_path):
-    readme, dictionary = Path(state.cfg.paths.readme), Path(state.root) / "docs" / "data-dictionary.md"
+    readme = Path(state.cfg.paths.readme)
+    dictionary = readme.parent / "docs" / "data-dictionary.md"      # next to the README, where the command looks for it
     readme.write_text("# Proyecto\n<!-- results:start -->\nviejo\n<!-- results:end -->\nfin\n", encoding="utf-8")
     dictionary.parent.mkdir(parents=True, exist_ok=True)
     from personaloffers.dashboard.semantic_model import MODEL
@@ -237,7 +238,7 @@ def test_a_task_that_fails_exits_1_and_says_why(before, monkeypatch):
     assert result.code == 1 and "falló: ValueError: hubo un problema" in result.err and "Traceback" in result.err
 
 
-def test_a_rejected_delivery_or_source_exits_3(before, tmp_path):
+def test_a_rejected_delivery_or_source_exits_3(before, workbook, tmp_path):
     for task in ("fetch_source", "deliver"):
         assert cli("task", task, "--run-key", "r", "--config", config_of(before)).code == 0
     path = Path(before.cfg.paths.raw_dir) / "deliveries" / "C2011-04-18" / "lines.parquet"
@@ -245,8 +246,7 @@ def test_a_rejected_delivery_or_source_exits_3(before, tmp_path):
     result = cli("task", "validate", "--run-key", "r", "--config", config_of(before))
     assert result.code == 3 and "rechazada" in result.err
     broken = tmp_path / "broken"
-    write_config_file(broken, type("W", (), {"zip_path": before.cfg.source.zip_path, "zip_bytes": before.cfg.source.zip_bytes, "zip_sha256": "0" * 64, "member": before.cfg.source.member,
-                                              "member_bytes": before.cfg.source.member_bytes, "member_sha256": before.cfg.source.member_sha256}))
+    write_config_file(broken, dataclasses.replace(workbook, zip_sha256="0" * 64))      # the same workbook, with a hash that is not its own
     refused = cli("task", "fetch_source", "--config", config_of(type("S", (), {"root": broken})))
     assert refused.code == 3 and "rechazada" in refused.err
 

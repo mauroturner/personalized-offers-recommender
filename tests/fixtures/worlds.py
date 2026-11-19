@@ -42,7 +42,7 @@ def build_launch_template(workbook, quick_cfg, fixture_lines, root: Path) -> Pat
 
 def copy_world(template: Path, workbook, quick_cfg, destination: Path, *, open_warehouse: bool = True) -> types.SimpleNamespace:
     """A copy of a template folder as a world: its configuration (every path under the copy), the sealed view, the plan of deliveries and, open, its warehouse."""
-    shutil.copytree(template, destination, dirs_exist_ok=True)
+    shutil.copytree(template, destination, dirs_exist_ok=True, copy_function=shutil.copyfile)
     cfg = config_for(quick_cfg, workbook, destination)
     view = sealed_view_of(cfg)
     conn = connect(cfg.paths.warehouse) if open_warehouse else None

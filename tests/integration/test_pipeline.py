@@ -41,6 +41,24 @@ def after(piped, workbook, quick_cfg, tmp_path):
     return copy_piped(piped, workbook, quick_cfg, tmp_path / "after")
 
 
+SHARED_KEY = "shared"
+
+
+@pytest.fixture(scope="module")
+def unclosed_template(before_close, workbook, quick_cfg, tmp_path_factory):
+    """The folder in which every delivery but the close was run and the close run ran its first eleven tasks (everything but ``render_dashboard`` and ``report``), once for the module (D31's speed unit): three
+    tests start from a close that has gone this far and each used to run those eleven tasks itself."""
+    made = copy_piped(before_close, workbook, quick_cfg, tmp_path_factory.mktemp("unclosed_template"))
+    pipeline.run_all(made.cfg, run_key=SHARED_KEY, only=list(EXPECTED_TASKS[:11]))
+    return made
+
+
+@pytest.fixture
+def unclosed(unclosed_template, workbook, quick_cfg, tmp_path):
+    """A copy of ``unclosed_template`` for a test that changes it."""
+    return copy_piped(unclosed_template, workbook, quick_cfg, tmp_path / "unclosed")
+
+
 # --- the tasks -----------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -90,10 +108,9 @@ def test_the_run_of_the_close_leaves_every_output_of_the_flow_and_they_say_the_r
     assert site_export.read_site(cfg.paths.site_dir).data["source"]["copies_removed"] == counts["copies_removed"]
 
 
-def test_the_run_stays_running_until_report_closes_it_in_order(before, monkeypatch):
-    cfg = before.cfg
-    key = "close-run"
-    pipeline.run_all(cfg, run_key=key, only=list(EXPECTED_TASKS[:12]))
+def test_the_run_stays_running_until_report_closes_it_in_order(unclosed, monkeypatch):
+    cfg, key = unclosed.cfg, SHARED_KEY
+    pipeline.run_task("render_dashboard", key, cfg)      # the twelfth task: the run has gone through every task but ``report``
     assert state_of(cfg, key)["status"] == "running"
     conn = db(cfg)
     try:
@@ -224,9 +241,8 @@ def test_a_run_with_nothing_to_deliver_ends_after_deliver_as_no_delivery_and_is_
     assert pipeline.replay(after.cfg) == []
 
 
-def test_a_failure_after_load_marks_the_run_failed_and_rewrites_what_was_exported(before, monkeypatch):
-    cfg, key = before.cfg, "failing"
-    pipeline.run_all(cfg, run_key=key, only=list(EXPECTED_TASKS[:11]))
+def test_a_failure_after_load_marks_the_run_failed_and_rewrites_what_was_exported(unclosed, monkeypatch):
+    cfg, key = unclosed.cfg, SHARED_KEY
     assert json.loads((Path(cfg.paths.site_dir) / "summary.json").read_text(encoding="utf-8"))["status"] == "running"
     monkeypatch.setattr(pipeline, "render_design", lambda *a, **k: (_ for _ in ()).throw(RuntimeError(f"boom at {cfg.paths.dashboard_html}")))
     with pytest.raises(RuntimeError, match="boom"):
@@ -252,9 +268,8 @@ def test_a_failure_after_load_marks_the_run_failed_and_rewrites_what_was_exporte
     assert [s["task"] for s in result] == ["render_dashboard", "report"] and state_of(cfg, key)["status"] == "ok", "a failed run is reopened and finished from the task that failed"
 
 
-def test_failure_handler_write_errors_do_not_mask_the_task_error(before, monkeypatch):
-    cfg, key = before.cfg, "masked"
-    pipeline.run_all(cfg, run_key=key, only=list(EXPECTED_TASKS[:11]))
+def test_failure_handler_write_errors_do_not_mask_the_task_error(unclosed, monkeypatch):
+    cfg, key = unclosed.cfg, SHARED_KEY
     monkeypatch.setattr(pipeline, "render_design", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
     original = pipeline._write_state
 
