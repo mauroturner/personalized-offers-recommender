@@ -6,6 +6,7 @@ from __future__ import annotations
 import dataclasses
 
 import pandas as pd
+import pytest
 
 from personaloffers import lines as ln
 
@@ -106,3 +107,42 @@ def test_a_line_without_a_customer_is_never_a_purchase_and_a_purchase_always_has
 def test_the_product_roles_are_the_lines_of_a_basket():
     assert ln.PRODUCT_ROLES == ("purchase", "guest_purchase")
 
+
+
+@pytest.mark.real_data
+def test_the_roles_of_the_first_rows_of_each_real_sheet_follow_the_rule_with_the_codes_the_real_file_has(project_root, quick_cfg):
+    """The first 3,000 rows of each sheet (December 2009 and December 2010: nothing from the test window is read) get their roles: every purchase has a code of five digits and up to
+    three letters, a customer and an invoice that does not start with C or A; the lines of the other roles do not meet that. The counts of the whole file are U21's (AC04)."""
+    import re
+
+    import openpyxl
+
+    from personaloffers import workbook as wb
+
+    book = openpyxl.load_workbook(project_root / "data" / "raw" / "online_retail_II.xlsx", read_only=True, data_only=True)
+    try:
+        raw = {"sheet": [], "source_row": [], **{key: [] for key in wb.RAW_COLUMNS[2:]}}
+        for number, name in enumerate(book.sheetnames, start=1):
+            for row_number, row in enumerate(book[name].iter_rows(min_row=2, max_row=3001, values_only=True), start=1):
+                converted, bad = wb.convert_row(tuple(row))
+                assert not bad
+                raw["sheet"].append(number)
+                raw["source_row"].append(row_number)
+                for key, value in zip(wb.RAW_COLUMNS[2:], converted, strict=True):
+                    raw[key].append(value)
+    finally:
+        book.close()
+    frame = pd.DataFrame({
+        "sheet": raw["sheet"], "source_row": raw["source_row"], "invoice": pd.array(raw["invoice"], dtype="string"), "stock_code": pd.array(raw["stock_code"], dtype="string"),
+        "description": pd.array(raw["description"], dtype="string"), "quantity": raw["quantity"], "invoice_date": pd.Series(raw["invoice_date"], dtype="datetime64[us]"),
+        "price": raw["price"], "customer_id": pd.array(raw["customer_id"], dtype="Int64"), "country": pd.array(raw["country"], dtype="string"),
+    })
+    assert frame["invoice_date"].max() < pd.Timestamp("2011-08-01")
+    roles = ln.assign_roles(frame, quick_cfg)
+    rule = re.compile(quick_cfg.catalogue.product_code_regex)
+    purchases = frame[roles == "purchase"]
+    assert len(purchases) > 3000 and purchases["customer_id"].notna().all()
+    assert all(rule.fullmatch(code) for code in purchases["stock_code"]) and not purchases["invoice"].str.startswith(("C", "A")).any()
+    assert not any(rule.fullmatch(code) for code in frame.loc[roles == "non_product", "stock_code"])
+    assert {"purchase", "cancellation", "non_product", "guest_purchase"} <= set(roles), "the first rows of the real file have each of these roles"
+    assert frame.loc[roles == "cancellation", "invoice"].str.startswith("C").all()
