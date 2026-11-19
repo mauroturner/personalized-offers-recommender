@@ -7,6 +7,7 @@ Reads data/interim/*.json and data/interim/analysis.parquet. Writes data/interim
 Run from any directory:  python -I research/s07_site_claims.py
 """
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -17,7 +18,9 @@ PROJECT = Path(__file__).resolve().parents[1]
 INTERIM = PROJECT / "data" / "interim"
 ANALYSIS = INTERIM / "analysis.parquet"
 OUT = INTERIM / "s07_site_claims.json"
-SITE_FILE = Path("C:/Users/user/Desktop/Proyectos/marca-personal/src/i18n/projects/personal-offers.ts")
+# The site repository sits beside the portfolio; MARCA_PERSONAL overrides that location.
+SITE_ROOT = Path(os.environ.get("MARCA_PERSONAL", PROJECT.parents[1] / "marca-personal"))
+SITE_FILE = SITE_ROOT / "src" / "i18n" / "projects" / "personal-offers.ts"
 COLUMNS = ["Invoice", "StockCode", "Description", "Quantity", "InvoiceDate", "Price", "Customer ID", "Country"]
 
 
