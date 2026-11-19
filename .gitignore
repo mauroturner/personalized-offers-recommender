@@ -1,5 +1,12 @@
-# Generated state of the research (raw download, interim tables, scratch outputs); never versioned
+# Generated state of the research and of the pipeline (raw download, interim tables, warehouse, models, the CRM stand-in's database, the quick mode); never versioned
 data/
+# Per-customer lists and the e-mail CSVs carry customer numbers (decision D30): never versioned
+outputs/private/
+airflow/.env
+airflow/logs/
+airflow/config/
+airflow/plugins/
+reports/validation/history/
 .venv/
 __pycache__/
 .pytest_cache/

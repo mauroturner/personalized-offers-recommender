@@ -1,0 +1,14 @@
+# Development and test dependencies (decisions D32 and D35). pytest-xdist is not pinned (decision D32). httpx, the client of FastAPI's test client, is pinned in
+# requirements.txt. mlxtend is here only for the test that compares the association rules' confidences with its own (D09); scikit-learn, joblib and cloudpickle
+# are its transitive pins.
+-r requirements.txt
+pytest==9.2.0
+mlxtend==0.25.0
+# transitive
+cloudpickle==3.1.2
+iniconfig==2.3.1
+joblib==1.6.0
+narwhals==2.28.0
+pluggy==1.7.0
+pygments==2.21.0
+scikit-learn==1.9.0

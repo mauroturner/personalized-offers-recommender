@@ -1,0 +1,8 @@
+# The service image needs the requirements files, the package, the SQL and the config; everything else is mounted or generated at run time.
+*
+!requirements*.txt
+!src/
+!sql/
+!config/
+**/__pycache__/
+**/*.pyc
