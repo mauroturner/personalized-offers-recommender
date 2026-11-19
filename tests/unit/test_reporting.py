@@ -130,11 +130,11 @@ def test_the_numbers_of_a_text_are_written_the_way_spanish_does():
 
 
 def test_no_threshold_verdict_or_name_of_the_criteria_names_an_effect_of_an_offer():
-    """D16: ``effect``, ``uplift`` and ``lift`` are banned as names; the texts that tell the criteria never say the word of an offer's effect (the criterion C08 is named as the plan names it, about the A/A)."""
+    """D16: ``effect``, ``uplift`` and ``lift`` are banned as names; the texts that tell the criteria never say the word of an offer's effect (C08 is shown as «no marca una diferencia que no existe»)."""
     criteria = list(got().values()) + list(by_id(criteria_of({"variants": 0}, LIMITS)).values())
     for criterion in criteria:
         assert not {f.name for f in dataclasses.fields(Criterion)} & {"effect", "uplift", "lift"}
-        for text in (criterion.threshold_es, criterion.verdict_es, criterion.tested_value_es):
+        for text in (criterion.name_es, criterion.threshold_es, criterion.verdict_es, criterion.tested_value_es):
             assert "lift" not in text.lower() and "aumento" not in text.lower() and "uplift" not in text.lower(), text
             assert "efecto" not in text.lower().replace("menor efecto detectable", ""), text
     assert "efecto" not in "".join(t.threshold_es for t in texts.CRITERIA.values()).lower()

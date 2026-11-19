@@ -216,3 +216,15 @@ def exported(evaluated, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFa
     star.conn.close()
     return star
 
+
+
+@pytest.fixture(scope="session")
+def rendered(exported, tmp_path_factory: pytest.TempPathFactory):
+    """The design of the exported star model written once (U16 on): the ``html`` text and its ``path``."""
+    import types
+
+    from personaloffers.dashboard.render import render_design
+    from personaloffers.dashboard.semantic_model import MODEL
+
+    path = render_design(MODEL, exported.out, tmp_path_factory.mktemp("design") / "powerbi-design.html", exported.run)
+    return types.SimpleNamespace(path=path, html=path.read_text(encoding="utf-8"))

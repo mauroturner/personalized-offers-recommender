@@ -8,6 +8,7 @@ import json
 import shutil
 import sqlite3
 from datetime import datetime
+from html import escape
 from pathlib import Path
 
 import numpy as np
@@ -165,8 +166,8 @@ def test_the_pair_rules_are_the_ones_with_the_highest_lift_and_enough_support_of
         star.conn.close()
 
 
-def test_the_verdict_text_in_the_parquet_is_the_summary_text(exported):
-    """N2 of project 07: what the star model tells of each criterion is what the summary tells."""
+def test_the_verdict_text_in_the_parquet_and_the_design_is_the_summary_text(exported, rendered):
+    """N2 of project 07: what the star model and the design tell of each criterion is what the summary tells, word for word, and the design's table has the column of what the threshold tests."""
     conn = sqlite3.connect(exported.world.warehouse_path)
     try:
         summary = reporting.build_summary(conn, exported.view, seal_path=exported.world.seal_path)
@@ -178,6 +179,8 @@ def test_the_verdict_text_in_the_parquet_is_the_summary_text(exported):
         row = table.loc[(c["criterion_id"], "sealed")]
         assert row["verdict_es"] == c["verdict_es"] and row["tested_value_es"] == c["tested_value_es"] and (row["passed"] is None or bool(row["passed"]) == c["passed"] or (c["passed"] is None and row["passed"] != row["passed"]))
         assert row["seen_by_research"] == c["seen_by_research"] and row["seen_by_planner"] == c["seen_by_planner"]
+        assert escape(c["verdict_es"]) in rendered.html and escape(c["tested_value_es"]) in rendered.html and escape(c["threshold_es"]) in rendered.html, c["criterion_id"]
+    assert "Lo que prueba el umbral" in rendered.html and "<th>Valor</th>" not in rendered.html
 
 
 def test_before_the_close_the_tables_of_the_test_are_empty_and_the_validation_is_there(delivered, workbook, quick_cfg, tmp_path):

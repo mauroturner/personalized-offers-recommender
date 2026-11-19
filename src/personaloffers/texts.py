@@ -31,7 +31,7 @@ CRITERIA: dict[str, CriterionText] = {
     "C05": CriterionText("Cada cliente recibe su propia lista", "cobertura media de las listas de la ronda ≥ {c05}", "sí", "sí"),
     "C06": CriterionText("El grupo de control está equilibrado", "mayor diferencia estandarizada absoluta de las cinco covariables ≤ {c06}", "sí", "sí"),
     "C07": CriterionText("La prueba del experimento está calibrada", "tasa de rechazo de la prueba preregistrada, en 500 sorteos nuevos del control, de M1 y de M2: las dos entre {c07_low} y {c07_high}", "sí", "sí"),
-    "C08": CriterionText("El A/A no muestra un efecto que no existe", "con el control sellado, la prueba preregistrada de M1 y de M2 da, las dos, p ≥ {c08}", "sí", "sí"),
+    "C08": CriterionText("El A/A no marca una diferencia que no existe", "con el control sellado, la prueba preregistrada de M1 y de M2 da, las dos, p ≥ {c08}", "sí", "sí"),
     "C09": CriterionText("Lo entregado al CRM es lo decidido", "el 100 % de las listas entregadas se lee de vuelta igual, ningún cliente del control llega al CRM ni al CSV y repetir la última ronda no crea ningún registro", "no", "no"),
     "C10": CriterionText("Variantes y seguimiento (informativo)", "sin umbral", "en parte", "en parte"),
 }

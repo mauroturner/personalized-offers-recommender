@@ -2,8 +2,8 @@
 ``dashboard/semantic_model.py``.
 
 Tables with their columns (type, description, unit) and relationships (all one to many, single direction, active) live here; the Arrow schema of every Parquet file, the data dictionary and the HTML
-design come from this module. Names of tables, columns and files are in English; descriptions and labels in Spanish (RNF13). The measures (DAX) and the five pages of the report join them in
-``U16``.
+design come from this module. Names of tables, columns and files are in English; descriptions and labels in Spanish (RNF13). The measures (DAX) and the five pages of the report live here too: ``validate_model`` checks the tables and the
+relationships and, for the measures and the pages, that every DAX reference and every field of a visual is a column or a measure of the model, because no measure runs anywhere in the project (risk item 6).
 
 **Privacy (D30).** No table has a column of customer, but the private one: ``fact_offer_customer`` (``private = True``) is written to ``outputs/private/`` and never versioned. A column that counts customers
 is in ``CUSTOMER_COUNT_COLUMNS``: a published cell of it has ``[privacy] min_cell_customers`` or more, and a hidden cell has a ``suppressed`` mark and an empty value.
@@ -11,6 +11,7 @@ is in ``CUSTOMER_COUNT_COLUMNS``: a published cell of it has ``[privacy] min_cel
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Literal
 
@@ -55,12 +56,43 @@ class Relationship:
 
 
 @dataclass(frozen=True)
+class Measure:
+    name_es: str
+    dax: str
+    format_string: str
+    description_es: str
+
+
+@dataclass(frozen=True)
+class Visual:
+    kind: str                     # slicer, card, table, barChart, lineChart
+    title_es: str
+    fields: tuple[str, ...]       # "table[column]" or "[Measure]"
+    x: int
+    y: int
+    w: int
+    h: int
+
+
+@dataclass(frozen=True)
+class Page:
+    name_es: str
+    visuals: tuple[Visual, ...]
+    note_es: str = ""
+
+
+@dataclass(frozen=True)
 class SemanticModel:
     tables: tuple[Table, ...]
     relationships: tuple[Relationship, ...]
+    measures: tuple[Measure, ...] = ()
+    pages: tuple[Page, ...] = ()
 
     def table(self, name: str) -> Table:
         return next(t for t in self.tables if t.name == name)
+
+    def measure(self, name: str) -> Measure:
+        return next(m for m in self.measures if m.name_es == name)
 
     @property
     def public(self) -> tuple[Table, ...]:
@@ -207,7 +239,100 @@ RELATIONSHIP_SPEC = {
     "R19": ("dim_criterion", "fact_evaluation_summary", "criterion_key"), "R20": ("dim_pipeline_run", "fact_validation", "run_key"),
 }
 RELATIONSHIPS = tuple(Relationship(rel_id, dim, next(t for t in DIMENSIONS if t.name == dim).key[0], fact, column) for rel_id, (dim, fact, column) in RELATIONSHIP_SPEC.items())
-MODEL = SemanticModel(tables=(*DIMENSIONS, *FACTS), relationships=RELATIONSHIPS)
+PAGE_COLUMNS, PAGE_ROWS = 12, 9
+
+# --- the measures and the pages (plan section 20; U16) --------------------------------------------------------------------------------------------------------------
+
+INTEGER, PERCENT, DECIMAL_3, DATETIME_FORMAT, TEXT_FORMAT = "#,0", "0.0%", "0.000", "yyyy-mm-dd hh:mm", "@"
+_S = 'seal_state] = "sealed"'
+LEGEND = "Sin ofertas reales: el archivo no permite medir el efecto de una oferta"
+
+
+def _sealed(table: str) -> str:
+    return f'{table}[{_S}'
+
+
+MEASURES: tuple[Measure, ...] = (
+    Measure("Clientes en la base", "SUM ( fact_round_ops[base] )", INTEGER, "Clientes de la base de las rondas elegidas; una celda con menos clientes que el mínimo está vacía y no suma."),
+    Measure("Reciben oferta", "SUM ( fact_round_ops[offer] )", INTEGER, "De ellos, los que reciben la lista."),
+    Measure("Grupo de control", "SUM ( fact_round_ops[control] )", INTEGER, "Los que quedaron apartados: su lista se arma y no se entrega."),
+    Measure("Listas entregadas", "SUM ( fact_round_ops[delivered] )", INTEGER, "Listas que llegaron al CRM y se leyeron de vuelta iguales."),
+    Measure("Parte de reserva", "AVERAGE ( fact_round_ops[fallback_share] )", PERCENT, "Parte de los productos de las listas que son de la reserva (lo más vendido de 28 días)."),
+    Measure("Acierto (hit@10)", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[hit_rate] ), {_sealed('fact_method_total')} )", PERCENT,
+            "hit@10 de la prueba de un método y una variante: la parte de los clientes que compraron con al menos un producto de la lista comprado en la semana."),
+    Measure("Acierto por ronda", f"CALCULATE ( AVERAGE ( fact_method_round[hit_rate] ), {_sealed('fact_method_round')} )", PERCENT, "hit@10 de cada ronda: la media de las rondas elegidas, con la configuración sellada."),
+    Measure("Límite inferior", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[ci_low] ), {_sealed('fact_method_total')} )", PERCENT, "Límite inferior del intervalo del 95 % del hit@10 (remuestreo por cliente)."),
+    Measure("Límite superior", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[ci_high] ), {_sealed('fact_method_total')} )", PERCENT, "Límite superior del intervalo del 95 % del hit@10."),
+    Measure("Recall (recall@10)", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[recall] ), {_sealed('fact_method_total')} )", PERCENT, "Productos de la lista comprados sobre productos distintos comprados."),
+    Measure("Precisión (precisión@10)", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[precision] ), {_sealed('fact_method_total')} )", PERCENT, "Productos de la lista comprados sobre diez."),
+    Measure("NDCG (NDCG@10)", f"CALCULATE ( SELECTEDVALUE ( fact_method_total[ndcg] ), {_sealed('fact_method_total')} )", PERCENT, "Acierto con descuento por el lugar de la lista."),
+    Measure("Cobertura", f"CALCULATE ( AVERAGE ( fact_method_round[coverage] ), {_sealed('fact_method_round')} )", DECIMAL_3,
+            "Productos distintos de las listas de la ronda sobre los comprados en los 365 días anteriores, media de las rondas elegidas."),
+    Measure("Acierto solo nuevos", f'CALCULATE ( SELECTEDVALUE ( fact_method_total[hit_rate] ), {_sealed("fact_method_total")}, fact_method_total[variant_key] = "new_only" )', PERCENT,
+            "hit@10 de la prueba con la lista armada solo con productos que el cliente nunca compró."),
+    Measure("Acierto por segmento", f"CALCULATE ( SELECTEDVALUE ( fact_segment[hit_rate] ), {_sealed('fact_segment')} )", PERCENT, "hit@10 de la prueba de un método y una variante en un segmento; una celda con pocos clientes está vacía."),
+    Measure("Ofrecido a", "SUM ( fact_offer_product[offered_to] )", INTEGER, "Clientes del grupo de oferta a los que la lista les puso el producto."),
+    Measure("Comprado por", "SUM ( fact_offer_product[bought_by] )", INTEGER, "De ellos, los que lo compraron en la semana; una celda con menos clientes que el mínimo está vacía."),
+    Measure("Diferencia estandarizada", f"CALCULATE ( SELECTEDVALUE ( fact_balance[smd] ), {_sealed('fact_balance')} )", DECIMAL_3, "Diferencia estandarizada de una covariable entre el grupo de oferta y el de control."),
+    Measure("Mayor diferencia estandarizada", f"CALCULATE ( MAXX ( fact_balance, ABS ( fact_balance[smd] ) ), {_sealed('fact_balance')} )", DECIMAL_3,
+            "La mayor diferencia estandarizada absoluta de las cinco covariables: lo que mira el criterio C06."),
+    Measure("Rechazo del A/A", f'CALCULATE ( SELECTEDVALUE ( fact_experiment[calibration_rejection] ), fact_experiment[test] = "preregistered", {_sealed("fact_experiment")} )', PERCENT,
+            "Parte de los sorteos nuevos del control que la prueba preregistrada rechazó con p menor que 0,05 (debe estar entre 3,1 % y 6,9 %)."),
+    Measure("p del A/A", f'CALCULATE ( SELECTEDVALUE ( fact_experiment[aa_p] ), fact_experiment[test] = "preregistered", {_sealed("fact_experiment")} )', DECIMAL_3,
+            "p de la prueba preregistrada con el control sellado, sin ninguna oferta."),
+    Measure("Menor efecto detectable", f"CALCULATE ( SELECTEDVALUE ( fact_mde[mde] ), {_sealed('fact_mde')} )", DECIMAL_3,
+            "Menor diferencia que una operación de este tamaño podría ver: en M1, parte de las semanas con compra; en M2, libras. No es un resultado."),
+    Measure("Veredicto", f"CALCULATE ( SELECTEDVALUE ( fact_evaluation_summary[verdict_es] ), {_sealed('fact_evaluation_summary')} )", TEXT_FORMAT, "Veredicto de un criterio con la configuración sellada."),
+    Measure("Última fecha de cálculo", 'CALCULATE ( MAX ( dim_pipeline_run[as_of] ), dim_pipeline_run[status] = "ok" )', DATETIME_FORMAT, "Instante de cálculo de la última corrida terminada bien."),
+    Measure("Reglas bloqueantes fallidas", 'CALCULATE ( COUNTROWS ( fact_validation ), fact_validation[severity] = "bloqueante", fact_validation[status] = "falla" )', INTEGER,
+            "Resultados de reglas bloqueantes que fallaron, en las corridas cargadas."),
+)
+
+NOT_FILTERED = " (no lo filtra{plural} {names})"
+SEGMENT_NOTE = NOT_FILTERED.format(plural="", names="el segmento")
+PAGES: tuple[Page, ...] = (
+    Page("Las ofertas de la semana", (
+        Visual("slicer", "Ronda", ("dim_round[round_key]",), 0, 0, 6, 1),
+        Visual("slicer", "Segmento", ("dim_segment[label_es]",), 6, 0, 6, 1),
+        Visual("card", "Clientes en la base" + SEGMENT_NOTE, ("[Clientes en la base]",), 0, 1, 2, 1),
+        Visual("card", "Reciben oferta" + SEGMENT_NOTE, ("[Reciben oferta]",), 2, 1, 2, 1),
+        Visual("card", "Grupo de control" + SEGMENT_NOTE, ("[Grupo de control]",), 4, 1, 2, 1),
+        Visual("card", "Listas entregadas" + SEGMENT_NOTE, ("[Listas entregadas]",), 6, 1, 3, 1),
+        Visual("card", "Parte de reserva" + SEGMENT_NOTE, ("[Parte de reserva]",), 9, 1, 3, 1),
+        Visual("barChart", "Clientes que reciben la lista y clientes de control, por ronda" + SEGMENT_NOTE, ("dim_round[round_key]", "[Reciben oferta]", "[Grupo de control]"), 0, 2, 6, 7),
+        Visual("table", "Los productos más ofrecidos, por origen" + SEGMENT_NOTE, ("dim_product[description_es]", "dim_source[label_es]", "[Ofrecido a]", "[Comprado por]"), 6, 2, 6, 7),
+    )),
+    Page("La lista contra las líneas base", (
+        Visual("slicer", "Variante", ("dim_variant[label_es]",), 0, 0, 6, 1),
+        Visual("slicer", "Segmento", ("dim_segment[label_es]",), 6, 0, 6, 1),
+        Visual("barChart", "Acierto de cada método, con su intervalo" + SEGMENT_NOTE, ("dim_method[label_es]", "[Acierto (hit@10)]", "[Límite inferior]", "[Límite superior]"), 0, 1, 6, 4),
+        Visual("lineChart", "Acierto por ronda de cada método" + SEGMENT_NOTE, ("dim_round[round_key]", "dim_method[label_es]", "[Acierto por ronda]"), 6, 1, 6, 4),
+        Visual("table", "Recall, precisión y NDCG de cada método" + SEGMENT_NOTE, ("dim_method[label_es]", "[Recall (recall@10)]", "[Precisión (precisión@10)]", "[NDCG (NDCG@10)]"), 0, 5, 6, 4),
+        Visual("barChart", "Acierto por segmento", ("dim_segment[label_es]", "dim_method[label_es]", "[Acierto por segmento]"), 6, 5, 6, 4),
+    )),
+    Page("Productos nuevos y cobertura", (
+        Visual("barChart", "Acierto solo con productos nuevos, de cada método", ("dim_method[label_es]", "[Acierto solo nuevos]"), 0, 0, 6, 4),
+        Visual("barChart", "Cobertura de las listas de cada método", ("dim_method[label_es]", "[Cobertura]"), 6, 0, 6, 4),
+        Visual("table", "La elección de la receta en la validación", ("fact_choice[candidate]", "fact_choice[val_hit_new]", "fact_choice[val_coverage]", "fact_choice[kept]", "fact_choice[chosen]",
+                                                                     "fact_choice[fit_rounds]"), 0, 4, 6, 5),
+        Visual("table", "Las reglas de pares con mayor rule_lift", ("fact_rule[antecedent_es]", "fact_rule[consequent_es]", "fact_rule[support]", "fact_rule[confidence]", "fact_rule[rule_lift]"), 6, 4, 6, 5),
+    )),
+    Page("El grupo de control, listo para medir", (
+        Visual("card", "Mayor diferencia estandarizada", ("[Mayor diferencia estandarizada]",), 0, 0, 4, 1),
+        Visual("table", "El equilibrio del control, covariable por covariable", ("dim_covariate[label_es]", "dim_covariate[unit_es]", "fact_balance[offer_mean]", "fact_balance[control_mean]", "[Diferencia estandarizada]"), 0, 1, 12, 3),
+        Visual("table", "El A/A del control sellado: p y rechazo de la calibración", ("fact_experiment[metric]", "[p del A/A]", "[Rechazo del A/A]"), 0, 4, 6, 5),
+        Visual("table", "Lo que una operación de este tamaño podría ver", ("fact_mde[metric]", "fact_mde[holdout_share]", "[Menor efecto detectable]"), 6, 4, 6, 5),
+    ), "Esto no es un efecto: sin ofertas en el archivo, la diferencia entre los dos grupos es ruido. Las cifras dicen cómo quedó armado el control y qué tamaño de diferencia podría verse con una operación real."),
+    Page("La prueba y la calidad de datos", (
+        Visual("table", "Criterios C01-C10", ("dim_criterion[criterion_key]", "dim_criterion[name_es]", "dim_criterion[threshold_es]", "fact_evaluation_summary[tested_value_es]",
+                                               "fact_evaluation_summary[seen_by_research]", "fact_evaluation_summary[seen_by_planner]", "[Veredicto]"), 0, 0, 12, 4),
+        Visual("card", "Reglas bloqueantes fallidas", ("[Reglas bloqueantes fallidas]",), 0, 4, 6, 1),
+        Visual("card", "Última fecha de cálculo", ("[Última fecha de cálculo]",), 6, 4, 6, 1),
+        Visual("table", "Reglas de validación", ("fact_validation[rule_id]", "fact_validation[name_es]", "fact_validation[severity]", "fact_validation[rows_affected]", "fact_validation[status]"), 0, 5, 6, 4),
+        Visual("table", "Corridas", ("dim_pipeline_run[run_key]", "dim_pipeline_run[delivery_id]", "dim_pipeline_run[as_of]", "dim_pipeline_run[status]", "dim_pipeline_run[message]"), 6, 5, 6, 4),
+    )),
+)
+MODEL = SemanticModel(tables=(*DIMENSIONS, *FACTS), relationships=RELATIONSHIPS, measures=MEASURES, pages=PAGES)
 
 # the columns that count customers: a published cell of them has ``[privacy] min_cell_customers`` or more (D30); the first of each table decides whether the cell is hidden
 CUSTOMER_COUNT_COLUMNS = {
@@ -249,4 +374,117 @@ def validate_model(model: SemanticModel) -> list[str]:
         problems += [f"{name}: la columna {c} que cuenta clientes no existe" for c in columns if name not in tables or c not in tables[name].column_names]
         if name in tables and "suppressed" not in tables[name].column_names:
             problems.append(f"{name}: cuenta clientes y no tiene la marca suppressed")
+    return problems + _measure_problems(model) + _page_problems(model)
+
+
+# --- the static checks that stand in for running the measures (risk item 6: no DAX runs anywhere in the project) --------------------------------------------------------------------------
+
+_COLUMN_REF = re.compile(r"(?<![\w'])([A-Za-z_]\w*)\[(\w+)\]")
+_MEASURE_REF = re.compile(r"(?<![\w\]'])\[([^\[\]]+)\]")
+_FUNCTION_CALL = re.compile(r"\b([A-Z][A-Z0-9.]*)(?=\s*\()")
+_LITERAL_COMPARISON = re.compile(r'\b([a-z_]\w*)\[(\w+)\]\s*=\s*"([^"]*)"')
+_REMOVES_FILTERS = re.compile(r"\b(ALL|ALLEXCEPT|ALLSELECTED|REMOVEFILTERS|CROSSFILTER|USERELATIONSHIP|KEEPFILTERS)\b")
+DAX_FUNCTIONS = frozenset({"CALCULATE", "COUNTROWS", "DISTINCTCOUNT", "DIVIDE", "MAX", "MAXX", "ABS", "SELECTEDVALUE", "SUM", "SUMX", "NOT", "ISBLANK", "TRUE", "AVERAGE"})
+
+
+def dax_column_refs(dax: str) -> set[tuple[str, str]]:
+    """The ``table[column]`` references of a DAX expression."""
+    return set(_COLUMN_REF.findall(dax))
+
+
+def dax_measure_refs(dax: str) -> set[str]:
+    """The ``[Measure]`` references of a DAX expression: a bracket not attached to a table."""
+    return set(_MEASURE_REF.findall(dax))
+
+
+def visual_tables(model: SemanticModel, visual: Visual) -> set[str]:
+    """The tables a visual reads: those of its columns and, through the DAX of its measures and of the measures they name, those the measures name by a column or whole."""
+    found: set[str] = set()
+    pending, seen = list(visual.fields), set()
+    while pending:
+        field = pending.pop()
+        if field.startswith("["):
+            name = field[1:-1]
+            measure = next((m for m in model.measures if m.name_es == name), None)
+            if measure is not None and name not in seen:
+                seen.add(name)
+                found |= {t.name for t in model.tables if re.search(rf"\b{t.name}\b", measure.dax)}
+                pending += [f"[{n}]" for n in dax_measure_refs(measure.dax)]
+        else:
+            found.add(field.split("[")[0])
+    return {t for t in found if any(table.name == t for table in model.tables)}
+
+
+def _field_problem(model: SemanticModel, field: str) -> str | None:
+    """Why the field of a visual does not resolve, or None."""
+    if field.startswith("["):
+        return None if any(f"[{m.name_es}]" == field for m in model.measures) else f"la medida {field} no existe"
+    match = re.fullmatch(r"([A-Za-z_]\w*)\[(\w+)\]", field)
+    if match is None:
+        return f"el campo {field!r} no es una columna ni una medida"
+    table, column = match.groups()
+    return None if any(t.name == table and column in t.column_names for t in model.tables) else f"la columna {field} no existe"
+
+
+def _measure_problems(model: SemanticModel) -> list[str]:
+    problems: list[str] = []
+    names = [m.name_es for m in model.measures]
+    problems += [f"la medida [{n}] está repetida" for n in sorted({n for n in names if names.count(n) > 1})]
+    columns = {t.name: {c.name: c for c in t.columns} for t in model.tables}
+    uses: dict[str, set[str]] = {}
+    for m in model.measures:
+        label = f"[{m.name_es}]"
+        if m.dax.count("(") != m.dax.count(")"):
+            problems.append(f"{label}: paréntesis sin cerrar en el DAX")
+        if m.dax.count('"') % 2:
+            problems.append(f"{label}: comillas sin cerrar en el DAX")
+        problems += [f"{label}: {t}[{c}] no existe" for t, c in sorted(dax_column_refs(m.dax)) if c not in columns.get(t, {})]
+        problems += [f"{label}: {w} no es una tabla" for w in sorted(set(re.findall(r"\b(?:dim|fact)_\w+", m.dax)) - set(columns))]
+        problems += [f"{label}: la función {f} no es de las que usa el plan" for f in sorted(set(_FUNCTION_CALL.findall(m.dax)) - DAX_FUNCTIONS)]
+        uses[m.name_es] = dax_measure_refs(m.dax)
+        problems += [f"{label}: la medida [{r}] no existe o es ella misma" for r in sorted(uses[m.name_es]) if r not in names or r == m.name_es]
+        for table, column, literal in _LITERAL_COMPARISON.findall(m.dax):
+            if column in columns.get(table, {}) and literal not in columns[table][column].description_es:
+                problems.append(f"{label}: compara {table}[{column}] con '{literal}', que la columna no toma")
+        problems += [f"{label}: {w} quita los filtros de los segmentadores" for w in sorted(set(_REMOVES_FILTERS.findall(m.dax)))]
+        if not m.format_string or not m.description_es:
+            problems.append(f"{label}: necesita un formato y una descripción")
+
+    def circle(name: str, path: tuple[str, ...]) -> bool:
+        return name in path or any(circle(n, (*path, name)) for n in uses.get(name, ()) if n in uses and n != name)
+
+    problems += [f"las medidas [{n}] se llaman en círculo" for n in sorted(uses) if any(circle(r, (n,)) for r in uses[n] if r in uses and r != n)]
+    return problems
+
+
+def _page_problems(model: SemanticModel) -> list[str]:
+    problems: list[str] = []
+    titles = [p.name_es for p in model.pages]
+    problems += [f"página repetida: {t}" for t in sorted({t for t in titles if titles.count(t) > 1})]
+    related = {(r.dim_table, r.fact_table) for r in model.relationships}
+    kinds = {t.name: t.kind for t in model.tables}
+    for page in model.pages:
+        if not page.visuals:
+            problems.append(f"{page.name_es}: sin visuales")
+        taken: dict[tuple[int, int], str] = {}
+        for v in page.visuals:
+            label = f"{page.name_es}: {v.title_es}"
+            problems += [f"{label}: {why}" for field in v.fields if (why := _field_problem(model, field)) is not None]
+            if v.kind == "slicer" and (len(v.fields) != 1 or v.fields[0].startswith("[")):
+                problems.append(f"{label}: un segmentador usa una sola columna")
+            tables = visual_tables(model, v)
+            dims, facts = sorted(t for t in tables if kinds[t] == "dimension"), sorted(t for t in tables if kinds[t] == "fact")
+            if len(facts) >= 2 and not dims:
+                problems.append(f"{label}: dos hechos sin una dimensión que los una")
+            if len(dims) >= 2 and not facts:
+                problems.append(f"{label}: dos dimensiones sin un hecho que las una")
+            problems += [f"{label}: {d} y {f} no se unen por ninguna relación" for d in dims for f in facts if (d, f) not in related]
+            if v.w < 1 or v.h < 1 or v.x < 0 or v.y < 0 or v.x + v.w > PAGE_COLUMNS or v.y + v.h > PAGE_ROWS:
+                problems.append(f"{label}: sale de la grilla de {PAGE_COLUMNS} x {PAGE_ROWS}")
+                continue
+            cells = [(cx, cy) for cx in range(v.x, v.x + v.w) for cy in range(v.y, v.y + v.h)]
+            clash = next((taken[c] for c in cells if c in taken), None)
+            if clash is not None:
+                problems.append(f"{label}: se superpone con {clash}")
+            taken.update({c: v.title_es for c in cells})
     return problems
