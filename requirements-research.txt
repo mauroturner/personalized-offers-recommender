@@ -1,0 +1,20 @@
+# Research environment for 08-Ecommerce-Personal-Offers (docs/research.md). Installed in 08-Ecommerce-Personal-Offers/.venv
+# with Python 3.11.1 on Windows 10 (CPU only; no GPU is needed for these baselines).
+# Every pin is at least two weeks old on the access date 2026-11-19 (no release uploaded after 2026-11-05).
+# Licences (checked on the access date): pandas BSD-3-Clause, numpy BSD-3-Clause, pyarrow Apache-2.0,
+# openpyxl MIT, mlxtend BSD-3-Clause (repository file LICENSE-BSD3.txt), implicit MIT (GitHub API),
+# scipy BSD-3-Clause, scikit-learn BSD-3-Clause, matplotlib PSF-style (matplotlib license).
+pandas==3.1.0
+# numpy 2.5.x and scipy 1.18.x need Python 3.12; this machine has 3.11.1, so the newest 3.11 builds are pinned
+numpy==2.4.6
+pyarrow==26.0.0
+# Reads the .xlsx file of Online Retail II (s01)
+openpyxl==3.1.5
+# Association rules: support, confidence and lift (s03, the site's market basket analysis)
+mlxtend==0.25.0
+# Implicit-feedback ALS and item-item kNN (s03); the site's recommendation baseline
+implicit==0.7.3
+# Dependencies of mlxtend and implicit, pinned for reproducibility
+scipy==1.17.1
+scikit-learn==1.9.0
+matplotlib==3.11.1

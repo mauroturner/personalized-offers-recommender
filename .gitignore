@@ -1,0 +1,6 @@
+# Generated state of the research (raw download, interim tables, scratch outputs); never versioned
+data/
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
