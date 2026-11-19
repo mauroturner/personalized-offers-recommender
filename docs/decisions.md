@@ -27,7 +27,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `sources.py`, `workbook.py`; V01-V07; runbook R1 y R2; README «Cómo correrlo».
 - **Quién**: agente de planificación.
 - **Estado**: vigente; una descarga en el paquete no se pide.
-- **Nota (2026-11-19, U04)**: V03 agrega a lo decidido tres comprobaciones que no cambian el contrato: ninguna parte con nombre que salga del archivo, ninguna parte cifrada y ningún DTD ni entidad en las primeras 4.096 bytes de una parte XML. Con el archivo real, las dos hojas pesan 156.346.796 y 160.448.656 bytes descomprimidas a razón de 7,0, así que `max_part_bytes = 400.000.000` queda (2,5 veces la mayor) y el tope de razón es 100 a 1 para partes de 64 KiB o más (una parte de ceros se comprime mil a uno). Cada celda se convierte como la entrega openpyxl en el archivo real (verificado en las primeras 3.000 filas de cada hoja, de 2009 y 2010): factura y código como número o texto, descripción y país como texto (un número se guarda como su texto), cantidad entera, precio decimal o entero, cliente entero de cinco dígitos o vacío. `line_key` es hoja por 10.000.000 más la fila de la hoja. El rol de cada línea (RF04) es de U05: `lines.parquet` de U04 trae las líneas sin rol.
+- **Nota (2026-11-19, U04)**: V03 agrega a lo decidido tres comprobaciones que no cambian el contrato: ninguna parte con nombre que salga del archivo, ninguna parte cifrada y ningún DTD ni entidad en una parte XML (se lee entera, por bloques de 64 KiB que se solapan 4.096 bytes; la primera versión miraba solo los primeros 4.096 bytes y un comentario delante de la declaración la escondía: la revisión de U04 lo encontró y se corrigió antes de U09). Con el archivo real, las dos hojas pesan 156.346.796 y 160.448.656 bytes descomprimidas a razón de 7,0, así que `max_part_bytes = 400.000.000` queda (2,5 veces la mayor) y el tope de razón es 100 a 1 para partes de 64 KiB o más (una parte de ceros se comprime mil a uno). Cada celda se convierte como la entrega openpyxl en el archivo real (verificado en las primeras 3.000 filas de cada hoja, de 2009 y 2010): factura y código como número o texto, descripción y país como texto (un número se guarda como su texto), cantidad entera, precio decimal o entero, cliente entero de cinco dígitos o vacío. `line_key` es hoja por 10.000.000 más la fila de la hoja. El rol de cada línea (RF04) es de U05: `lines.parquet` de U04 trae las líneas sin rol.
 
 ## D03 Copias, repeticiones y roles: se quitan las 22.523 copias del solapamiento, se marcan las 11.812 repeticiones internas y las anulaciones no se descuentan de las compras
 
@@ -98,6 +98,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `recommend/*`; `requirements*.txt`; AC11; el sitio (filas 9 y 10).
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U09)**: las reglas se cuentan con una matriz de coocurrencia dispersa (`B.T @ B` de las facturas por los productos), no con una densa de 4.600 por 4.600: la prueba contra mlxtend (`fpgrowth` y `association_rules` con `max_len = 2`) da las mismas parejas y las mismas confianzas y lifts a 1 × 10⁻⁹ en el accesorio. Los modelos de implicit se piden con un hilo, sin GPU y sin el aviso `ParameterWarning` (dice, con la ruta de su propio archivo, que convirtió una matriz a CSR). Los módulos comparten una `RoundData` (`recommend/context.py`, que el plan no nombraba) que arma una vez el catálogo, lo que compró cada cliente, las cuentas de popularidad y el orden de desempate de una ronda, y que guarda sin volver a armarlas la matriz de clientes por productos y las cuentas de pares.
 
 ## D10 La lista que se entrega: hasta 7 productos de la propia recompra, el resto nuevos del modelo elegido y la reserva de lo más vendido de 28 días
 
@@ -118,6 +119,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `launch.py`, `weekly.py`; `model_registry`; AC17.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U09)**: el desempate no suma un número pequeño al puntaje (la investigación sumaba `popularidad / máximo × 10⁻⁶`, que con puntajes de otra escala puede no desempatar o desempatar de más). Cada puntaje `float32` se vuelve un entero que lo ordena exactamente (el `-0,0` es `0,0`, una unidad del último lugar es una diferencia) y debajo va el lugar del producto en el orden fijo: nunca dos claves de una fila son iguales y el orden no depende del orden de las columnas. Un catálogo de 65.535 productos o más no cabe (el real tiene unos 4.600) y es un error.
 
 ## D12 La elección: 48 candidatas medidas solo en las 13 rondas de validación, por hit@10 solo nuevos, con una tolerancia de medio punto a favor de la cobertura
 
@@ -138,6 +140,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `recommend/artifacts.py`; AC15; runbook R6.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U09)**: el manifiesto `artifact.json` lleva la versión, los parámetros y el tamaño y la huella de cada `.npy`, y se escribe al final; la huella que `model_registry` guarda es la del manifiesto. Al leer, se compara esa huella antes de leer nada; un nombre que no sea un `.npy` simple (un `.pkl`, un `.npz`, una ruta) se rechaza por su nombre aunque el manifiesto lo liste; un archivo de la carpeta que el manifiesto no lista también; y `numpy.load` corre con `allow_pickle=False`. Escribir otra vez lo mismo no cambia nada; escribir otro contenido en una carpeta con su manifiesto es un error (lo registrado no se reescribe).
 
 ## D14 El grupo de control: 20 % de la cohorte del lanzamiento, estratificado por recencia, frecuencia y la marca mayorista, sorteado una vez; los que entran después por una función hash; persistente; con lista que nunca se entrega
 

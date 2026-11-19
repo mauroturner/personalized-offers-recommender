@@ -1,6 +1,6 @@
-"""No information from the future (U07; RF08, AC07; decision D23): the base of a round and its covariates are the same, bit for bit, if every line from its Monday on is removed or
-changed; a function that is given one such line refuses; and the modules that compute them have no way to read the lines by themselves. U09 and U12 add the recommenders and the
-lists to this file."""
+"""No information from the future (U07 and U09; RF08, RF10, AC07, AC13; decision D23): the base of a round and its covariates, and the recommenders and the lists of the round, are
+the same, bit for bit, if every line from its Monday on is removed or changed; a function that is given one such line refuses; and the modules that compute them have no way to read
+the lines by themselves. U12 adds the lists the weekly task emits and the baselines to this file."""
 
 from __future__ import annotations
 
@@ -12,12 +12,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from personaloffers import base
+from personaloffers import base, offers
 from personaloffers import calendar as cal
 from personaloffers.base import LeakageError
+from personaloffers.recommend import blend, context, factor, popularity, repeats, rules
 
 SRC = Path(__file__).resolve().parents[2] / "src" / "personaloffers"
-CALCULATIONS = ("base.py", "holdout.py")      # the modules whose results enter a sealed value; U09 adds the recommenders
+CALCULATIONS = ("base.py", "holdout.py", "offers.py", "recommend/popularity.py", "recommend/repeats.py", "recommend/rules.py", "recommend/factor.py",
+                "recommend/blend.py", "recommend/context.py")      # the modules whose results enter a sealed value; the model files (artifacts.py) compute nothing
 
 
 def bytes_of(frame: pd.DataFrame) -> bytes:
@@ -106,3 +108,78 @@ def test_the_two_functions_that_read_the_history_call_the_guard_and_the_table_ca
     calls = {name: {n.func.id for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)} for name, node in functions.items()}
     assert "check_no_leak" in calls["contact_base"] and "check_no_leak" in calls["covariates"]
     assert {"contact_base", "covariates"} <= calls["base_table"]
+
+
+# --- U09: the recommenders and the list --------------------------------------------------------------------------------------------------------------
+
+
+def lists_for(lines: pd.DataFrame, monday, view) -> bytes:
+    """What the tasks of a round do with the cut history: the shared data of the round, the discovery scores of three recipes (one of each model) and the list built from each; every
+    array with all its bytes."""
+    history = base.history_before(lines, monday)
+    customers = base.contact_base(history, monday, view)["customer_id"].to_numpy()
+    data = context.prepare(history, monday, customers, view)
+    parts = [data.customers.tobytes(), "\n".join(data.codes).encode(), data.seen.tobytes(), data.repeat.tobytes(), data.popularity.tobytes(), data.recent.tobytes(),
+             data.trend.tobytes(), data.tie_rank.tobytes(), data.fallback.tobytes()]
+    cache: dict = {}
+    for recipe in (blend.Recipe("als", 8, 1.0, regularization=0.1), blend.Recipe("cosine", 20, 0.5), blend.Recipe("rules", 3, 1.0)):
+        discovery = blend.discovery_scores(data, recipe, view, cache=cache)
+        products, origins = offers.build_list(data.repeat, discovery, data.seen, data.fallback, view, tie_rank=data.tie_rank)
+        parts += [discovery.tobytes(), products.tobytes(), origins.tobytes()]
+    return b"\x00".join(parts)
+
+
+def test_the_recommenders_and_the_list_are_identical_when_every_line_from_the_monday_is_removed(fixture_lines, quick_view, quick_cfg):
+    """AC13: the popularity, the repeats, the three models' scores and the lists of a round are the same bytes with the whole file, with every line from the Monday on removed, and with
+    every one of those lines changed (quantity, price, customer and time)."""
+    calendar = quick_cfg.calendar
+    for monday in (calendar.validation_last_round, calendar.test_first_round, calendar.test_last_round):
+        midnight = datetime.combine(monday, datetime.min.time())
+        everything = lists_for(fixture_lines, monday, quick_view)
+        truncated = lists_for(fixture_lines[fixture_lines["invoice_date"] < midnight], monday, quick_view)
+        changed = fixture_lines.copy()
+        later = changed["invoice_date"] >= midnight
+        assert later.sum() > 30
+        changed.loc[later, "quantity"] = changed.loc[later, "quantity"] * 7 + 1
+        changed.loc[later, "price"] = changed.loc[later, "price"] * 3 + 0.5
+        changed.loc[later, "customer_id"] = pd.array(changed.loc[later, "customer_id"].astype("Int64") + 1000, dtype="Int64")
+        changed.loc[later, "invoice_date"] = changed.loc[later, "invoice_date"] + pd.Timedelta(hours=5)
+        assert everything == truncated == lists_for(changed, monday, quick_view), monday
+        assert len(everything) > 50_000
+
+
+def test_a_recommender_given_a_line_of_its_round_raises(fixture_lines, quick_view, quick_cfg):
+    """M01 (D23): every function of the recommenders that reads the history refuses the whole file given to a round that is not the last one, and accepts the cut."""
+    monday = quick_cfg.calendar.test_first_round
+    cut = base.history_before(fixture_lines, monday)
+    codes = popularity.catalogue(cut, monday)
+    customers = base.contact_base(cut, monday, quick_view)["customer_id"].to_numpy()
+    calls = {
+        "popularity.catalogue": lambda h: popularity.catalogue(h, monday),
+        "popularity.counts": lambda h: popularity.counts(h, monday, codes),
+        "popularity.counts (28 days)": lambda h: popularity.counts(h, monday, codes, days=28),
+        "repeats.score_matrix": lambda h: repeats.score_matrix(h, monday, customers, codes, quick_view),
+        "rules.pair_counts": lambda h: rules.pair_counts(h, monday, codes),
+        "factor.user_item": lambda h: factor.user_item(h, monday, codes),
+        "context.prepare": lambda h: context.prepare(h, monday, customers, quick_view),
+    }
+    for name, call in calls.items():
+        call(cut)
+        with pytest.raises(LeakageError, match=monday.isoformat()):
+            call(fixture_lines)
+        assert name
+
+
+def test_every_function_of_the_recommenders_that_takes_the_history_calls_the_guard():
+    """Static: a public function with a ``history`` parameter calls ``check_no_leak`` itself, so a new one cannot forget it."""
+    checked = []
+    for name in CALCULATIONS:
+        if not name.startswith("recommend/"):
+            continue
+        tree = ast.parse((SRC / name).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_") and "history" in {a.arg for a in node.args.args}:
+                called = {n.func.id for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+                assert "check_no_leak" in called, f"{name}:{node.name}"
+                checked.append(f"{name}:{node.name}")
+    assert len(checked) >= 6 and "recommend/context.py:prepare" in checked
