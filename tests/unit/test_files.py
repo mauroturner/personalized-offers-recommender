@@ -118,6 +118,75 @@ def test_sha256_file_is_the_hash_of_the_bytes_whatever_the_block_size(tmp_path):
     assert files.sha256_file(big, block=7) == files.sha256_file(big)
 
 
+# --- U11: the file that is created once and the folder that is moved ------------------------------------------------------------------------------------------
+
+
+def test_write_exclusive_creates_the_file_with_its_content_and_creates_the_folders(tmp_path):
+    target = tmp_path / "reports" / "deep" / "seal.json"
+    assert files.write_exclusive(target, '{"a": "línea"}\n') == target
+    assert target.read_bytes() == '{"a": "línea"}\n'.encode("utf-8")
+    assert files.write_exclusive(tmp_path / "bytes.bin", b"\x00\x01").read_bytes() == b"\x00\x01"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["bytes.bin", "reports"] and sorted(p.name for p in target.parent.iterdir()) == ["seal.json"], "no temporary file is left"
+
+
+def test_write_exclusive_never_replaces_what_is_there_and_leaves_no_temporary_file(tmp_path):
+    target = tmp_path / "seal.json"
+    target.write_bytes(b"first")
+    with pytest.raises(FileExistsError):
+        files.write_exclusive(target, b"second")
+    assert target.read_bytes() == b"first" and [p.name for p in tmp_path.iterdir()] == ["seal.json"]
+
+
+def test_write_exclusive_flushes_the_content_before_it_gives_the_file_its_name(tmp_path, monkeypatch):
+    order: list[str] = []
+    real_fsync, real_link = os.fsync, os.link
+    monkeypatch.setattr(files.os, "fsync", lambda fd: order.append("fsync") or real_fsync(fd))
+    monkeypatch.setattr(files.os, "link", lambda a, b: order.append("link") or real_link(a, b))
+    files.write_exclusive(tmp_path / "x.json", b"data")
+    assert order == ["fsync", "link"]
+
+
+def test_write_exclusive_gives_one_of_two_racing_writers_the_file_and_the_other_the_error(tmp_path):
+    import threading
+
+    results: list[object] = []
+    barrier = threading.Barrier(2)
+
+    def write(payload: bytes) -> None:
+        barrier.wait()
+        try:
+            files.write_exclusive(tmp_path / "seal.json", payload)
+            results.append("won")
+        except FileExistsError:
+            results.append("lost")
+
+    threads = [threading.Thread(target=write, args=(payload,)) for payload in (b"one", b"two")]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert sorted(results) == ["lost", "won"] and (tmp_path / "seal.json").read_bytes() in (b"one", b"two") and [p.name for p in tmp_path.iterdir()] == ["seal.json"]
+
+
+def test_move_folder_renames_the_folder_with_everything_in_it_and_creates_the_parents(tmp_path):
+    source = tmp_path / "candidates" / "R2011-08-01" / "als"
+    source.mkdir(parents=True)
+    (source / "artifact.json").write_bytes(b"{}")
+    (source / "a.npy").write_bytes(b"x")
+    target = files.move_folder(source, tmp_path / "models" / "R2011-08-01" / "als")
+    assert target == tmp_path / "models" / "R2011-08-01" / "als" and sorted(p.name for p in target.iterdir()) == ["a.npy", "artifact.json"] and not source.exists()
+
+
+def test_move_folder_refuses_a_target_that_exists_and_leaves_both_as_they_were(tmp_path):
+    (tmp_path / "from").mkdir()
+    (tmp_path / "from" / "f").write_bytes(b"1")
+    (tmp_path / "to").mkdir()
+    (tmp_path / "to" / "g").write_bytes(b"2")
+    with pytest.raises(FileExistsError):
+        files.move_folder(tmp_path / "from", tmp_path / "to")
+    assert (tmp_path / "from" / "f").read_bytes() == b"1" and (tmp_path / "to" / "g").read_bytes() == b"2" and not (tmp_path / "to" / "f").exists()
+
+
 # --- the static rule: nothing writes a file but through write_atomic -------------------------------------------------------
 
 WRITER_ATTRIBUTES = {"write_text", "write_bytes", "to_parquet", "to_csv", "to_json", "to_excel", "to_feather", "savefig", "write_table", "touch"}

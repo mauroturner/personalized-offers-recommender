@@ -10,7 +10,7 @@ synced (``fsync`` of a directory is not available on Windows), so after a power 
 target may be its previous content; nothing is torn either way. A reader that needs to know which one it got checks the manifest
 hashes the writers keep (RNF06).
 
-No other module of the package writes a file: ``tests/unit/test_files.py`` reads the package and lists every call that does.
+No other module of the package writes a file (``write_exclusive`` creates one that must not exist yet and ``move_folder`` renames a folder of them): ``tests/unit/test_files.py`` reads the package and lists every call that does.
 """
 
 from __future__ import annotations
@@ -71,6 +71,37 @@ def write_atomic(path: Path, data: str | bytes) -> Path:
         temporary.unlink(missing_ok=True)
         raise
     return path
+
+
+def write_exclusive(path: Path, data: str | bytes) -> Path:
+    """Create `path` with `data` only if it does not exist, atomically: the content is written and flushed to a temporary file next to it and then linked to its name, which fails if the name is
+    taken (``FileExistsError``, and the file that was there is untouched), so two writers that race give one the file and the other the error and nobody ever sees a half-written file. For what is
+    written once and never again (the seal)."""
+    payload = data.encode("utf-8") if isinstance(data, str) else data
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, name = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".", suffix=".tmp")
+    temporary = Path(name)
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return path
+
+
+def move_folder(source: Path, target: Path) -> Path:
+    """Move the folder `source` to the name `target` (created parents); ``FileExistsError`` if `target` exists, and then `source` stays where it was. A rename inside one filesystem, so a reader
+    sees the folder in one place or in the other and never in both."""
+    source, target = Path(source), Path(target)
+    if target.exists():
+        raise FileExistsError(f"ya existe {target.name}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(source, target)
+    return target
 
 
 def sha256_file(path: Path, block: int = 1 << 20) -> str:

@@ -14,6 +14,8 @@ another in its row and the ranking is the same whatever the order of the columns
 
 from __future__ import annotations
 
+import hashlib
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -95,3 +97,36 @@ def check_lists(products: np.ndarray, sources: np.ndarray, k: int, catalogue_siz
     unknown = int(((sources < 0) | (sources >= len(SOURCES))).any(axis=1).sum())
     if unknown:
         raise ListError(f"{unknown} listas tienen un producto sin un origen conocido ({', '.join(SOURCES)})")
+
+
+@dataclass(frozen=True)
+class RoundLists:
+    """The lists of every customer of a round: the customers, and for each of them the ``k`` products (positions in the catalogue), their sources (codes of ``SOURCES``) and their scores."""
+
+    customers: np.ndarray        # (n,) int64
+    products: np.ndarray         # (n, k) int64
+    sources: np.ndarray          # (n, k) int8
+    scores: np.ndarray           # (n, k) float64: the repeat score, the discovery score or the recent popularity of the product, by its source
+
+
+def list_scores(products: np.ndarray, sources: np.ndarray, repeat_scores: np.ndarray, discovery_scores: np.ndarray, recent_counts: np.ndarray) -> np.ndarray:
+    """The score each listed product had: the repeat score of the customer, the mixed discovery score, or the 28-day count of the fallback."""
+    rows = np.arange(len(products))[:, None]
+    return np.choose(sources.astype(np.int64), [repeat_scores[rows, products], discovery_scores[rows, products], np.asarray(recent_counts)[products]]).astype(np.float64)
+
+
+def round_lists(data: Any, recipe: Any, view: Any, *, cache: dict | None = None) -> RoundLists:
+    """The lists of the customers of `data` (a ``RoundData``) with the discovery model of `recipe`: ``build_list`` over the repeat scores, the mixed discovery scores and the fallback of the round."""
+    from personaloffers.recommend import blend
+
+    discovery = blend.discovery_scores(data, recipe, view, cache=cache)
+    products, sources = build_list(data.repeat, discovery, data.seen, data.fallback, view, tie_rank=data.tie_rank)
+    return RoundLists(customers=data.customers, products=products, sources=sources, scores=list_scores(products, sources, data.repeat, discovery, data.recent))
+
+
+def lists_fingerprint(lists: RoundLists, codes: np.ndarray) -> str:
+    """The SHA-256 of the lists as ``customer_id,rank,stock_code,source`` lines (a header first, the customers in order and the ranks from 1): what the seal keeps of the first round."""
+    parts = ["customer_id,rank,stock_code,source\n"]
+    for customer, listed, origin in zip(lists.customers, lists.products, lists.sources, strict=True):
+        parts.append("".join(f"{int(customer)},{rank},{codes[product]},{SOURCES[int(source)]}\n" for rank, (product, source) in enumerate(zip(listed, origin, strict=True), start=1)))
+    return hashlib.sha256("".join(parts).encode("utf-8")).hexdigest()

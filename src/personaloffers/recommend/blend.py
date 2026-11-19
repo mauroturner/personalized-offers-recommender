@@ -50,17 +50,40 @@ def blend(model_scores: np.ndarray, trend_counts: np.ndarray, weight: float) -> 
     return (normalized + np.float32(weight) * trend[None, :]).astype(np.float32)
 
 
+def cache_key(recipe: Recipe) -> tuple:
+    """What the fit of a recipe's model depends on: the model, its size and its regularization (not the trend weight)."""
+    return (recipe.model, recipe.size, recipe.regularization)
+
+
+def fit_model(data: Any, recipe: Recipe, view: Any) -> Any:
+    """The fitted model of the recipe on the history of `data` (a ``RoundData``): an ``AlsModel``, a ``CosineModel`` or a ``RuleSet``."""
+    if recipe.model == "als":
+        return factor.fit_als(data.user_item(), view, factors=recipe.size, regularization=recipe.regularization)
+    if recipe.model == "cosine":
+        return factor.fit_cosine(data.user_item(), neighbours=recipe.size)
+    return rules.select(data.pair_counts(), recipe.size, view.grid.rules_min_lift)
+
+
+def model_scores(data: Any, recipe: Recipe, model: Any) -> np.ndarray:
+    """The scores of a fitted model for the customers of `data`."""
+    if recipe.model == "als":
+        return factor.als_scores(model, data.customers)
+    if recipe.model == "cosine":
+        return factor.cosine_scores(model, data.user_item(), data.customers)
+    return rules.score_matrix(model, data.seen)
+
+
+def model_arrays(recipe: Recipe, model: Any) -> dict[str, np.ndarray]:
+    """The flat arrays of a fitted model, as ``recommend.artifacts`` writes them."""
+    return rules.to_arrays(model) if recipe.model == "rules" else model.to_arrays()
+
+
 def raw_scores(data: Any, recipe: Recipe, view: Any, *, cache: dict | None = None) -> np.ndarray:
-    """The scores of the recipe's model alone for the customers of `data` (a ``RoundData``); with a `cache` a model is fitted once for every weight."""
-    key = (recipe.model, recipe.size, recipe.regularization)
+    """The scores of the recipe's model alone for the customers of `data`; with a `cache` a model is fitted once for every weight."""
+    key = cache_key(recipe)
     if cache is not None and key in cache:
         return cache[key]
-    if recipe.model == "als":
-        found = factor.als_scores(factor.fit_als(data.user_item(), view, factors=recipe.size, regularization=recipe.regularization), data.customers)
-    elif recipe.model == "cosine":
-        found = factor.cosine_scores(factor.fit_cosine(data.user_item(), neighbours=recipe.size), data.user_item(), data.customers)
-    else:
-        found = rules.score_matrix(rules.select(data.pair_counts(), recipe.size, view.grid.rules_min_lift), data.seen)
+    found = model_scores(data, recipe, fit_model(data, recipe, view))
     if cache is not None:
         cache[key] = found
     return found

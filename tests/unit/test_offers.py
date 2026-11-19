@@ -179,3 +179,66 @@ def test_the_reserve_is_enough_when_the_customer_holds_the_first_products_of_it(
     repeat[0, :10] = 1.0
     chosen, origins = offers.build_list(repeat, np.zeros((1, products), dtype=np.float32), seen, fallback, quick_view)
     assert sorted(chosen[0].tolist()) == list(range(10)) and (origins[0, :7] == 0).all() and (origins[0, 7:] == 2).all()
+
+
+# --- U11: the lists of a round, their scores and their fingerprint -----------------------------------------------------------------------------------
+
+
+def round_data_of(fixture_lines, quick_view, quick_cfg):
+    from personaloffers import base
+    from personaloffers.recommend import context
+
+    monday = quick_cfg.calendar.test_first_round
+    history = base.history_before(fixture_lines, monday)
+    return context.prepare(history, monday, base.contact_base(history, monday, quick_view)["customer_id"].to_numpy(), quick_view)
+
+
+def test_the_lists_of_a_round_are_the_list_built_from_the_repeats_the_discovery_of_the_recipe_and_the_fallback(fixture_lines, quick_view, quick_cfg):
+    from personaloffers.recommend import blend
+
+    data = round_data_of(fixture_lines, quick_view, quick_cfg)
+    recipe = blend.Recipe("cosine", 20, 1.0)
+    found = offers.round_lists(data, recipe, quick_view)
+    discovery = blend.discovery_scores(data, recipe, quick_view)
+    products, sources = offers.build_list(data.repeat, discovery, data.seen, data.fallback, quick_view, tie_rank=data.tie_rank)
+    assert np.array_equal(found.customers, data.customers) and np.array_equal(found.products, products) and np.array_equal(found.sources, sources)
+    assert found.products.shape == (len(data.customers), 10) and found.scores.shape == found.products.shape and found.scores.dtype == np.float64
+
+
+def test_the_score_of_a_listed_product_is_the_one_of_its_source(fixture_lines, quick_view, quick_cfg):
+    from personaloffers.recommend import blend
+
+    data = round_data_of(fixture_lines, quick_view, quick_cfg)
+    recipe = blend.Recipe("rules", 12, 0.0)
+    found = offers.round_lists(data, recipe, quick_view)
+    discovery = blend.discovery_scores(data, recipe, quick_view)
+    seen_sources = set()
+    for i in range(0, len(data.customers), 7):
+        for rank in range(10):
+            product, source, score = int(found.products[i, rank]), int(found.sources[i, rank]), found.scores[i, rank]
+            seen_sources.add(source)
+            expected = (data.repeat[i, product], discovery[i, product], data.recent[product])[source]
+            assert score == pytest.approx(float(expected)), (i, rank, SOURCE and NAME[source])
+    assert seen_sources == {0, 1, 2}, "the fixture has lists with the three sources"
+
+
+def test_the_fingerprint_of_the_lists_is_the_hash_of_customer_rank_code_and_source_in_order(fixture_lines, quick_view, quick_cfg):
+    import hashlib
+
+    from personaloffers.recommend import blend
+
+    data = round_data_of(fixture_lines, quick_view, quick_cfg)
+    found = offers.round_lists(data, blend.Recipe("rules", 3, 1.0), quick_view)
+    lines = ["customer_id,rank,stock_code,source"]
+    for i, customer in enumerate(found.customers):
+        for rank in range(10):
+            lines.append(f"{int(customer)},{rank + 1},{data.codes[found.products[i, rank]]},{offers.SOURCES[int(found.sources[i, rank])]}")
+    expected = hashlib.sha256(("\n".join(lines) + "\n").encode("utf-8")).hexdigest()
+    assert offers.lists_fingerprint(found, data.codes) == expected
+    swapped = dataclasses.replace(found, products=found.products.copy())
+    swapped.products[0, [0, 1]] = swapped.products[0, [1, 0]]
+    assert offers.lists_fingerprint(swapped, data.codes) != expected, "the order of a list is part of it"
+    other = dataclasses.replace(found, sources=found.sources.copy())
+    other.sources[3, 9] = (other.sources[3, 9] + 1) % 3
+    assert offers.lists_fingerprint(other, data.codes) != expected, "and so is the source"
+    assert offers.lists_fingerprint(offers.round_lists(data, blend.Recipe("rules", 3, 1.0), quick_view), data.codes) == expected, "the same lists again, the same fingerprint"
