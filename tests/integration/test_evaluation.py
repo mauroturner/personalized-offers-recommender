@@ -471,3 +471,108 @@ def test_the_rows_of_the_choice_are_one_per_round_and_one_for_all_of_them_with_t
         assert [r[:3] for r in rows if r[0] != "all"] == per_round
         (total,) = [r for r in rows if r[0] == "all"]
         assert total[1:] == (candidate["pairs"], candidate["hits"], candidate["hit_new"], candidate["coverage"], int(candidate["kept"]), int(candidate["chosen"]))
+
+
+# --- what stops the evaluation and what the pure parts give (L128: the paths that no test ran) ----------------------------------------------------------------------------
+
+
+def _without_triggers(conn, *tables):
+    """The insert-only guards of `tables` taken off a copy of the warehouse, to damage it the way an outside hand would."""
+    for table in tables:
+        for suffix in ("no_update", "no_delete"):
+            conn.execute(f"DROP TRIGGER {table}_{suffix}")
+
+
+def test_a_list_with_a_product_the_warehouse_does_not_know_or_without_its_places_or_for_a_customer_who_bought_stops_the_rankings(world):
+    """Four ways the lists can be what the evaluation cannot use: each is an ``EvaluationError`` that says which, and nothing is written."""
+    before = tables_digest(world.conn)
+    other = dataclasses.replace(world.view, recommend=dataclasses.replace(world.view.recommend, k=world.view.recommend.k - 1))
+    with pytest.raises(EvaluationError, match=r"no tienen sus 9 lugares por cliente"):
+        evaluation.evaluate_rankings(world.conn, other)
+    _without_triggers(world.conn, "products", "offer_lists", "baseline_lists")
+    code = world.conn.execute("SELECT stock_code FROM offer_lists WHERE round_id = 'R2011-03-28' AND customer_id = (SELECT MIN(customer_id) FROM round_outcomes WHERE round_id = 'R2011-03-28' AND bought = 1) AND rank = 1").fetchone()[0]
+    world.conn.execute("DELETE FROM products WHERE stock_code = ?", (code,))
+    with pytest.raises(EvaluationError, match=r"R2011-03-28 tienen productos que el almacén no conoce"):
+        evaluation.evaluate_rankings(world.conn, world.view)
+    world.conn.execute("INSERT INTO products SELECT ?, 'x', '2011-01-01', 0", (code,))
+    customer = world.conn.execute("SELECT MIN(customer_id) FROM round_outcomes WHERE round_id = 'R2011-04-04' AND bought = 1").fetchone()[0]
+    world.conn.execute("DELETE FROM offer_lists WHERE round_id = 'R2011-04-04' AND customer_id = ?", (customer,))
+    with pytest.raises(EvaluationError, match=r"compraron y no tienen lista en offer_list/unrestricted de R2011-04-04"):
+        evaluation.evaluate_rankings(world.conn, world.view)
+    assert tables_digest(world.conn) == before, "an evaluation that stops has written no row"
+
+
+def test_a_round_without_all_the_methods_that_are_evaluated_stops_the_rankings(world):
+    _without_triggers(world.conn, "baseline_lists", "round_outcomes")
+    world.conn.execute("DELETE FROM baseline_lists WHERE round_id = 'R2011-04-11' AND method = 'b6'")
+    with pytest.raises(EvaluationError, match=r"R2011-04-11 no tienen los métodos que se evalúan: faltan \[\('b6', 'new_only'\), \('b6', 'unrestricted'\)\], sobran \[\]"):
+        evaluation.evaluate_rankings(world.conn, world.view)
+
+
+def test_a_test_in_which_nobody_bought_has_no_pair_to_evaluate(world):
+    _without_triggers(world.conn, "round_outcomes")
+    world.conn.execute("UPDATE round_outcomes SET bought = 0, products = 0, products_in_offer = 0 WHERE round_id IN ('R2011-03-28', 'R2011-04-04', 'R2011-04-11')")
+    lines = warehouse_lines_without_the_test(world)
+    with pytest.raises(EvaluationError, match=r"ninguna ronda de la prueba tiene pares evaluados"):
+        evaluation.evaluate_rankings(world.conn, world.view, lines=lines)
+
+
+def warehouse_lines_without_the_test(world):
+    """The lines of the warehouse without a purchase of the three weeks of the test: what a test in which nobody bought would have held."""
+    from personaloffers import warehouse
+
+    lines = warehouse.read_lines(world.conn)
+    first, last = world.view.calendar.test_first_round, world.view.calendar.test_last_round + timedelta(days=7)
+    inside = (lines["invoice_date"] >= str(first)) & (lines["invoice_date"] < str(last))
+    return lines[~inside].reset_index(drop=True)
+
+
+def test_the_experiment_of_a_cohort_that_is_not_the_base_of_its_round_stops_before_anything_is_computed(world):
+    _without_triggers(world.conn, "contact_base")
+    world.conn.execute("DELETE FROM contact_base WHERE round_id = 'R2011-03-28' AND customer_id = (SELECT MAX(customer_id) FROM contact_base WHERE round_id = 'R2011-03-28')")
+    with pytest.raises(EvaluationError, match=r"la cohorte del lanzamiento \(R2011-03-28\) no es la base de esa ronda"):
+        evaluation.evaluate_experiment(world.conn, world.view)
+
+
+def test_the_experiment_is_a_pure_function_of_its_arguments_and_the_one_of_the_warehouse_is_that_function_over_the_cohort(world, evaluated):
+    """``run_experiment`` reads nothing but what it is given: the same arguments twice give the same dictionary, which is the ``figures`` of ``evaluate_experiment`` and the ones the seal holds; the lines of
+    other customers do not change it; and its keys are the ones the criteria read."""
+    from personaloffers import base, experiment, holdout, warehouse
+    from personaloffers import calendar as cal
+
+    first = cal.round_id(world.view.calendar.test_first_round)
+    assignment = holdout.read_assignments(world.conn)
+    cohort = assignment[(assignment["assigned_round"] == first) & (assignment["method"] == "stratified")].sort_values("customer_id").reset_index(drop=True)
+    cov = base.pd.read_sql_query("SELECT customer_id, recency_days, invoices_365, spend_365, tenure_days, bulk, invoices_before FROM contact_base WHERE round_id = ? ORDER BY customer_id", world.conn, params=(first,))
+    lines = warehouse.read_lines(world.conn)
+    weeks = cal.rounds(world.view, "test")
+    earlier = experiment.week_mondays(world.view.calendar.test_first_round, world.view.experiment.cuped_weeks)
+    one = evaluation.run_experiment(cov, cohort, lines, weeks, earlier, world.view)
+    assert one == evaluation.run_experiment(cov, cohort, lines, weeks, earlier, world.view) == evaluation.evaluate_experiment(world.conn, world.view).figures
+    assert set(one) == {"customers", "control", "balance", "aa", "outcomes", "calibration", "mde"} and one["customers"] == 300 and 0 < one["control"] < 300
+    assert one["balance"] == evaluated.seal["test"]["metrics"]["balance"] and one["calibration"]["rejection"] == evaluated.seal["test"]["metrics"]["calibration"]["rejection"]
+    strangers = lines[~lines["customer_id"].isin(cohort["customer_id"])]
+    assert len(strangers) > 0 and evaluation.run_experiment(cov, cohort, lines[lines["customer_id"].isin(cohort["customer_id"]) | lines["customer_id"].isna()], weeks, earlier, world.view) == one
+    with pytest.raises(KeyError):
+        evaluation.run_experiment(cov, cohort.iloc[1:], lines, weeks, earlier, world.view)
+
+
+def test_a_damaged_e_mail_file_or_a_crm_that_cannot_be_read_stops_the_evidence_and_is_not_counted_as_nothing(world, evaluated):
+    from personaloffers.crm.client import CrmUnreachable
+
+    path = world.cfg.paths.private_dir / "email" / "R2011-04-04.csv"
+    good = path.read_bytes()
+    path.write_bytes(good + b"not-a-number,1,95000,x,repeat\n")
+    with pytest.raises(ValueError):
+        evidence_of(world)
+    path.write_bytes(good)
+    assert evidence_of(world) == evaluated.crm, "the file as it was gives the evidence as it was"
+    client = crm_client(world)
+
+    def down(round_id):
+        raise CrmUnreachable("sin respuesta")
+
+    client.read_round = down
+    with pytest.raises(CrmUnreachable):
+        evaluation.crm_evidence(world.conn, client, private_dir=world.cfg.paths.private_dir, batch_size=world.cfg.crm.batch_size)
+
