@@ -74,3 +74,30 @@ def replay(world) -> list:
         spec = load_next_delivery(world, run_key)
         results.append(weekly.run_round(world.conn, world.view, run_key, spec, models_dir=world.models_dir, seal_path=world.seal_path))
     return results
+
+
+CRM_TOKEN = "worlds-crm-token"
+CLOSE_RUN = "run-4"       # the run that closes the replay: the last delivery of the fixture's plan
+
+
+def crm_client(world):
+    """A client of the CRM stand-in that is the file of the world's configuration (a new application over the same file serves the same lists)."""
+    from personaloffers.crm.client import make_client
+
+    return make_client(world.cfg.crm, world.cfg.paths, env={world.cfg.crm.token_env: CRM_TOKEN})
+
+
+def deliver_all(world) -> types.SimpleNamespace:
+    """Deliver every round of the replay to the world's CRM stand-in and write its e-mail file and the operation of the round, as the task ``deliver_offers`` does (U18's): ``results`` is each round's
+    ``DeliveryResult``."""
+    from personaloffers import weekly
+    from personaloffers.crm.client import deliver_round
+    from personaloffers.email_export import email_path, write_email_csv
+
+    client = crm_client(world)
+    results = {}
+    for (round_id,) in world.conn.execute("SELECT round_id FROM rounds ORDER BY round_id").fetchall():
+        results[round_id] = deliver_round(world.conn, client, round_id, run_key=CLOSE_RUN, batch_size=world.cfg.crm.batch_size)
+        write_email_csv(world.conn, round_id, email_path(world.cfg.paths.private_dir, round_id), world.view)
+        weekly.write_round_ops(world.conn, round_id, CLOSE_RUN, delivered=results[round_id].delivered, seconds=0.5)
+    return types.SimpleNamespace(client=client, results=results)

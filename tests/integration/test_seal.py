@@ -63,3 +63,29 @@ def test_the_launch_part_of_a_matching_seal_is_what_the_round_receives(after_lau
     assert launch["run_key"] == RUN_KEY and set(launch) == registry.LAUNCH_KEYS
     chosen, recipes = weekly.sealed_recipes(launch)
     assert chosen.name == launch["recipe"]["name"] and sorted(recipes) == ["b4", "b5", "b6"] and all(r.weight == 0.0 for r in recipes.values())
+
+
+# --- the evaluation of the test does not start before the seal either (U14: RNF07e, AC16; decision D21) ---------------------------------------------------------------------
+
+
+def test_evaluating_the_test_under_another_config_before_the_test_seal_is_refused(delivered, workbook, quick_cfg, tmp_path):
+    """The seal has its launch part and not the test part: the first evaluation is the one that is sealed, so another configuration is refused, naming the key, before anything is read or written."""
+    from datetime import datetime
+
+    from personaloffers import evaluation, reporting
+    from personaloffers.registry import EvaluationRefusedError
+
+    world = copy_world(delivered.root, workbook, quick_cfg, tmp_path / "delivered")
+    try:
+        other = dataclasses.replace(world.view, criteria=dataclasses.replace(world.view.criteria, c01_min_diff_low=0.01))
+        before_seal, before_db = world.seal_path.read_bytes(), hashlib.sha256(Path(world.warehouse_path).read_bytes()).hexdigest()
+        evidence = evaluation.CrmEvidence(0, 0, 0, 0, 0, 0, "", 0, 0)
+        with pytest.raises(EvaluationRefusedError, match="criteria.c01_min_diff_low"):
+            reporting.evaluate(world.conn, other, reporting.RunMeta("run-5", datetime(2011, 4, 23)), seal_path=world.seal_path, crm=evidence)
+        assert world.seal_path.read_bytes() == before_seal and hashlib.sha256(Path(world.warehouse_path).read_bytes()).hexdigest() == before_db, "nothing was read into a figure and nothing was written"
+        world.seal_path.unlink()
+        with pytest.raises(EvaluationRefusedError, match="no hay sello"):
+            reporting.evaluate(world.conn, world.view, reporting.RunMeta("run-5", datetime(2011, 4, 23)), seal_path=world.seal_path, crm=evidence)
+        assert hashlib.sha256(Path(world.warehouse_path).read_bytes()).hexdigest() == before_db
+    finally:
+        world.conn.close()

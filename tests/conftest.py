@@ -175,3 +175,33 @@ def replayed(launched, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFac
     results = replay(world)
     world.conn.close()
     return types.SimpleNamespace(root=world.root, results=results)
+
+
+@pytest.fixture(scope="session")
+def delivered(replayed, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The replay with every round delivered to the world's CRM stand-in, its e-mail files and the operation of each round written (U14 on): ``root`` is the folder (a test copies it with ``copy_world``)."""
+    import types
+
+    from tests.fixtures.worlds import copy_world, deliver_all
+
+    world = copy_world(replayed.root, workbook, quick_cfg, tmp_path_factory.mktemp("delivered"))
+    done = deliver_all(world)
+    world.conn.close()
+    return types.SimpleNamespace(root=world.root, results=done.results)
+
+
+@pytest.fixture(scope="session")
+def evaluated(delivered, workbook, quick_cfg, tmp_path_factory: pytest.TempPathFactory):
+    """The closing evaluation run once on the delivered replay (U14 on): ``root`` is the folder, ``outcome`` what ``reporting.evaluate`` returned and ``seal`` the seal with its test part."""
+    import types
+    from datetime import datetime
+
+    from personaloffers import evaluation, registry, reporting
+    from tests.fixtures.worlds import copy_world, crm_client
+
+    world = copy_world(delivered.root, workbook, quick_cfg, tmp_path_factory.mktemp("evaluated"))
+    crm = evaluation.crm_evidence(world.conn, crm_client(world), private_dir=world.cfg.paths.private_dir, batch_size=world.cfg.crm.batch_size)
+    outcome = reporting.evaluate(world.conn, world.view, reporting.RunMeta("run-5", datetime(2011, 4, 23)), seal_path=world.seal_path, crm=crm)
+    world.conn.close()
+    return types.SimpleNamespace(root=world.root, outcome=outcome, crm=crm, seal=registry.read_seal(world.seal_path))
+

@@ -1,0 +1,16 @@
+[data] lines before 2011-08-01: 788359; latest line read 2011-07-31 16:04:00
+[cohort] customers with a purchase in the 365 days before 2011-03-28: 4318; control 863; strata 18; 0.2 s
+[balance] max |SMD| 0.043 (tenure_days)
+[outcome m1] mean 0.0528, sd 0.0959, sd after CUPED 0.0668, theta 0.740
+[outcome m2] mean 503.5227, sd 2516.6932, sd after CUPED 1598.4913, theta 0.763
+[A/A m1 preregistered] diff 0.0017, p 0.484, 95 % -0.0031 to 0.0064
+[A/A m1 normal_raw] diff 0.0020, p 0.557, 95 % -0.0048 to 0.0089
+[A/A m1 normal_cuped] diff 0.0017, p 0.495, 95 % -0.0031 to 0.0064
+[A/A m2 preregistered] diff 80.0614, p 0.186, 95 % 8.4630 to 151.6598
+[A/A m2 normal_raw] diff 110.6497, p 0.093, 95 % -18.2807 to 239.5801
+[A/A m2 normal_cuped] diff 80.0614, p 0.028, 95 % 8.4630 to 151.6598
+[calibration] 500 draws of 500 permutations: m1_normal_cuped 6.0 %, m1_normal_raw 2.6 %, m1_preregistered 6.4 %, m2_normal_cuped 3.0 %, m2_normal_raw 6.2 %, m2_preregistered 4.4 %
+[MDE] holdout 10 % (432): M1 0.95 points, M2 227.12 GBP
+[MDE] holdout 20 % (864): M1 0.71 points, M2 170.35 GBP
+[MDE] holdout 30 % (1295): M1 0.62 points, M2 148.73 GBP
+[timing] A/A, calibration and MDE together 38.5 s (the plan's limit for the calibration is 180 s); script total 39.0 s
