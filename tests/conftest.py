@@ -228,3 +228,12 @@ def rendered(exported, tmp_path_factory: pytest.TempPathFactory):
 
     path = render_design(MODEL, exported.out, tmp_path_factory.mktemp("design") / "powerbi-design.html", exported.run)
     return types.SimpleNamespace(path=path, html=path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="session")
+def sited(exported, tmp_path_factory: pytest.TempPathFactory):
+    """The six site files of the exported replay, written once (U17 on): ``out`` is the folder, ``site`` what ``read_site`` gives, ``view``/``run``/``seal_path`` what wrote it and ``source_counts`` the counts of the source it was given;
+    a test that changes anything exports its own (``tests.fixtures.sites.export_site_of``)."""
+    from tests.fixtures.sites import export_site_of
+
+    return export_site_of(exported.world.warehouse_path, exported.world, exported.view, tmp_path_factory.mktemp("sited"))

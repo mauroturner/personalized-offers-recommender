@@ -118,3 +118,35 @@ def test_a_segment_is_judged_by_its_customers_and_not_by_its_pairs(evaluated, wo
         assert segments["suppressed"].all() and segments["pairs"].isna().all(), f"{pairs} pairs but {customers} customers: under {customers + 1}"
     finally:
         star.conn.close()
+
+
+# --- the bytes of everything that is published (U17; AC28) -----------------------------------------------------------------------------------------------
+
+LOCAL_PATH = re.compile(r"(?<![A-Za-z])[A-Za-z]:[\\/]|/(?:home|Users)/|\\Users\\")
+
+
+def published_texts(sited, exported, rendered) -> dict[str, str]:
+    """Every file that leaves the project, as the text of its bytes: the six site files and their manifest, the design, the manifest of the star model and the metadata and strings of each Parquet file."""
+    import json
+
+    import pyarrow.parquet as pq
+
+    texts = {path.name: path.read_text(encoding="utf-8") for path in sorted(sited.out.glob("*.json"))}
+    texts["powerbi-design.html"] = rendered.html
+    texts["star-manifest.json"] = (exported.out / "manifest.json").read_text(encoding="utf-8")
+    for table in MODEL.public:
+        parquet = pq.read_table(exported.out / f"{table.name}.parquet")
+        texts[f"{table.name}.parquet"] = json.dumps({k.decode(): v.decode() for k, v in (parquet.schema.metadata or {}).items()}) + " " + " ".join(
+            str(v) for column in parquet.column_names if parquet.schema.field(column).type == "string" for v in parquet[column].to_pylist() if v is not None)
+    return texts
+
+
+def test_no_customer_number_in_published_bytes(sited, exported, rendered):
+    """No file of the site, no string of a Parquet file and no byte of the design is a customer number of the fixture (90001 to 90300)."""
+    for name, text in published_texts(sited, exported, rendered).items():
+        assert not CUSTOMER_NUMBER.search(text), f"{name} holds what looks like a customer number: {CUSTOMER_NUMBER.search(text).group(0)}"
+
+
+def test_published_files_carry_no_local_path(sited, exported, rendered):
+    for name, text in published_texts(sited, exported, rendered).items():
+        assert not LOCAL_PATH.search(text), f"{name} names a folder of this machine"

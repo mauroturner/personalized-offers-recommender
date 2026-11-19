@@ -109,6 +109,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `offers.py`; RF11; AC12; C02, C03; el sitio (fila 7).
 - **Quién**: agente de planificación.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 2).
+- **Nota** (2026-11-19, correcciones de L126): `discovery_slots` no se lee: la lista toma `repeat_slots` y deja el resto de `k` al descubrimiento y a la reserva. La configuración exige `repeat_slots + discovery_slots = k` y `build_list` lo exige también, así que una vista armada a mano que no cierre ya no da una lista que contradice sus propios lugares.
 
 ## D11 Reajuste semanal con la receta sellada; desempate fijo
 
@@ -121,6 +122,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Estado**: vigente.
 - **Nota (2026-11-19, U12)**: la ronda semanal (`weekly.py`) hace, para la entrega `W<s>`: comprueba el sello (sin la parte del lanzamiento, o con el de otra configuración, no hace nada y no escribe nada), sigue la ronda `R<s>` (`round_outcomes`: una fila por cliente de su base, por intención de tratar, con las listas del control también) y arma la ronda `R<s + 7>` en una sola transacción: base y covariables de la historia anterior a ese lunes, asignación por la función hash de quien entró, reajuste con la receta sellada, listas de todos los clientes de la base (las del control con su grupo, nunca entregadas) y listas de las líneas base. La última semanal arma la ronda censurada del cierre; el cierre solo sigue (cinco días). Una ronda ya emitida se recalcula y se compara con lo guardado en lugar de escribirse (`status = done`; si difiere, `ScoringError` y nada cambia), y `round_ops` se escribe aparte al final de la corrida (`write_round_ops`), porque `delivered` lo conoce U13. La comprobación del sello de la tarea `deliver` es de U18 (que usa `registry.require_launch_seal`); aquí la aplica `run_round`.
 - **Nota (2026-11-19, U09)**: el desempate no suma un número pequeño al puntaje (la investigación sumaba `popularidad / máximo × 10⁻⁶`, que con puntajes de otra escala puede no desempatar o desempatar de más). Cada puntaje `float32` se vuelve un entero que lo ordena exactamente (el `-0,0` es `0,0`, una unidad del último lugar es una diferencia) y debajo va el lugar del producto en el orden fijo: nunca dos claves de una fila son iguales y el orden no depende del orden de las columnas. Un catálogo de 65.535 productos o más no cabe (el real tiene unos 4.600) y es un error.
+- **Nota** (2026-11-19, correcciones de L126): una ronda cortada después de escribir sus artefactos y antes de su transacción dejaba carpetas de componentes que nadie registró, y una con otro contenido (o con un archivo de más) detenía la ronda para siempre porque `write_component` no reescribe lo que existe. Ahora `emit_round` quita las carpetas de los componentes que el registro no tiene antes de escribir; una registrada no se toca. Con un reajuste determinista una carpeta igual se readopta sola: la advertencia solo se alcanzaba con otro contenido, y esa es la prueba que estaba en rojo.
 
 ## D12 La elección: 48 candidatas medidas solo en las 13 rondas de validación, por hit@10 solo nuevos, con una tolerancia de medio punto a favor de la cobertura
 
@@ -338,6 +340,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Quién**: agente de planificación.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 13).
 - **Nota (2026-11-19, U13 y U14)**: la suite por defecto pasó de unos 37 s (U12) a 44,3 s con U13 (+7,3 s; previstos 5), a 52,0 s con U14 (+7,7 s; previstos 5), a unos 55 s con U15 (+3 s; previstos 3) y a 57,5 s con U16 (+2,5 s; previstos 3). U13 y U14 pasan 1,5 veces lo previsto: lo que suman son los accesorios de sesión nuevos (`delivered`, que entrega las cuatro rondas del repaso al CRM, y `evaluated`, que corre el cierre una vez) y los mundos que copia cada prueba que cambia algo; ninguna prueba sola pasa de 3,4 s. El disparador de 100 s no se alcanzó.
+- **Nota** (2026-11-19, U17): la suite por defecto pasó de 62 s a 67,6 s y 70,1 s (1.072 pruebas), unos 7 s contra los 4 previstos: cada prueba del sitio que cambia el mínimo de una celda, la configuración o la corrida exporta su propio modelo estrella (cerca de 1 s cada una), y las del sitio comparten un solo conjunto de archivos por sesión (`sited`). Quedan unos 30 s hasta el disparador de 100 s con U18 a U22 por venir.
 
 ## D32 `pytest-xdist` no se fija
 
@@ -411,6 +414,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `site_export.py`; AC28; la página del sitio.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota** (2026-11-19, U17): `export_site(conn, out_dir, run, view, *, seal_path, private_dir, max_total_bytes, source_counts=None)` lee las cifras de la prueba del modelo estrella (las mismas filas que los Parquet, con las celdas chicas ya ocultas), los criterios y el titular del resumen, y los hechos del archivo de las líneas del almacén; `source_counts` (las copias quitadas y las filas por hoja) las trae la primera construcción de las líneas, porque el almacén no las guarda: sin ellas esos dos datos van `null`. Hasta el sello, `summary.criteria` son los diez umbrales sin veredicto y `methods`, `by_round`, `aa`, `calibration` y `mde` van vacíos o `null`; con otra configuración que la sellada (`post_seal`) tampoco se publica nada de la prueba. El equilibrio del sorteo y la elección en validación se sellaron en el lanzamiento y se publican desde entonces. `control.json` no publica los tamaños por estrato: con los totales publicados darían una celda oculta por resta. Las tres listas de ejemplo son de los tres perfiles más grandes con al menos 10 clientes, de quien está en la mitad del orden por número entre los del grupo de oferta, y no llevan ningún cliente; una lista propia puede revelar compras de alguien, así que la evaluación independiente decide si se reemplazan por una armada para un perfil sintético (el supuesto del plan). `operation.rounds[].seconds` se mide: dos repeticiones no la dan igual.
 
 ## D39 Distinto de los proyectos 02 y 04: el producto, no la baja ni el segmento
 
