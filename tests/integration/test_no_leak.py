@@ -5,6 +5,7 @@ lists to this file."""
 from __future__ import annotations
 
 import ast
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -16,7 +17,7 @@ from personaloffers import calendar as cal
 from personaloffers.base import LeakageError
 
 SRC = Path(__file__).resolve().parents[2] / "src" / "personaloffers"
-CALCULATIONS = ("base.py",)      # the modules whose results enter a sealed value; U08 adds holdout.py and U09 the recommenders
+CALCULATIONS = ("base.py", "holdout.py")      # the modules whose results enter a sealed value; U09 adds the recommenders
 
 
 def bytes_of(frame: pd.DataFrame) -> bytes:
@@ -82,15 +83,21 @@ def test_a_later_round_sees_what_an_earlier_one_could_not(fixture_lines, quick_v
 
 
 def test_the_calculation_modules_do_not_read_the_lines_by_themselves():
-    """Static (plan section 10): the modules whose results are sealed receive the cut history and never call ``read_lines``, the warehouse or the file of the lines."""
+    """Static (plan section 10): the modules whose results are sealed receive the cut history and never call ``read_lines``, never open the file of the lines and, but for the stored
+    assignments of the control group, never touch the warehouse (``holdout.py`` reads ``holdout_assignments`` and nothing of ``lines``)."""
     for name in CALCULATIONS:
-        tree = ast.parse((SRC / name).read_text(encoding="utf-8"))
+        text = (SRC / name).read_text(encoding="utf-8")
+        tree = ast.parse(text)
         imported = {alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
         imported |= {node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)}
         called = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)} | {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
-        assert not {m for m in imported if m.startswith(("personaloffers.warehouse", "personaloffers.workbook", "personaloffers.sources", "sqlite3"))}, name
-        assert not {"read_lines", "read_parquet", "read_table", "connect", "lines_state"} & called, name
+        banned = ["personaloffers.warehouse", "personaloffers.workbook", "personaloffers.sources"] + (["sqlite3"] if name == "base.py" else [])
+        assert not {m for m in imported if m.startswith(tuple(banned))}, name
+        assert not {"read_lines", "read_parquet", "read_table", "lines_state", "read_delivery"} & called, name
         assert "read_csv" not in called and "open" not in called, name
+        assert not re.search(r"(FROM|JOIN)\s+lines", text, re.IGNORECASE), f"{name} reads the lines table"
+        if name != "holdout.py":
+            assert "connect" not in called, name
 
 
 def test_the_two_functions_that_read_the_history_call_the_guard_and_the_table_calls_them():
