@@ -161,6 +161,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `experiment.py`; `[experiment]`; C07, C08, C10; `fact_experiment`, `control.json`.
 - **Quién**: agente de planificación.
 - **Estado**: pendiente del dueño (plan, sección 29, ítem 5).
+- **Nota (2026-11-19, U10)**: la permutación se hace dentro de cada estrato con el número de controles que tiene (las asignaciones salen de ordenar números al azar, los estratos en orden) y el p a dos colas es `(permutaciones tan lejos de cero como lo observado + 1) / (permutaciones + 1)`; un caso de ocho clientes se enumera entero (`exact_permutation`) y da el p exacto 10/36 que la prueba de Monte Carlo estima. En la calibración, cada sorteo `s` (de 1 a 500) usa `holdout.assign_cohort` con esa semilla y un generador de permutaciones de semilla 100.000 + `s`, compartido por M1 y M2 (la mitad del tiempo de la investigación, que sorteaba aparte): medida con 4.300 clientes sintéticos y las 500 × 500 del plan, tarda unos 38 s en esta máquina. Las dos pruebas normales (sobre el resultado sin ajustar y sobre el ajustado) se calculan en el mismo sorteo para la fila de C10; ninguna es la prueba preregistrada.
 
 ## D16 Qué se puede decir del efecto de una oferta: nada; el sitio muestra el A/A y el menor efecto detectable
 
@@ -211,6 +212,7 @@ Estados: **vigente**, **pendiente del dueño**, **reemplazada por Dxx**.
 - **Afecta**: `metrics.py`; C01-C04.
 - **Quién**: agente de planificación.
 - **Estado**: vigente.
+- **Nota (2026-11-19, U10)**: las remuestras de clientes son el sorteo multinomial de `n` clientes con reposición (cuántas veces entra cada uno), y el estadístico de una remuestra es la suma de aciertos de los pares de los clientes sorteados sobre su número de pares; con 2.000 remuestras y unos 2.000 clientes la matriz de repeticiones ocupa unos 30 MB. La diferencia pareada resta los dos estadísticos con las mismas repeticiones. Los percentiles son los de `numpy.percentile` (interpolación lineal) y Wilson es la fórmula del puntaje de Wilson, acotada a [0, 1].
 
 ## D21 El sello: qué se congela antes de abrir la prueba
 
