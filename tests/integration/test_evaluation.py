@@ -444,3 +444,30 @@ def test_a_batch_that_was_not_read_back_equal_is_not_counted_as_delivered_in_the
     world.conn.execute("INSERT INTO crm_deliveries (round_id, batch, attempt, status, contacts, created, unchanged, conflicts, sends, readback_equal, seconds, run_key) "
                        "VALUES ('R2011-03-28', 10, 1, 'failed', 5, 0, 0, 5, 1, 0, 0.1, 'run-4')")
     assert evidence_of(world).read_back_equal == first.read_back_equal, "neither a batch read back different nor one that failed counts"
+
+
+def test_a_candidate_whose_rounds_do_not_add_up_to_its_sealed_pairs_and_hits_stops_the_evaluation_and_writes_nothing(before, evaluated):
+    """L128's warning: the rows of ``eval_choice`` for every round are checked against the figures of the «all» row that the seal holds, so that the two never tell different totals."""
+    before_rows, document = tables_digest(before.conn), json.loads(before.seal_path.read_text(encoding="utf-8"))
+    candidate = document["launch"]["validation"]["candidates"][0]
+    round_id = next(iter(candidate["per_round"]))
+    assert sum(r[0] for r in candidate["per_round"].values()) == candidate["pairs"] and sum(r[1] for r in candidate["per_round"].values()) == candidate["hits"], "as the launch sealed it"
+    for index, what in ((0, "pares"), (1, "aciertos")):
+        broken = json.loads(json.dumps(document))
+        broken["launch"]["validation"]["candidates"][0]["per_round"][round_id][index] += 1
+        before.seal_path.write_text(json.dumps(broken, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        tampered = file_digest(before.seal_path)
+        with pytest.raises(registry.SealError, match=rf"{what} por ronda del candidato {candidate['name']}.*R7"):
+            reporting.evaluate(before.conn, before.view, RUN, seal_path=before.seal_path, crm=evaluated.crm)
+        assert tables_digest(before.conn) == before_rows and file_digest(before.seal_path) == tampered, f"nothing is written when the {what} do not add up"
+    assert json.loads(before.seal_path.read_text(encoding="utf-8")).get("test") is None
+
+
+def test_the_rows_of_the_choice_are_one_per_round_and_one_for_all_of_them_with_the_sealed_figures(evaluated, world):
+    """The rows of every candidate as they were: a row per round of the validation with its own pairs and hits, and the «all» row with the sealed totals (the previous behavior of ``eval_choice``)."""
+    for candidate in evaluated.seal["launch"]["validation"]["candidates"]:
+        rows = world.conn.execute("SELECT round_id, pairs, hits, hit_new, coverage, kept, chosen FROM eval_choice WHERE candidate = ? AND seal_state = 'sealed' ORDER BY round_id", (candidate["name"],)).fetchall()
+        per_round = [(round_id, pairs, hits) for round_id, (pairs, hits, _distinct, _catalogue) in sorted(candidate["per_round"].items())]
+        assert [r[:3] for r in rows if r[0] != "all"] == per_round
+        (total,) = [r for r in rows if r[0] == "all"]
+        assert total[1:] == (candidate["pairs"], candidate["hits"], candidate["hit_new"], candidate["coverage"], int(candidate["kept"]), int(candidate["chosen"]))

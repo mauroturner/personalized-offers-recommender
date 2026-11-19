@@ -51,6 +51,9 @@ def _choice_rows(launch: Mapping[str, Any]) -> list[tuple]:
             total[0] += pairs
             total[1] += hits
             rows.append((common[0], round_id, *common[2:], pairs, hits, distinct, catalogue, hits / pairs if pairs else None, distinct / catalogue if catalogue else None, None, None, len(c["fit_rounds"])))
+        for what, summed, sealed in (("pares", total[0], c["pairs"]), ("aciertos", total[1], c["hits"])):
+            if summed != sealed:
+                raise registry.SealError(f"los {what} por ronda del candidato {c['name']} suman {summed} y el sello dice {sealed} en «todas»: lo sellado no concuerda consigo mismo y no se escribe (runbook R7)")
         rows.append((common[0], "all", *common[2:], c["pairs"], c["hits"], 0, 0, c["hit_new"], c["coverage"], int(c["kept"]), int(c["chosen"]), len(c["fit_rounds"])))
     return rows
 
