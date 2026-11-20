@@ -4,8 +4,8 @@
  "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
  "files": {
   "algorithms.json": {
-   "bytes": 47007,
-   "sha256": "119d8b9eb5b3ea5b270d6cc3c99f342232294270ec95e1cc938392632275ed11"
+   "bytes": 47929,
+   "sha256": "2e7356653bd1445c3c33b0bbdbabf7362ffd836df4bf881a489b3a274060e931"
   },
   "control.json": {
    "bytes": 3860,
@@ -20,8 +20,8 @@
    "sha256": "4b57af7aa0c9b5e71964ba358174001b342c8f103f626c944e4915d0d173d81d"
   },
   "summary.json": {
-   "bytes": 7598,
-   "sha256": "aea4626646a7e41b935aa4c5eb9e9aba96e6d016be05dd9673cac542ad4555a2"
+   "bytes": 12077,
+   "sha256": "a47de162fb2a3be069679756991e34d99510ffd3005adf532bdccb9e8f5029af"
   },
   "validation_rules.json": {
    "bytes": 2832,

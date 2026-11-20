@@ -160,6 +160,162 @@
   "pairs": 5803,
   "rounds": 18
  },
+ "post_seal_analysis": {
+  "c05": {
+   "by_round": {
+    "R2011-08-01": {
+     "basket_365": 3928,
+     "basket_before": 4567,
+     "distinct": 2152,
+     "distinct_evaluated": 625,
+     "purchase_365": 3749
+    },
+    "R2011-08-08": {
+     "basket_365": 3920,
+     "basket_before": 4584,
+     "distinct": 2169,
+     "distinct_evaluated": 536,
+     "purchase_365": 3743
+    },
+    "R2011-08-15": {
+     "basket_365": 3916,
+     "basket_before": 4592,
+     "distinct": 2166,
+     "distinct_evaluated": 625,
+     "purchase_365": 3736
+    },
+    "R2011-08-22": {
+     "basket_365": 3892,
+     "basket_before": 4594,
+     "distinct": 2165,
+     "distinct_evaluated": 622,
+     "purchase_365": 3711
+    },
+    "R2011-08-29": {
+     "basket_365": 3888,
+     "basket_before": 4603,
+     "distinct": 2173,
+     "distinct_evaluated": 565,
+     "purchase_365": 3709
+    },
+    "R2011-09-05": {
+     "basket_365": 3903,
+     "basket_before": 4624,
+     "distinct": 2177,
+     "distinct_evaluated": 673,
+     "purchase_365": 3715
+    },
+    "R2011-09-12": {
+     "basket_365": 3926,
+     "basket_before": 4661,
+     "distinct": 2198,
+     "distinct_evaluated": 646,
+     "purchase_365": 3731
+    },
+    "R2011-09-19": {
+     "basket_365": 3918,
+     "basket_before": 4670,
+     "distinct": 2203,
+     "distinct_evaluated": 717,
+     "purchase_365": 3720
+    },
+    "R2011-09-26": {
+     "basket_365": 3945,
+     "basket_before": 4706,
+     "distinct": 2208,
+     "distinct_evaluated": 763,
+     "purchase_365": 3749
+    },
+    "R2011-10-03": {
+     "basket_365": 3941,
+     "basket_before": 4727,
+     "distinct": 2210,
+     "distinct_evaluated": 698,
+     "purchase_365": 3741
+    },
+    "R2011-10-10": {
+     "basket_365": 3956,
+     "basket_before": 4756,
+     "distinct": 2214,
+     "distinct_evaluated": 723,
+     "purchase_365": 3758
+    },
+    "R2011-10-17": {
+     "basket_365": 3962,
+     "basket_before": 4779,
+     "distinct": 2200,
+     "distinct_evaluated": 711,
+     "purchase_365": 3762
+    },
+    "R2011-10-24": {
+     "basket_365": 3974,
+     "basket_before": 4811,
+     "distinct": 2211,
+     "distinct_evaluated": 776,
+     "purchase_365": 3774
+    },
+    "R2011-10-31": {
+     "basket_365": 3965,
+     "basket_before": 4825,
+     "distinct": 2222,
+     "distinct_evaluated": 785,
+     "purchase_365": 3764
+    },
+    "R2011-11-07": {
+     "basket_365": 3953,
+     "basket_before": 4841,
+     "distinct": 2220,
+     "distinct_evaluated": 831,
+     "purchase_365": 3740
+    },
+    "R2011-11-14": {
+     "basket_365": 3946,
+     "basket_before": 4851,
+     "distinct": 2225,
+     "distinct_evaluated": 931,
+     "purchase_365": 3720
+    },
+    "R2011-11-21": {
+     "basket_365": 3920,
+     "basket_before": 4858,
+     "distinct": 2219,
+     "distinct_evaluated": 863,
+     "purchase_365": 3690
+    },
+    "R2011-11-28": {
+     "basket_365": 3909,
+     "basket_before": 4874,
+     "distinct": 2198,
+     "distinct_evaluated": 910,
+     "purchase_365": 3665
+    }
+   },
+   "p01_definition": {
+    "definition_es": "La definición de la validación del plan (`p01`): los productos distintos de las listas de los clientes evaluados (los que compraron en la semana) sobre todos los productos con alguna línea de canasta antes de la ronda.",
+    "value": 0.1526783708698336
+   },
+   "p01_denominator": {
+    "definition_es": "Solo el denominador de `p01`: los productos distintos de todas las listas de la ronda sobre todos los productos con alguna línea de canasta antes de la ronda.",
+    "value": 0.4656213045456287
+   },
+   "preregistered": {
+    "definition_es": "Lo preregistrado (requerimientos, 8.1): los productos distintos de todas las listas de la ronda sobre los productos con alguna línea de compra (`purchase`) en los 365 días anteriores.",
+    "passed": true,
+    "threshold": 0.1,
+    "value": 0.5884707768744654
+   },
+   "rounds": 18,
+   "sealed": {
+    "definition_es": "Lo sellado: los productos distintos de todas las listas de la ronda sobre los productos con alguna línea de canasta (compras de clientes e invitados) en los 365 días anteriores.",
+    "passed": true,
+    "threshold": 0.1,
+    "value": 0.5586313748130077
+   }
+  },
+  "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+  "note_es": "Se calculó después del sello, sobre las mismas listas emitidas y las mismas líneas; no reemplaza ninguna cifra sellada (D49).",
+  "seal_sha256": "fa393815bb5eb6d39a8b29f0167200f0d4f6305da30980b636fee5a9b1c5cc36"
+ },
  "source": "warehouse",
  "validation": {
   "baselines": {

@@ -17,6 +17,13 @@ El archivo no tiene ofertas: ninguna cifra es el efecto de una oferta; las lista
 | C09 | Lo entregado al CRM es lo decidido | el 100 % de las listas entregadas se lee de vuelta igual, ningún cliente del control llega al CRM ni al CSV y repetir la última ronda no crea ningún registro | 65.959 de 65.959 listas leídas de vuelta iguales; 0 del control en el CRM o en el CSV; 0 nuevas al repetir la última ronda | 65.959 de 65.959 listas entregadas se leyeron de vuelta del CRM iguales; 0 clientes del control llegaron al CRM y 0 a los archivos de correo; repetir la última ronda (R2011-12-05, 3.433 contactos) creó 0 registros nuevos; debían leerse todas iguales y no llegar ni crearse ninguno. |
 | C10 | Variantes y seguimiento (informativo) | sin umbral | sin umbral | Informativo: sin umbral. Las líneas base, el modelo elegido y la lista con hit@10, recall@10, precisión@10, NDCG@10 y cobertura, sin restricción y solo nuevos, por ronda y por segmento, las pruebas normales sin ajustar del A/A, el menor efecto detectable con 10, 20 y 30 % de control y la ronda censurada están en el resumen (17 variantes). |
 
+### Análisis posteriores al sello
+
+No reemplazan ninguna cifra sellada: se calcularon después del sello, sobre las mismas listas emitidas y las mismas líneas, y se publican al lado de lo sellado (D49).
+
+- C05 como lo fija el preregistro: en 18 rondas, las listas de cada ronda cubrieron en promedio 0,588 de los productos con alguna línea de compra (`purchase`) en los 365 días anteriores; el umbral era 0,10 y se cumple. La cifra sellada, 0,559, tiene otro denominador: los productos con alguna de las líneas de canasta (las compras de clientes y las de invitados) en esos 365 días.
+- Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de la ronda), la prueba da 0,153, comparable con el 0,158 de esa validación. La distancia entre la cifra sellada, 0,559, y ese 0,158 es sobre todo el numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es 0,466; con solo las listas de los clientes evaluados, 0,153.
+
 Cifras de la validación (no son la prueba; se midieron en 13 rondas, de R2011-05-02 a R2011-07-25, con el hit@10 solo nuevos sobre los clientes que compraron):
 
 - Receta elegida entre 48 candidatas, `als_128_r0.1_w1`: hit@10 solo nuevos 0,346 sobre 3.219 pares, cobertura 0,101.

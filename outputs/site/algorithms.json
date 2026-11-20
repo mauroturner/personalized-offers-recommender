@@ -1745,66 +1745,68 @@
  "example_lists": [
   {
    "customers_in_segment": 3029,
+   "kind": "aggregate",
+   "note_es": "Lista agregada del perfil: los productos de recompra y de descubrimiento que más aparecen en las listas de sus clientes en la ronda, cada uno con cuántos clientes lo tienen; no es la lista de ningún cliente.",
    "products": [
     {
+     "customers": 544,
      "description_es": "WHITE HANGING HEART T-LIGHT HOLDER",
-     "rank": 1,
      "source_key": "repeat",
      "stock_code": "85123A"
     },
     {
-     "description_es": "RETROSPOT TEA SET CERAMIC 11 PC ",
-     "rank": 2,
+     "customers": 334,
+     "description_es": "REGENCY CAKESTAND 3 TIER",
      "source_key": "repeat",
-     "stock_code": "22139"
+     "stock_code": "22423"
     },
     {
-     "description_es": "ANTIQUE SILVER TEA GLASS ETCHED",
-     "rank": 3,
-     "source_key": "repeat",
-     "stock_code": "84946"
-    },
-    {
-     "description_es": "RED SPOTTY BOWL",
-     "rank": 4,
-     "source_key": "repeat",
-     "stock_code": "20676"
-    },
-    {
-     "description_es": "RED GINGHAM ROSE JEWELLERY BOX",
-     "rank": 5,
-     "source_key": "repeat",
-     "stock_code": "21429"
-    },
-    {
-     "description_es": "BAKING SET SPACEBOY DESIGN",
-     "rank": 6,
-     "source_key": "repeat",
-     "stock_code": "22617"
-    },
-    {
-     "description_es": "PINK SPOTTY BOWL",
-     "rank": 7,
-     "source_key": "repeat",
-     "stock_code": "20677"
-    },
-    {
-     "description_es": "BAKING SET 9 PIECE RETROSPOT ",
-     "rank": 8,
-     "source_key": "discovery",
-     "stock_code": "22138"
-    },
-    {
-     "description_es": "SMALL POPCORN HOLDER",
-     "rank": 9,
-     "source_key": "discovery",
-     "stock_code": "22197"
-    },
-    {
+     "customers": 292,
      "description_es": "ASSORTED COLOUR BIRD ORNAMENT",
-     "rank": 10,
-     "source_key": "discovery",
+     "source_key": "repeat",
      "stock_code": "84879"
+    },
+    {
+     "customers": 244,
+     "description_es": "JUMBO BAG RED RETROSPOT",
+     "source_key": "repeat",
+     "stock_code": "85099B"
+    },
+    {
+     "customers": 212,
+     "description_es": "PARTY BUNTING",
+     "source_key": "repeat",
+     "stock_code": "47566"
+    },
+    {
+     "customers": 183,
+     "description_es": "REX CASH+CARRY JUMBO SHOPPER",
+     "source_key": "repeat",
+     "stock_code": "21034"
+    },
+    {
+     "customers": 178,
+     "description_es": "LUNCH BAG RED SPOTTY",
+     "source_key": "repeat",
+     "stock_code": "20725"
+    },
+    {
+     "customers": 954,
+     "description_es": "SPOTTY BUNTING",
+     "source_key": "discovery",
+     "stock_code": "23298"
+    },
+    {
+     "customers": 297,
+     "description_es": "JUMBO BAG DOILEY PATTERNS",
+     "source_key": "discovery",
+     "stock_code": "23203"
+    },
+    {
+     "customers": 237,
+     "description_es": "LUNCH BAG PINK POLKADOT",
+     "source_key": "discovery",
+     "stock_code": "22384"
     }
    ],
    "profile_es": "Minorista con compras repetidas",
@@ -1813,66 +1815,68 @@
   },
   {
    "customers_in_segment": 958,
+   "kind": "aggregate",
+   "note_es": "Lista agregada del perfil: los productos de recompra y de descubrimiento que más aparecen en las listas de sus clientes en la ronda, cada uno con cuántos clientes lo tienen; no es la lista de ningún cliente.",
    "products": [
     {
+     "customers": 119,
+     "description_es": "WHITE HANGING HEART T-LIGHT HOLDER",
+     "source_key": "repeat",
+     "stock_code": "85123A"
+    },
+    {
+     "customers": 99,
+     "description_es": "REGENCY CAKESTAND 3 TIER",
+     "source_key": "repeat",
+     "stock_code": "22423"
+    },
+    {
+     "customers": 82,
+     "description_es": "BAKING SET 9 PIECE RETROSPOT ",
+     "source_key": "repeat",
+     "stock_code": "22138"
+    },
+    {
+     "customers": 69,
+     "description_es": "ASSORTED COLOUR BIRD ORNAMENT",
+     "source_key": "repeat",
+     "stock_code": "84879"
+    },
+    {
+     "customers": 66,
+     "description_es": "PACK OF 72 RETRO SPOT CAKE CASES",
+     "source_key": "repeat",
+     "stock_code": "21212"
+    },
+    {
+     "customers": 62,
      "description_es": "RETROSPOT TEA SET CERAMIC 11 PC ",
-     "rank": 1,
      "source_key": "repeat",
      "stock_code": "22139"
     },
     {
-     "description_es": "VINTAGE SNAP CARDS",
-     "rank": 2,
+     "customers": 61,
+     "description_es": "REX CASH+CARRY JUMBO SHOPPER",
      "source_key": "repeat",
-     "stock_code": "21790"
+     "stock_code": "21034"
     },
     {
-     "description_es": "PAPER CHAIN KIT VINTAGE CHRISTMAS",
-     "rank": 3,
-     "source_key": "repeat",
-     "stock_code": "22910"
-    },
-    {
-     "description_es": "PINK HAPPY BIRTHDAY BUNTING",
-     "rank": 4,
-     "source_key": "repeat",
-     "stock_code": "47590B"
-    },
-    {
-     "description_es": "3 STRIPEY MICE FELTCRAFT",
-     "rank": 5,
-     "source_key": "repeat",
-     "stock_code": "22150"
-    },
-    {
-     "description_es": "WOODEN SCHOOL COLOURING SET",
-     "rank": 6,
-     "source_key": "repeat",
-     "stock_code": "22561"
-    },
-    {
-     "description_es": "VINTAGE SNAKES & LADDERS",
-     "rank": 7,
-     "source_key": "repeat",
-     "stock_code": "21912"
-    },
-    {
+     "customers": 576,
      "description_es": "PARTY BUNTING",
-     "rank": 8,
      "source_key": "discovery",
      "stock_code": "47566"
     },
     {
-     "description_es": "SPOTTY BUNTING",
-     "rank": 9,
-     "source_key": "discovery",
-     "stock_code": "23298"
-    },
-    {
+     "customers": 442,
      "description_es": "JUMBO BAG RED RETROSPOT",
-     "rank": 10,
      "source_key": "discovery",
      "stock_code": "85099B"
+    },
+    {
+     "customers": 356,
+     "description_es": "SPOTTY BUNTING",
+     "source_key": "discovery",
+     "stock_code": "23298"
     }
    ],
    "profile_es": "Minorista con una factura",
@@ -1881,66 +1885,68 @@
   },
   {
    "customers_in_segment": 288,
+   "kind": "aggregate",
+   "note_es": "Lista agregada del perfil: los productos de recompra y de descubrimiento que más aparecen en las listas de sus clientes en la ronda, cada uno con cuántos clientes lo tienen; no es la lista de ningún cliente.",
    "products": [
     {
-     "description_es": "CHARLOTTE BAG SUKI DESIGN",
-     "rank": 1,
+     "customers": 34,
+     "description_es": "JUMBO BAG RED RETROSPOT",
      "source_key": "repeat",
-     "stock_code": "22355"
+     "stock_code": "85099B"
     },
     {
-     "description_es": "SUKI  SHOULDER BAG",
-     "rank": 2,
+     "customers": 28,
+     "description_es": "WHITE HANGING HEART T-LIGHT HOLDER",
      "source_key": "repeat",
-     "stock_code": "21935"
+     "stock_code": "85123A"
     },
     {
-     "description_es": "DECORATION, HANGING HEART+MIRROR ",
-     "rank": 3,
+     "customers": 22,
+     "description_es": "PACK OF 72 RETRO SPOT CAKE CASES",
      "source_key": "repeat",
-     "stock_code": "22227"
+     "stock_code": "21212"
     },
     {
-     "description_es": "JUMBO STORAGE BAG SUKI",
-     "rank": 4,
+     "customers": 22,
+     "description_es": "REGENCY CAKESTAND 3 TIER",
      "source_key": "repeat",
-     "stock_code": "21931"
+     "stock_code": "22423"
     },
     {
-     "description_es": "LOVEBIRD HANGING DECORATION WHITE ",
-     "rank": 5,
+     "customers": 18,
+     "description_es": "PACK OF 60 PINK PAISLEY CAKE CASES",
      "source_key": "repeat",
-     "stock_code": "22219"
+     "stock_code": "21977"
     },
     {
-     "description_es": "HEART OF WICKER SMALL",
-     "rank": 6,
+     "customers": 15,
+     "description_es": "PARTY BUNTING",
      "source_key": "repeat",
-     "stock_code": "22469"
+     "stock_code": "47566"
     },
     {
-     "description_es": "ZINC METAL HEART DECORATION",
-     "rank": 7,
+     "customers": 14,
+     "description_es": "VINTAGE SNAP CARDS",
      "source_key": "repeat",
-     "stock_code": "84836"
+     "stock_code": "21790"
     },
     {
-     "description_es": "JUMBO  BAG BAROQUE BLACK WHITE",
-     "rank": 8,
+     "customers": 125,
+     "description_es": "SPOTTY BUNTING",
      "source_key": "discovery",
-     "stock_code": "85099C"
+     "stock_code": "23298"
     },
     {
-     "description_es": "JUMBO BAG PINK VINTAGE PAISLEY",
-     "rank": 9,
+     "customers": 59,
+     "description_es": "JUMBO BAG DOILEY PATTERNS",
      "source_key": "discovery",
-     "stock_code": "21929"
+     "stock_code": "23203"
     },
     {
-     "description_es": "RECYCLING BAG RETROSPOT ",
-     "rank": 10,
+     "customers": 33,
+     "description_es": "LUNCH BAG DOILEY PATTERN ",
      "source_key": "discovery",
-     "stock_code": "22379"
+     "stock_code": "23209"
     }
    ],
    "profile_es": "Mayorista con compras repetidas",
