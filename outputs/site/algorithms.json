@@ -1,0 +1,2301 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "by_round": [
+  {
+   "hit_rate": 0.256,
+   "method_key": "b2",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.265,
+   "method_key": "b2",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.242,
+   "method_key": "b2",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.265,
+   "method_key": "b2",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.183,
+   "method_key": "b2",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.189,
+   "method_key": "b2",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.243,
+   "method_key": "b2",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.231,
+   "method_key": "b2",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.305,
+   "method_key": "b2",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.298,
+   "method_key": "b2",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.27,
+   "method_key": "b2",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.312,
+   "method_key": "b2",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.29,
+   "method_key": "b2",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.285,
+   "method_key": "b2",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.329,
+   "method_key": "b2",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.361,
+   "method_key": "b2",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.311,
+   "method_key": "b2",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.268,
+   "method_key": "b2",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.157,
+   "method_key": "b2",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.517,
+   "method_key": "b2",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.583,
+   "method_key": "b2",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.571,
+   "method_key": "b2",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.515,
+   "method_key": "b2",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.442,
+   "method_key": "b2",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.423,
+   "method_key": "b2",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.474,
+   "method_key": "b2",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.44,
+   "method_key": "b2",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.53,
+   "method_key": "b2",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.543,
+   "method_key": "b2",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.52,
+   "method_key": "b2",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.493,
+   "method_key": "b2",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.49,
+   "method_key": "b2",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.547,
+   "method_key": "b2",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.564,
+   "method_key": "b2",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.601,
+   "method_key": "b2",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.576,
+   "method_key": "b2",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.566,
+   "method_key": "b2",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.532,
+   "method_key": "b2",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.256,
+   "method_key": "b3",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.265,
+   "method_key": "b3",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.242,
+   "method_key": "b3",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.265,
+   "method_key": "b3",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.183,
+   "method_key": "b3",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.189,
+   "method_key": "b3",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.243,
+   "method_key": "b3",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.231,
+   "method_key": "b3",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.305,
+   "method_key": "b3",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.298,
+   "method_key": "b3",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.27,
+   "method_key": "b3",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.312,
+   "method_key": "b3",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.29,
+   "method_key": "b3",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.285,
+   "method_key": "b3",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.329,
+   "method_key": "b3",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.361,
+   "method_key": "b3",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.311,
+   "method_key": "b3",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.268,
+   "method_key": "b3",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.157,
+   "method_key": "b3",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.824,
+   "method_key": "b3",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.858,
+   "method_key": "b3",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.838,
+   "method_key": "b3",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.82,
+   "method_key": "b3",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.792,
+   "method_key": "b3",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.79,
+   "method_key": "b3",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.825,
+   "method_key": "b3",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.775,
+   "method_key": "b3",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.741,
+   "method_key": "b3",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.768,
+   "method_key": "b3",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.75,
+   "method_key": "b3",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.74,
+   "method_key": "b3",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.777,
+   "method_key": "b3",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.795,
+   "method_key": "b3",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.805,
+   "method_key": "b3",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.79,
+   "method_key": "b3",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.786,
+   "method_key": "b3",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.815,
+   "method_key": "b3",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.784,
+   "method_key": "b3",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.319,
+   "method_key": "chosen_discovery",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.294,
+   "method_key": "chosen_discovery",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.283,
+   "method_key": "chosen_discovery",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.294,
+   "method_key": "chosen_discovery",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.218,
+   "method_key": "chosen_discovery",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.245,
+   "method_key": "chosen_discovery",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.347,
+   "method_key": "chosen_discovery",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.306,
+   "method_key": "chosen_discovery",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.361,
+   "method_key": "chosen_discovery",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.351,
+   "method_key": "chosen_discovery",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.352,
+   "method_key": "chosen_discovery",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.377,
+   "method_key": "chosen_discovery",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.377,
+   "method_key": "chosen_discovery",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.373,
+   "method_key": "chosen_discovery",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.403,
+   "method_key": "chosen_discovery",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.395,
+   "method_key": "chosen_discovery",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.339,
+   "method_key": "chosen_discovery",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.311,
+   "method_key": "chosen_discovery",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.272,
+   "method_key": "chosen_discovery",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "new_only"
+  },
+  {
+   "hit_rate": 0.765,
+   "method_key": "chosen_discovery",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.791,
+   "method_key": "chosen_discovery",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.742,
+   "method_key": "chosen_discovery",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.728,
+   "method_key": "chosen_discovery",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.66,
+   "method_key": "chosen_discovery",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.692,
+   "method_key": "chosen_discovery",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.753,
+   "method_key": "chosen_discovery",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.684,
+   "method_key": "chosen_discovery",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.698,
+   "method_key": "chosen_discovery",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.689,
+   "method_key": "chosen_discovery",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.707,
+   "method_key": "chosen_discovery",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.688,
+   "method_key": "chosen_discovery",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.693,
+   "method_key": "chosen_discovery",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.784,
+   "method_key": "chosen_discovery",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.754,
+   "method_key": "chosen_discovery",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.796,
+   "method_key": "chosen_discovery",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.797,
+   "method_key": "chosen_discovery",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.789,
+   "method_key": "chosen_discovery",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.748,
+   "method_key": "chosen_discovery",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.815,
+   "method_key": "offer_list",
+   "pairs": 238,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.839,
+   "method_key": "offer_list",
+   "pairs": 211,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.812,
+   "method_key": "offer_list",
+   "pairs": 240,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.82,
+   "method_key": "offer_list",
+   "pairs": 272,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.782,
+   "method_key": "offer_list",
+   "pairs": 197,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.783,
+   "method_key": "offer_list",
+   "pairs": 286,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.821,
+   "method_key": "offer_list",
+   "pairs": 251,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.765,
+   "method_key": "offer_list",
+   "pairs": 307,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.738,
+   "method_key": "offer_list",
+   "pairs": 321,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.738,
+   "method_key": "offer_list",
+   "pairs": 302,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.737,
+   "method_key": "offer_list",
+   "pairs": 304,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.743,
+   "method_key": "offer_list",
+   "pairs": 292,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.746,
+   "method_key": "offer_list",
+   "pairs": 355,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.787,
+   "method_key": "offer_list",
+   "pairs": 375,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.79,
+   "method_key": "offer_list",
+   "pairs": 447,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.802,
+   "method_key": "offer_list",
+   "pairs": 501,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.772,
+   "method_key": "offer_list",
+   "pairs": 434,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.785,
+   "method_key": "offer_list",
+   "pairs": 470,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "variant_key": "unrestricted"
+  },
+  {
+   "hit_rate": 0.756,
+   "method_key": "offer_list",
+   "pairs": 389,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "variant_key": "unrestricted"
+  }
+ ],
+ "choice": [
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.01_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 128
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.238,
+   "val_hit_new": 0.209
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.01_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 128
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.176,
+   "val_hit_new": 0.285
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.01_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 128
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.101,
+   "val_hit_new": 0.344
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.01_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.01,
+    "size": 128
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.031,
+   "val_hit_new": 0.347
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.1_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 128
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.239,
+   "val_hit_new": 0.213
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.1_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 128
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.177,
+   "val_hit_new": 0.285
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.1_w1",
+   "chosen": true,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.1,
+    "size": 128
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.101,
+   "val_hit_new": 0.346
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_128_r0.1_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.1,
+    "size": 128
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.031,
+   "val_hit_new": 0.346
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.01_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 32
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.213,
+   "val_hit_new": 0.199
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.01_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 32
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.143,
+   "val_hit_new": 0.292
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.01_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 32
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.071,
+   "val_hit_new": 0.34
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.01_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.01,
+    "size": 32
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.023,
+   "val_hit_new": 0.345
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.1_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 32
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.214,
+   "val_hit_new": 0.199
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.1_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 32
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.144,
+   "val_hit_new": 0.295
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.1_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 32
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.071,
+   "val_hit_new": 0.341
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_32_r0.1_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 32
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.023,
+   "val_hit_new": 0.344
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.01_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 64
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.228,
+   "val_hit_new": 0.212
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.01_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.01,
+    "size": 64
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.162,
+   "val_hit_new": 0.292
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.01_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.01,
+    "size": 64
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.086,
+   "val_hit_new": 0.347
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.01_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.01,
+    "size": 64
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.026,
+   "val_hit_new": 0.349
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.1_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 64
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.229,
+   "val_hit_new": 0.209
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.1_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": 0.1,
+    "size": 64
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.164,
+   "val_hit_new": 0.29
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.1_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.1,
+    "size": 64
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.088,
+   "val_hit_new": 0.345
+  },
+  {
+   "base_model": "als",
+   "candidate": "als_64_r0.1_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": true,
+   "params": {
+    "regularization": 0.1,
+    "size": 64
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.026,
+   "val_hit_new": 0.349
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_100_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 100
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.063,
+   "val_hit_new": 0.221
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_100_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 100
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.041,
+   "val_hit_new": 0.256
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_100_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 100
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.027,
+   "val_hit_new": 0.285
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_100_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 100
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.018,
+   "val_hit_new": 0.304
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_200_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 200
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.06,
+   "val_hit_new": 0.22
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_200_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 200
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.036,
+   "val_hit_new": 0.246
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_200_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 200
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.024,
+   "val_hit_new": 0.263
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_200_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 200
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.018,
+   "val_hit_new": 0.29
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_50_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 50
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.078,
+   "val_hit_new": 0.242
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_50_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 50
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.049,
+   "val_hit_new": 0.28
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_50_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 50
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.031,
+   "val_hit_new": 0.308
+  },
+  {
+   "base_model": "cosine",
+   "candidate": "cosine_50_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 50
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.017,
+   "val_hit_new": 0.319
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_10_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 10
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.18,
+   "val_hit_new": 0.207
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_10_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 10
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.101,
+   "val_hit_new": 0.273
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_10_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 10
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.047,
+   "val_hit_new": 0.298
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_10_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 10
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.019,
+   "val_hit_new": 0.312
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_20_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 20
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.176,
+   "val_hit_new": 0.21
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_20_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 20
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.1,
+   "val_hit_new": 0.272
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_20_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 20
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.048,
+   "val_hit_new": 0.298
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_20_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 20
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.019,
+   "val_hit_new": 0.313
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_5_w0",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 5
+   },
+   "trend_weight": 0.0,
+   "val_coverage": 0.184,
+   "val_hit_new": 0.206
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_5_w0.5",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 5
+   },
+   "trend_weight": 0.5,
+   "val_coverage": 0.102,
+   "val_hit_new": 0.272
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_5_w1",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 5
+   },
+   "trend_weight": 1.0,
+   "val_coverage": 0.047,
+   "val_hit_new": 0.297
+  },
+  {
+   "base_model": "rules",
+   "candidate": "rules_5_w2",
+   "chosen": false,
+   "fit_rounds": 13,
+   "kept": false,
+   "params": {
+    "regularization": null,
+    "size": 5
+   },
+   "trend_weight": 2.0,
+   "val_coverage": 0.018,
+   "val_hit_new": 0.312
+  }
+ ],
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "example_lists": [
+  {
+   "customers_in_segment": 3029,
+   "products": [
+    {
+     "description_es": "WHITE HANGING HEART T-LIGHT HOLDER",
+     "rank": 1,
+     "source_key": "repeat",
+     "stock_code": "85123A"
+    },
+    {
+     "description_es": "RETROSPOT TEA SET CERAMIC 11 PC ",
+     "rank": 2,
+     "source_key": "repeat",
+     "stock_code": "22139"
+    },
+    {
+     "description_es": "ANTIQUE SILVER TEA GLASS ETCHED",
+     "rank": 3,
+     "source_key": "repeat",
+     "stock_code": "84946"
+    },
+    {
+     "description_es": "RED SPOTTY BOWL",
+     "rank": 4,
+     "source_key": "repeat",
+     "stock_code": "20676"
+    },
+    {
+     "description_es": "RED GINGHAM ROSE JEWELLERY BOX",
+     "rank": 5,
+     "source_key": "repeat",
+     "stock_code": "21429"
+    },
+    {
+     "description_es": "BAKING SET SPACEBOY DESIGN",
+     "rank": 6,
+     "source_key": "repeat",
+     "stock_code": "22617"
+    },
+    {
+     "description_es": "PINK SPOTTY BOWL",
+     "rank": 7,
+     "source_key": "repeat",
+     "stock_code": "20677"
+    },
+    {
+     "description_es": "BAKING SET 9 PIECE RETROSPOT ",
+     "rank": 8,
+     "source_key": "discovery",
+     "stock_code": "22138"
+    },
+    {
+     "description_es": "SMALL POPCORN HOLDER",
+     "rank": 9,
+     "source_key": "discovery",
+     "stock_code": "22197"
+    },
+    {
+     "description_es": "ASSORTED COLOUR BIRD ORNAMENT",
+     "rank": 10,
+     "source_key": "discovery",
+     "stock_code": "84879"
+    }
+   ],
+   "profile_es": "Minorista con compras repetidas",
+   "round_key": "R2011-08-01",
+   "segment_key": "retail|repeat"
+  },
+  {
+   "customers_in_segment": 958,
+   "products": [
+    {
+     "description_es": "RETROSPOT TEA SET CERAMIC 11 PC ",
+     "rank": 1,
+     "source_key": "repeat",
+     "stock_code": "22139"
+    },
+    {
+     "description_es": "VINTAGE SNAP CARDS",
+     "rank": 2,
+     "source_key": "repeat",
+     "stock_code": "21790"
+    },
+    {
+     "description_es": "PAPER CHAIN KIT VINTAGE CHRISTMAS",
+     "rank": 3,
+     "source_key": "repeat",
+     "stock_code": "22910"
+    },
+    {
+     "description_es": "PINK HAPPY BIRTHDAY BUNTING",
+     "rank": 4,
+     "source_key": "repeat",
+     "stock_code": "47590B"
+    },
+    {
+     "description_es": "3 STRIPEY MICE FELTCRAFT",
+     "rank": 5,
+     "source_key": "repeat",
+     "stock_code": "22150"
+    },
+    {
+     "description_es": "WOODEN SCHOOL COLOURING SET",
+     "rank": 6,
+     "source_key": "repeat",
+     "stock_code": "22561"
+    },
+    {
+     "description_es": "VINTAGE SNAKES & LADDERS",
+     "rank": 7,
+     "source_key": "repeat",
+     "stock_code": "21912"
+    },
+    {
+     "description_es": "PARTY BUNTING",
+     "rank": 8,
+     "source_key": "discovery",
+     "stock_code": "47566"
+    },
+    {
+     "description_es": "SPOTTY BUNTING",
+     "rank": 9,
+     "source_key": "discovery",
+     "stock_code": "23298"
+    },
+    {
+     "description_es": "JUMBO BAG RED RETROSPOT",
+     "rank": 10,
+     "source_key": "discovery",
+     "stock_code": "85099B"
+    }
+   ],
+   "profile_es": "Minorista con una factura",
+   "round_key": "R2011-08-01",
+   "segment_key": "retail|one_invoice"
+  },
+  {
+   "customers_in_segment": 288,
+   "products": [
+    {
+     "description_es": "CHARLOTTE BAG SUKI DESIGN",
+     "rank": 1,
+     "source_key": "repeat",
+     "stock_code": "22355"
+    },
+    {
+     "description_es": "SUKI  SHOULDER BAG",
+     "rank": 2,
+     "source_key": "repeat",
+     "stock_code": "21935"
+    },
+    {
+     "description_es": "DECORATION, HANGING HEART+MIRROR ",
+     "rank": 3,
+     "source_key": "repeat",
+     "stock_code": "22227"
+    },
+    {
+     "description_es": "JUMBO STORAGE BAG SUKI",
+     "rank": 4,
+     "source_key": "repeat",
+     "stock_code": "21931"
+    },
+    {
+     "description_es": "LOVEBIRD HANGING DECORATION WHITE ",
+     "rank": 5,
+     "source_key": "repeat",
+     "stock_code": "22219"
+    },
+    {
+     "description_es": "HEART OF WICKER SMALL",
+     "rank": 6,
+     "source_key": "repeat",
+     "stock_code": "22469"
+    },
+    {
+     "description_es": "ZINC METAL HEART DECORATION",
+     "rank": 7,
+     "source_key": "repeat",
+     "stock_code": "84836"
+    },
+    {
+     "description_es": "JUMBO  BAG BAROQUE BLACK WHITE",
+     "rank": 8,
+     "source_key": "discovery",
+     "stock_code": "85099C"
+    },
+    {
+     "description_es": "JUMBO BAG PINK VINTAGE PAISLEY",
+     "rank": 9,
+     "source_key": "discovery",
+     "stock_code": "21929"
+    },
+    {
+     "description_es": "RECYCLING BAG RETROSPOT ",
+     "rank": 10,
+     "source_key": "discovery",
+     "stock_code": "22379"
+    }
+   ],
+   "profile_es": "Mayorista con compras repetidas",
+   "round_key": "R2011-08-01",
+   "segment_key": "bulk|repeat"
+  }
+ ],
+ "methods": [
+  {
+   "ci_high": 0.034,
+   "ci_low": 0.024,
+   "coverage": 1.2,
+   "hit_rate": 0.029,
+   "label_es": "B0 al azar",
+   "method_key": "b0",
+   "ndcg": 0.003,
+   "pairs": 5803,
+   "precision": 0.003,
+   "recall": 0.001,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.033,
+   "wilson_low": 0.025
+  },
+  {
+   "ci_high": 0.063,
+   "ci_low": 0.05,
+   "coverage": 1.2,
+   "hit_rate": 0.056,
+   "label_es": "B0 al azar",
+   "method_key": "b0",
+   "ndcg": 0.006,
+   "pairs": 5803,
+   "precision": 0.006,
+   "recall": 0.002,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.062,
+   "wilson_low": 0.051
+  },
+  {
+   "ci_high": 0.141,
+   "ci_low": 0.122,
+   "coverage": 0.021,
+   "hit_rate": 0.131,
+   "label_es": "B1 popularidad global",
+   "method_key": "b1",
+   "ndcg": 0.018,
+   "pairs": 5803,
+   "precision": 0.017,
+   "recall": 0.007,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.14,
+   "wilson_low": 0.123
+  },
+  {
+   "ci_high": 0.45,
+   "ci_low": 0.414,
+   "coverage": 0.003,
+   "hit_rate": 0.431,
+   "label_es": "B1 popularidad global",
+   "method_key": "b1",
+   "ndcg": 0.083,
+   "pairs": 5803,
+   "precision": 0.073,
+   "recall": 0.035,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.444,
+   "wilson_low": 0.419
+  },
+  {
+   "ci_high": 0.296,
+   "ci_low": 0.267,
+   "coverage": 0.016,
+   "hit_rate": 0.281,
+   "label_es": "B2 lo más vendido de 28 días",
+   "method_key": "b2",
+   "ndcg": 0.048,
+   "pairs": 5803,
+   "precision": 0.043,
+   "recall": 0.018,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.292,
+   "wilson_low": 0.269
+  },
+  {
+   "ci_high": 0.548,
+   "ci_low": 0.511,
+   "coverage": 0.003,
+   "hit_rate": 0.529,
+   "label_es": "B2 lo más vendido de 28 días",
+   "method_key": "b2",
+   "ndcg": 0.116,
+   "pairs": 5803,
+   "precision": 0.103,
+   "recall": 0.051,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.542,
+   "wilson_low": 0.516
+  },
+  {
+   "ci_high": 0.296,
+   "ci_low": 0.267,
+   "coverage": 0.016,
+   "hit_rate": 0.281,
+   "label_es": "B3 recompra propia",
+   "method_key": "b3",
+   "ndcg": 0.048,
+   "pairs": 5803,
+   "precision": 0.043,
+   "recall": 0.018,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.292,
+   "wilson_low": 0.269
+  },
+  {
+   "ci_high": 0.804,
+   "ci_low": 0.78,
+   "coverage": 0.652,
+   "hit_rate": 0.792,
+   "label_es": "B3 recompra propia",
+   "method_key": "b3",
+   "ndcg": 0.302,
+   "pairs": 5803,
+   "precision": 0.242,
+   "recall": 0.179,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.802,
+   "wilson_low": 0.781
+  },
+  {
+   "ci_high": 0.246,
+   "ci_low": 0.22,
+   "coverage": 0.449,
+   "hit_rate": 0.233,
+   "label_es": "B4 reglas de asociación",
+   "method_key": "b4",
+   "ndcg": 0.034,
+   "pairs": 5803,
+   "precision": 0.032,
+   "recall": 0.016,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.244,
+   "wilson_low": 0.222
+  },
+  {
+   "ci_high": 0.493,
+   "ci_low": 0.458,
+   "coverage": 0.407,
+   "hit_rate": 0.475,
+   "label_es": "B4 reglas de asociación",
+   "method_key": "b4",
+   "ndcg": 0.103,
+   "pairs": 5803,
+   "precision": 0.094,
+   "recall": 0.066,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.488,
+   "wilson_low": 0.462
+  },
+  {
+   "ci_high": 0.245,
+   "ci_low": 0.219,
+   "coverage": 0.514,
+   "hit_rate": 0.232,
+   "label_es": "B5 ALS",
+   "method_key": "b5",
+   "ndcg": 0.036,
+   "pairs": 5803,
+   "precision": 0.033,
+   "recall": 0.016,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.243,
+   "wilson_low": 0.221
+  },
+  {
+   "ci_high": 0.588,
+   "ci_low": 0.553,
+   "coverage": 0.51,
+   "hit_rate": 0.571,
+   "label_es": "B5 ALS",
+   "method_key": "b5",
+   "ndcg": 0.139,
+   "pairs": 5803,
+   "precision": 0.119,
+   "recall": 0.102,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.583,
+   "wilson_low": 0.558
+  },
+  {
+   "ci_high": 0.234,
+   "ci_low": 0.208,
+   "coverage": 0.363,
+   "hit_rate": 0.221,
+   "label_es": "B6 coseno entre productos",
+   "method_key": "b6",
+   "ndcg": 0.037,
+   "pairs": 5803,
+   "precision": 0.034,
+   "recall": 0.016,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.231,
+   "wilson_low": 0.21
+  },
+  {
+   "ci_high": 0.626,
+   "ci_low": 0.593,
+   "coverage": 0.568,
+   "hit_rate": 0.61,
+   "label_es": "B6 coseno entre productos",
+   "method_key": "b6",
+   "ndcg": 0.175,
+   "pairs": 5803,
+   "precision": 0.148,
+   "recall": 0.104,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.622,
+   "wilson_low": 0.597
+  },
+  {
+   "ci_high": 0.355,
+   "ci_low": 0.324,
+   "coverage": 0.241,
+   "hit_rate": 0.338,
+   "label_es": "Modelo elegido (descubrimiento)",
+   "method_key": "chosen_discovery",
+   "ndcg": 0.059,
+   "pairs": 5803,
+   "precision": 0.053,
+   "recall": 0.024,
+   "suppressed": false,
+   "variant_key": "new_only",
+   "wilson_high": 0.351,
+   "wilson_low": 0.326
+  },
+  {
+   "ci_high": 0.755,
+   "ci_low": 0.726,
+   "coverage": 0.258,
+   "hit_rate": 0.74,
+   "label_es": "Modelo elegido (descubrimiento)",
+   "method_key": "chosen_discovery",
+   "ndcg": 0.224,
+   "pairs": 5803,
+   "precision": 0.188,
+   "recall": 0.128,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.751,
+   "wilson_low": 0.728
+  },
+  {
+   "ci_high": 0.793,
+   "ci_low": 0.768,
+   "coverage": 0.559,
+   "hit_rate": 0.78,
+   "label_es": "La lista que se entrega",
+   "method_key": "offer_list",
+   "ndcg": 0.275,
+   "pairs": 5803,
+   "precision": 0.205,
+   "recall": 0.154,
+   "suppressed": false,
+   "variant_key": "unrestricted",
+   "wilson_high": 0.791,
+   "wilson_low": 0.769
+  }
+ ],
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "rules_example": [
+  {
+   "antecedent_es": "SET OF 12 FAIRY CAKE BAKING CASES",
+   "confidence": 0.607,
+   "consequent_es": "SET OF 6 SNACK LOAF BAKING CASES",
+   "rule_lift": 301.486,
+   "support": 51
+  },
+  {
+   "antecedent_es": "SET OF 6 SNACK LOAF BAKING CASES",
+   "confidence": 0.823,
+   "consequent_es": "SET OF 12 FAIRY CAKE BAKING CASES",
+   "rule_lift": 301.486,
+   "support": 51
+  },
+  {
+   "antecedent_es": "SET OF 12 FAIRY CAKE BAKING CASES",
+   "confidence": 0.655,
+   "consequent_es": "SET OF 6 TEA TIME BAKING CASES",
+   "rule_lift": 296.443,
+   "support": 55
+  },
+  {
+   "antecedent_es": "SET OF 6 TEA TIME BAKING CASES",
+   "confidence": 0.809,
+   "consequent_es": "SET OF 12 FAIRY CAKE BAKING CASES",
+   "rule_lift": 296.443,
+   "support": 55
+  },
+  {
+   "antecedent_es": "BLUE VINTAGE SPOT BEAKER",
+   "confidence": 0.714,
+   "consequent_es": "RED VINTAGE SPOT BEAKER",
+   "rule_lift": 293.21,
+   "support": 65
+  },
+  {
+   "antecedent_es": "RED VINTAGE SPOT BEAKER",
+   "confidence": 0.867,
+   "consequent_es": "BLUE VINTAGE SPOT BEAKER",
+   "rule_lift": 293.21,
+   "support": 65
+  },
+  {
+   "antecedent_es": "PINK VINTAGE SPOT BEAKER",
+   "confidence": 0.69,
+   "consequent_es": "GREEN VINTAGE SPOT BEAKER",
+   "rule_lift": 276.074,
+   "support": 58
+  },
+  {
+   "antecedent_es": "GREEN VINTAGE SPOT BEAKER",
+   "confidence": 0.753,
+   "consequent_es": "PINK VINTAGE SPOT BEAKER",
+   "rule_lift": 276.074,
+   "support": 58
+  },
+  {
+   "antecedent_es": "RED VINTAGE SPOT BEAKER",
+   "confidence": 0.68,
+   "consequent_es": "GREEN VINTAGE SPOT BEAKER",
+   "rule_lift": 271.885,
+   "support": 51
+  },
+  {
+   "antecedent_es": "GREEN VINTAGE SPOT BEAKER",
+   "confidence": 0.662,
+   "consequent_es": "RED VINTAGE SPOT BEAKER",
+   "rule_lift": 271.885,
+   "support": 51
+  }
+ ],
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb"
+}

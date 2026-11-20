@@ -1,0 +1,164 @@
+{
+ "aa": {
+  "m1": {
+   "normal_cuped": {
+    "ci_high": 0.0083,
+    "ci_low": -0.0028,
+    "diff": 0.0027,
+    "p": 0.333
+   },
+   "normal_raw": {
+    "ci_high": 0.0095,
+    "ci_low": -0.0055,
+    "diff": 0.002,
+    "p": 0.599
+   },
+   "preregistered": {
+    "ci_high": 0.0083,
+    "ci_low": -0.0028,
+    "diff": 0.0027,
+    "p": 0.294
+   }
+  },
+  "m2": {
+   "normal_cuped": {
+    "ci_high": 79.5415,
+    "ci_low": -133.8319,
+    "diff": -27.1452,
+    "p": 0.618
+   },
+   "normal_raw": {
+    "ci_high": 339.8516,
+    "ci_low": -18.5747,
+    "diff": 160.6384,
+    "p": 0.079
+   },
+   "preregistered": {
+    "ci_high": 79.5415,
+    "ci_low": -133.8319,
+    "diff": -27.1452,
+    "p": 0.735
+   }
+  }
+ },
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "balance": [
+  {
+   "control_mean": 137.051,
+   "covariate_key": "recency_days",
+   "label_es": "Recencia",
+   "offer_mean": 137.959,
+   "smd": 0.008
+  },
+  {
+   "control_mean": 3.894,
+   "covariate_key": "invoices_365",
+   "label_es": "Facturas del año",
+   "offer_mean": 4.138,
+   "smd": 0.038
+  },
+  {
+   "control_mean": 1626.125,
+   "covariate_key": "spend_365",
+   "label_es": "Gasto del año",
+   "offer_mean": 1935.118,
+   "smd": 0.048
+  },
+  {
+   "control_mean": 386.98,
+   "covariate_key": "tenure_days",
+   "label_es": "Antigüedad",
+   "offer_mean": 382.941,
+   "smd": -0.023
+  },
+  {
+   "control_mean": 0.077,
+   "covariate_key": "bulk",
+   "label_es": "Marca mayorista",
+   "offer_mean": 0.079,
+   "smd": 0.004
+  }
+ ],
+ "calibration": {
+  "alpha": 0.05,
+  "band": [
+   0.031,
+   0.069
+  ],
+  "permutations": 500,
+  "rejection": {
+   "m1": 0.048,
+   "m2": 0.062
+  },
+  "rejection_normal_raw": {
+   "m1": 0.014,
+   "m2": 0.094
+  },
+  "seeds": 500
+ },
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "holdout": {
+  "groups": {
+   "control": 865,
+   "offer": 3461
+  },
+  "method": "estratificado por recencia, frecuencia y la marca mayorista; una sola vez, con la semilla sellada",
+  "share": 0.2,
+  "strata": 18
+ },
+ "mde": [
+  {
+   "holdout_share": 0.1,
+   "holdout_size": 433,
+   "mde": 0.0102,
+   "mde_relative": 0.147,
+   "metric": "m1"
+  },
+  {
+   "holdout_share": 0.2,
+   "holdout_size": 865,
+   "mde": 0.0076,
+   "mde_relative": 0.11,
+   "metric": "m1"
+  },
+  {
+   "holdout_share": 0.3,
+   "holdout_size": 1298,
+   "mde": 0.0067,
+   "mde_relative": 0.096,
+   "metric": "m1"
+  },
+  {
+   "holdout_share": 0.1,
+   "holdout_size": 433,
+   "mde": 303.616,
+   "mde_relative": 0.399,
+   "metric": "m2"
+  },
+  {
+   "holdout_share": 0.2,
+   "holdout_size": 865,
+   "mde": 227.8253,
+   "mde_relative": 0.299,
+   "metric": "m2"
+  },
+  {
+   "holdout_share": 0.3,
+   "holdout_size": 1298,
+   "mde": 198.8362,
+   "mde_relative": 0.261,
+   "metric": "m2"
+  }
+ ],
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb",
+ "what_it_cannot_measure_es": [
+  "No se puede medir cuánto vende una oferta: el archivo no tiene ninguna oferta enviada.",
+  "No se puede medir qué hace un grupo de control sin oferta: nadie quedó fuera de una campaña.",
+  "El A/A compara dos grupos que no recibieron nada: lo que muestra es cómo quedó armado el control y qué tan calibrada está la prueba.",
+  "El menor efecto detectable dice qué tamaño de diferencia podría verse con una operación real de este tamaño; no es un resultado."
+ ]
+}

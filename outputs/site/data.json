@@ -1,0 +1,135 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "baskets": {
+  "guest_invoices": 2922,
+  "invoices": 39516,
+  "median_products": 15.0
+ },
+ "bulk": {
+  "bulk": 339,
+  "customers_in_the_launch_base": 4326,
+  "rule": "mediana de la cantidad por línea y líneas mínimas de [base]; la regla del proyecto 02"
+ },
+ "calendar": {
+  "censored_round": "R2011-12-05",
+  "close_first_day": "2011-12-05",
+  "close_last_day": "2011-12-09",
+  "history_start": "2009-12-01",
+  "launch_last_day": "2011-07-31",
+  "rounds": [
+   "R2011-08-01",
+   "R2011-08-08",
+   "R2011-08-15",
+   "R2011-08-22",
+   "R2011-08-29",
+   "R2011-09-05",
+   "R2011-09-12",
+   "R2011-09-19",
+   "R2011-09-26",
+   "R2011-10-03",
+   "R2011-10-10",
+   "R2011-10-17",
+   "R2011-10-24",
+   "R2011-10-31",
+   "R2011-11-07",
+   "R2011-11-14",
+   "R2011-11-21",
+   "R2011-11-28"
+  ],
+  "validation_rounds": [
+   "R2011-05-02",
+   "R2011-05-09",
+   "R2011-05-16",
+   "R2011-05-23",
+   "R2011-05-30",
+   "R2011-06-06",
+   "R2011-06-13",
+   "R2011-06-20",
+   "R2011-06-27",
+   "R2011-07-04",
+   "R2011-07-11",
+   "R2011-07-18",
+   "R2011-07-25"
+  ]
+ },
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "countries": [
+  {
+   "country": "United Kingdom",
+   "lines": 935026
+  },
+  {
+   "country": "EIRE",
+   "lines": 16933
+  },
+  {
+   "country": "Germany",
+   "lines": 15811
+  },
+  {
+   "country": "France",
+   "lines": 13193
+  },
+  {
+   "country": "Netherlands",
+   "lines": 4982
+  },
+  {
+   "country": "Spain",
+   "lines": 3572
+  },
+  {
+   "country": "Switzerland",
+   "lines": 3076
+  },
+  {
+   "country": "Belgium",
+   "lines": 2912
+  },
+  {
+   "country": "Portugal",
+   "lines": 2421
+  },
+  {
+   "country": "Australia",
+   "lines": 1784
+  }
+ ],
+ "customers": {
+  "with_a_purchase": 5852,
+  "with_two_or_more_invoices": 4234
+ },
+ "discount_lines": 173,
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "products": {
+  "distinct": 4877
+ },
+ "repurchase": {
+  "median_days_between_purchases": 25.0,
+  "pairs": 480971,
+  "share_of_pairs": 0.252
+ },
+ "roles": {
+  "adjustment": 6,
+  "bad_price": 5938,
+  "cancellation": 19165,
+  "guest_purchase": 226757,
+  "non_product": 4795,
+  "purchase": 788187
+ },
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source": {
+  "copies_removed": 22523,
+  "internal_repeats": 11812,
+  "rows_by_sheet": {
+   "Year 2009-2010": 525461,
+   "Year 2010-2011": 541910
+  },
+  "rows_loaded": 1044848,
+  "rows_without_customer": 235287,
+  "share_without_customer": 0.225
+ },
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb"
+}

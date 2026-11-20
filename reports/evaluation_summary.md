@@ -1,0 +1,25 @@
+## Resumen de la evaluación
+
+No se cumple: C03.
+
+El archivo no tiene ofertas: ninguna cifra es el efecto de una oferta; las listas se miden por lo que anticipan y el grupo de control, por cómo quedó armado y comprobado.
+
+| ID | Criterio | Umbral | Lo que prueba el umbral | Veredicto |
+| --- | --- | --- | --- | --- |
+| C01 | La lista supera a lo más vendido | límite inferior del intervalo del 95 % de hit@10(lista) − hit@10(B2) > 0,0 puntos | 23,1 puntos (límite inferior) | En 18 rondas semanales, la lista acertó al menos un producto en el 78,0 % de los clientes que compraron y lo más vendido (B2) en el 52,9 %; el límite inferior de la diferencia es 23,1 puntos y el umbral era 0,0 puntos. |
+| C02 | La lista no pierde más de 5 puntos frente a la recompra propia | límite inferior del intervalo del 95 % de hit@10(lista) − hit@10(B3) > −5,0 puntos | −1,9 puntos (límite inferior) | En 18 rondas semanales, la lista acertó al menos un producto en el 78,0 % de los clientes que compraron y la recompra propia (B3) en el 79,2 %; el límite inferior de la diferencia es −1,9 puntos y debía ser mayor que −5,0 puntos. |
+| C03 | La lista supera a la recompra propia | límite inferior del intervalo del 95 % de hit@10(lista) − hit@10(B3) > 0,0 puntos | −1,9 puntos (límite inferior) | En 18 rondas semanales, la lista acertó al menos un producto en el 78,0 % de los clientes que compraron y la recompra propia (B3) en el 79,2 %; el límite inferior de la diferencia es −1,9 puntos y debía ser mayor que 0,0 puntos. No se cumple. |
+| C04 | El modelo descubre mejor que lo más vendido | límite inferior del intervalo del 95 % de hit@10 solo nuevos(modelo elegido) − hit@10 solo nuevos(B2) > 0,0 puntos | 4,6 puntos (límite inferior) | Entre los productos que el cliente nunca había comprado, el modelo elegido acertó en el 33,8 % de los clientes que compraron y lo más vendido (B2) en el 28,1 %; el límite inferior de la diferencia es 4,6 puntos y debía ser mayor que 0,0 puntos. |
+| C05 | Cada cliente recibe su propia lista | cobertura media de las listas de la ronda ≥ 0,10 | 0,559 (cobertura media) | En 18 rondas, las listas de cada ronda cubrieron en promedio 0,559 de los productos con alguna compra en los 365 días anteriores; el umbral era 0,10. |
+| C06 | El grupo de control está equilibrado | mayor diferencia estandarizada absoluta de las cinco covariables ≤ 0,10 | 0,048 (mayor diferencia estandarizada absoluta) | Entre las cinco covariables de la cohorte del lanzamiento (4.326 clientes), la mayor diferencia estandarizada absoluta entre el grupo de oferta y el de control es 0,048 (el gasto del año); el máximo era 0,10. |
+| C07 | La prueba del experimento está calibrada | tasa de rechazo de la prueba preregistrada, en 500 sorteos nuevos del control, de M1 y de M2: las dos entre 3,1 % y 6,9 % | 4,8 % y 6,2 % (tasas de rechazo de M1 y de M2) | En 500 sorteos nuevos del grupo de control sobre el período de prueba, la prueba preregistrada rechazó 4,8 % de las veces para las semanas con compra (M1) y 6,2 % para el gasto (M2); las dos debían estar entre 3,1 % y 6,9 %. |
+| C08 | El A/A no marca una diferencia que no existe | con el control sellado, la prueba preregistrada de M1 y de M2 da, las dos, p ≥ 0,05 | p = 0,294 y p = 0,735 (M1 y M2) | Con el control sellado y sin ninguna oferta, la prueba preregistrada da p = 0,294 para las semanas con compra (M1) y p = 0,735 para el gasto (M2) en el período de prueba; los dos debían ser al menos 0,05. |
+| C09 | Lo entregado al CRM es lo decidido | el 100 % de las listas entregadas se lee de vuelta igual, ningún cliente del control llega al CRM ni al CSV y repetir la última ronda no crea ningún registro | 65.959 de 65.959 listas leídas de vuelta iguales; 0 del control en el CRM o en el CSV; 0 nuevas al repetir la última ronda | 65.959 de 65.959 listas entregadas se leyeron de vuelta del CRM iguales; 0 clientes del control llegaron al CRM y 0 a los archivos de correo; repetir la última ronda (R2011-12-05, 3.433 contactos) creó 0 registros nuevos; debían leerse todas iguales y no llegar ni crearse ninguno. |
+| C10 | Variantes y seguimiento (informativo) | sin umbral | sin umbral | Informativo: sin umbral. Las líneas base, el modelo elegido y la lista con hit@10, recall@10, precisión@10, NDCG@10 y cobertura, sin restricción y solo nuevos, por ronda y por segmento, las pruebas normales sin ajustar del A/A, el menor efecto detectable con 10, 20 y 30 % de control y la ronda censurada están en el resumen (17 variantes). |
+
+Cifras de la validación (no son la prueba; se midieron en 13 rondas, de R2011-05-02 a R2011-07-25, con el hit@10 solo nuevos sobre los clientes que compraron):
+
+- Receta elegida entre 48 candidatas, `als_128_r0.1_w1`: hit@10 solo nuevos 0,346 sobre 3.219 pares, cobertura 0,101.
+- Mejor parámetro de B4 sin tendencia, `rules_5_w0`: hit@10 solo nuevos 0,206, cobertura 0,184.
+- Mejor parámetro de B5 sin tendencia, `als_128_r0.1_w0`: hit@10 solo nuevos 0,213, cobertura 0,239.
+- Mejor parámetro de B6 sin tendencia, `cosine_50_w0`: hit@10 solo nuevos 0,242, cobertura 0,078.

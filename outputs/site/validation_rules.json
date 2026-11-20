@@ -1,0 +1,97 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "rules": [
+  {
+   "aggregation": "per_run",
+   "name_es": "La entrega es la siguiente del plan",
+   "rows_affected": 0,
+   "rule_id": "V10",
+   "scope": "entrega",
+   "severity": "bloqueante",
+   "status": "pasa"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Filas y SHA-256 son los del manifiesto de la entrega",
+   "rows_affected": 0,
+   "rule_id": "V11",
+   "scope": "entrega",
+   "severity": "bloqueante",
+   "status": "pasa"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Toda línea tiene su fecha dentro del período de la entrega",
+   "rows_affected": 0,
+   "rule_id": "V12",
+   "scope": "entrega",
+   "severity": "bloqueante",
+   "status": "pasa"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Ninguna línea ya cargada ni repetida dentro de la entrega",
+   "rows_affected": 0,
+   "rule_id": "V13",
+   "scope": "entrega",
+   "severity": "bloqueante",
+   "status": "pasa"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Repeticiones internas, contadas (se conservan)",
+   "rows_affected": 11812,
+   "rule_id": "V14",
+   "scope": "línea",
+   "severity": "advertencia",
+   "status": "advertencia"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Precio o cantidad en cero o negativos fuera de las anulaciones (se apartan)",
+   "rows_affected": 5938,
+   "rule_id": "V15",
+   "scope": "línea",
+   "severity": "advertencia",
+   "status": "advertencia"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Descripción vacía (se conserva)",
+   "rows_affected": 4275,
+   "rule_id": "V16",
+   "scope": "línea",
+   "severity": "advertencia",
+   "status": "advertencia"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Líneas por rol",
+   "rows_affected": 0,
+   "rule_id": "V17",
+   "scope": "entrega",
+   "severity": "informativa",
+   "status": "pasa"
+  },
+  {
+   "aggregation": "per_run",
+   "name_es": "Clientes y productos nuevos de la entrega",
+   "rows_affected": 0,
+   "rule_id": "V18",
+   "scope": "entrega",
+   "severity": "informativa",
+   "status": "pasa"
+  }
+ ],
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb",
+ "totals": {
+  "deliveries_loaded": 20,
+  "deliveries_rejected": 0,
+  "lines": 1044848
+ }
+}

@@ -1,0 +1,35 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "files": {
+  "algorithms.json": {
+   "bytes": 47007,
+   "sha256": "119d8b9eb5b3ea5b270d6cc3c99f342232294270ec95e1cc938392632275ed11"
+  },
+  "control.json": {
+   "bytes": 3860,
+   "sha256": "df4859c7c8c8ad5b357a3913ac9437d78fec0b925a25dca5fc28b7119e7d8601"
+  },
+  "data.json": {
+   "bytes": 2989,
+   "sha256": "f312c5f82b27e8bb477d4c828c5e2d48db587ea2c606a9670e2aba96e0bc5236"
+  },
+  "operation.json": {
+   "bytes": 6621,
+   "sha256": "4b57af7aa0c9b5e71964ba358174001b342c8f103f626c944e4915d0d173d81d"
+  },
+  "summary.json": {
+   "bytes": 7598,
+   "sha256": "aea4626646a7e41b935aa4c5eb9e9aba96e6d016be05dd9673cac542ad4555a2"
+  },
+  "validation_rules.json": {
+   "bytes": 2832,
+   "sha256": "5d48dbef214b5afbd90dd959224ffe8e7ae7bc294943e9492075476eabd0740a"
+  }
+ },
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb"
+}

@@ -1,0 +1,328 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "crm": {
+  "batches": 134,
+  "batches_read_back_equal": 134,
+  "conflicts": 0,
+  "created": 65959,
+  "lists": 65959,
+  "minimum_cell": 10,
+  "unchanged": 0
+ },
+ "email": {
+  "files": 19,
+  "rows": 659590
+ },
+ "no_effect_note_es": "El archivo no tiene ofertas: estas cifras dicen qué anticipa cada lista, no cuánto vende una oferta",
+ "rounds": [
+  {
+   "base": 4326,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 865,
+   "delivered": 3461,
+   "fallback_share": 0.0,
+   "monday": "2011-08-01",
+   "offer": 3461,
+   "period": "test",
+   "round_key": "R2011-08-01",
+   "seconds": 23.3
+  },
+  {
+   "base": 4339,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 869,
+   "delivered": 3470,
+   "fallback_share": 0.0,
+   "monday": "2011-08-08",
+   "offer": 3470,
+   "period": "test",
+   "round_key": "R2011-08-08",
+   "seconds": 23.7
+  },
+  {
+   "base": 4328,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 865,
+   "delivered": 3463,
+   "fallback_share": 0.0,
+   "monday": "2011-08-15",
+   "offer": 3463,
+   "period": "test",
+   "round_key": "R2011-08-15",
+   "seconds": 23.8
+  },
+  {
+   "base": 4327,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 867,
+   "delivered": 3460,
+   "fallback_share": 0.0,
+   "monday": "2011-08-22",
+   "offer": 3460,
+   "period": "test",
+   "round_key": "R2011-08-22",
+   "seconds": 23.8
+  },
+  {
+   "base": 4324,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 870,
+   "delivered": 3454,
+   "fallback_share": 0.0,
+   "monday": "2011-08-29",
+   "offer": 3454,
+   "period": "test",
+   "round_key": "R2011-08-29",
+   "seconds": 23.9
+  },
+  {
+   "base": 4315,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 867,
+   "delivered": 3448,
+   "fallback_share": 0.0,
+   "monday": "2011-09-05",
+   "offer": 3448,
+   "period": "test",
+   "round_key": "R2011-09-05",
+   "seconds": 24.3
+  },
+  {
+   "base": 4313,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 867,
+   "delivered": 3446,
+   "fallback_share": 0.0,
+   "monday": "2011-09-12",
+   "offer": 3446,
+   "period": "test",
+   "round_key": "R2011-09-12",
+   "seconds": 24.3
+  },
+  {
+   "base": 4321,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 865,
+   "delivered": 3456,
+   "fallback_share": 0.0,
+   "monday": "2011-09-19",
+   "offer": 3456,
+   "period": "test",
+   "round_key": "R2011-09-19",
+   "seconds": 24.7
+  },
+  {
+   "base": 4361,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 872,
+   "delivered": 3489,
+   "fallback_share": 0.0,
+   "monday": "2011-09-26",
+   "offer": 3489,
+   "period": "test",
+   "round_key": "R2011-09-26",
+   "seconds": 25.1
+  },
+  {
+   "base": 4356,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 867,
+   "delivered": 3489,
+   "fallback_share": 0.0,
+   "monday": "2011-10-03",
+   "offer": 3489,
+   "period": "test",
+   "round_key": "R2011-10-03",
+   "seconds": 25.0
+  },
+  {
+   "base": 4372,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 868,
+   "delivered": 3504,
+   "fallback_share": 0.0,
+   "monday": "2011-10-10",
+   "offer": 3504,
+   "period": "test",
+   "round_key": "R2011-10-10",
+   "seconds": 25.3
+  },
+  {
+   "base": 4353,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 865,
+   "delivered": 3488,
+   "fallback_share": 0.0,
+   "monday": "2011-10-17",
+   "offer": 3488,
+   "period": "test",
+   "round_key": "R2011-10-17",
+   "seconds": 25.5
+  },
+  {
+   "base": 4360,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 860,
+   "delivered": 3500,
+   "fallback_share": 0.0,
+   "monday": "2011-10-24",
+   "offer": 3500,
+   "period": "test",
+   "round_key": "R2011-10-24",
+   "seconds": 25.5
+  },
+  {
+   "base": 4348,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 864,
+   "delivered": 3484,
+   "fallback_share": 0.0,
+   "monday": "2011-10-31",
+   "offer": 3484,
+   "period": "test",
+   "round_key": "R2011-10-31",
+   "seconds": 25.7
+  },
+  {
+   "base": 4352,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 865,
+   "delivered": 3487,
+   "fallback_share": 0.0,
+   "monday": "2011-11-07",
+   "offer": 3487,
+   "period": "test",
+   "round_key": "R2011-11-07",
+   "seconds": 26.3
+  },
+  {
+   "base": 4339,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 858,
+   "delivered": 3481,
+   "fallback_share": 0.0,
+   "monday": "2011-11-14",
+   "offer": 3481,
+   "period": "test",
+   "round_key": "R2011-11-14",
+   "seconds": 26.6
+  },
+  {
+   "base": 4334,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 855,
+   "delivered": 3479,
+   "fallback_share": 0.0,
+   "monday": "2011-11-21",
+   "offer": 3479,
+   "period": "test",
+   "round_key": "R2011-11-21",
+   "seconds": 26.8
+  },
+  {
+   "base": 4307,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 840,
+   "delivered": 3467,
+   "fallback_share": 0.0,
+   "monday": "2011-11-28",
+   "offer": 3467,
+   "period": "test",
+   "round_key": "R2011-11-28",
+   "seconds": 26.9
+  },
+  {
+   "base": 4268,
+   "buyers": null,
+   "buyers_of_listed": {
+    "control": null,
+    "offer": null
+   },
+   "control": 835,
+   "delivered": 3433,
+   "fallback_share": 0.0,
+   "monday": "2011-12-05",
+   "offer": 3433,
+   "period": "censored",
+   "round_key": "R2011-12-05",
+   "seconds": 27.3
+  }
+ ],
+ "run_key": "20261120T000628680396Z",
+ "schema_version": 1,
+ "source_sha256": "572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb"
+}

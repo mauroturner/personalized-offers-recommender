@@ -1,0 +1,129 @@
+{
+ "as_of": "2011-12-10 00:00:00",
+ "attribution": "Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). Modificado: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; no hay números de cliente.",
+ "config_sha256": "5ef462a014abd8ee63acbeaf830ec49b77fee4ae670cccd9fc462abffe66fcfa",
+ "files": [
+  {
+   "bytes": 11458,
+   "name": "dim_date.parquet",
+   "sha256": "2fd8f85581ddd39c9f536b2870fac8ed6e0b7367c2b6970e39f72a10fd7e9996"
+  },
+  {
+   "bytes": 2943,
+   "name": "dim_round.parquet",
+   "sha256": "a5af9336ccc1dc5c3002e77e354f7d76a5ded307dc7cb50acadb9148d57ef484"
+  },
+  {
+   "bytes": 112856,
+   "name": "dim_product.parquet",
+   "sha256": "05cb327d2a714fbfb89012ede806bb796aab34503e6d37680aae21b292a04123"
+  },
+  {
+   "bytes": 3413,
+   "name": "dim_method.parquet",
+   "sha256": "99ceac9381d81da82e9f56fedff618abbb9dd3c560b883d6be811ece2058467d"
+  },
+  {
+   "bytes": 2412,
+   "name": "dim_variant.parquet",
+   "sha256": "0c14c1dc1f6832b98aca749fbb428252ee47f46c2e45e92ff3242bc922ee945e"
+  },
+  {
+   "bytes": 2341,
+   "name": "dim_source.parquet",
+   "sha256": "ab396770714140ab96af06a34e67de938a1bf049803365d604d49ff97f21a3a2"
+  },
+  {
+   "bytes": 2206,
+   "name": "dim_group.parquet",
+   "sha256": "9c4e72bf5301958b2fd5ad9b971c93e2be27cab4266a7566a483d15899644b9d"
+  },
+  {
+   "bytes": 2363,
+   "name": "dim_segment.parquet",
+   "sha256": "922a5affeec6695bfec008f834eb74fe632a87767f8f3c3bb710820e91908913"
+  },
+  {
+   "bytes": 2567,
+   "name": "dim_covariate.parquet",
+   "sha256": "757c3d279c6d02050a61d276f8fe3d953fc3f522674b8e89432b135be181fc4a"
+  },
+  {
+   "bytes": 3794,
+   "name": "dim_criterion.parquet",
+   "sha256": "0bfeaa2a294992ce75b57a07889551eb3c26def6a25dba3d4b38ed4beac5f416"
+  },
+  {
+   "bytes": 5988,
+   "name": "dim_pipeline_run.parquet",
+   "sha256": "1a8d1a220a6fc4a868819087678ae25fa1c1d4c857956f796b9a2abc6684d1bc"
+  },
+  {
+   "bytes": 5349,
+   "name": "fact_round_ops.parquet",
+   "sha256": "97d84b6669149558f83b8a04e32988d4a4b028d782656f16175e3c192fe6743a"
+  },
+  {
+   "bytes": 5338,
+   "name": "fact_round_group.parquet",
+   "sha256": "feefebcc9183edcff01d215894fdf71d221bdc49b3c1e116138d5ad13adaac0b"
+  },
+  {
+   "bytes": 30256,
+   "name": "fact_offer_product.parquet",
+   "sha256": "8a91903d8a7adf6c8fe0ddc3e296d08f7f59f15e9a263fad3c6ef6d1d83f3922"
+  },
+  {
+   "bytes": 18743,
+   "name": "fact_method_round.parquet",
+   "sha256": "fc1c0135010f1bfb61976f9f0043b33dbbdf15e084876c5000f2c183045bb3fa"
+  },
+  {
+   "bytes": 6822,
+   "name": "fact_method_total.parquet",
+   "sha256": "079ab4cb99caab18003745f13ec47b77ec093922c64f2db16061bfbfb74db46c"
+  },
+  {
+   "bytes": 5753,
+   "name": "fact_segment.parquet",
+   "sha256": "3e57deecfe6c61f794a72714c145903093354e39547a039073af0e6001048071"
+  },
+  {
+   "bytes": 5394,
+   "name": "fact_choice.parquet",
+   "sha256": "ca122d41f9c03c00e1c4b311f820aabbce690d655450b0872969aca2cc411e58"
+  },
+  {
+   "bytes": 3200,
+   "name": "fact_balance.parquet",
+   "sha256": "59800b3684b571f233eac5197ad7f32d9463f57aca033860d3b592e3fffc05a7"
+  },
+  {
+   "bytes": 4048,
+   "name": "fact_experiment.parquet",
+   "sha256": "5d82be935f79ffb06cff4f25bf480046a446912127f8040c1f194030794381d1"
+  },
+  {
+   "bytes": 3613,
+   "name": "fact_mde.parquet",
+   "sha256": "e155135eb94c2c4f430537d5a84fc1fbfe1289fa9d0afd74cbadb37f7d9d74aa"
+  },
+  {
+   "bytes": 12358,
+   "name": "fact_rule.parquet",
+   "sha256": "d4dd4cce2f5a08e60634775b42f32a24375a4e074a1e16778b9ead6f27098fbd"
+  },
+  {
+   "bytes": 7555,
+   "name": "fact_evaluation_summary.parquet",
+   "sha256": "59245d0f09c8347014d877d5ff64e8e2326ed50f85dd62a03e7346868444d6d8"
+  },
+  {
+   "bytes": 5146,
+   "name": "fact_validation.parquet",
+   "sha256": "0d85b85befefaf9f0034ba5cc95601a30038cf710ae106281391f1d8aaede845"
+  }
+ ],
+ "run_key": "20261120T000628680396Z",
+ "version": 1
+}
