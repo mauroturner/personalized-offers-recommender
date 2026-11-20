@@ -545,7 +545,7 @@ def test_the_root_rows_of_project_08_carry_the_real_figures(project_root: Path) 
                    "fa393815", "5ef462a0", "als_128_r0.1_w1", "22.523", "173", "5, 5 y 6", "0,158"):
         assert figure in rows, figure
     assert rows.count("No se cumple") >= 1 and all(f"C{n:02d}" in rows for n in range(1, 10)) and "PeakWorkingSetSize" in rows
-    assert "No aplicado en el sitio todavía" in rows and "Aplicado en el sitio" not in rows.replace("No aplicado en el sitio", "") and "personal-offers" in rows and "Airflow" in rows and "@gmail" not in rows
+    assert "Aplicado en el sitio el 2026-11-20" in rows and "No aplicado" not in rows and "personal-offers" in rows and "Airflow" in rows and "@gmail" not in rows
     assert "n8n" not in rows.replace("n8n por Airflow", "").replace("n8n (si algún texto lo conserva)", "") or "Airflow" in rows
     assert "no se mide el efecto" in rows.lower() or "no se muestra ningún efecto" in rows.lower()
     assert not LOCAL_PATH.search(rows) and "Users" not in rows
