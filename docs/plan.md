@@ -506,7 +506,7 @@ Dimensiones (clave en negrita):
 | `dim_variant` | **`variant_key`** (`unrestricted`, `new_only`), `label_es` |
 | `dim_source` | **`source_key`** (`repeat`, `discovery`, `fallback`), `label_es` |
 | `dim_group` | **`group_key`** (`offer`, `control`), `label_es` |
-| `dim_segment` | **`segment_key`** (`bulk|repeat`, `bulk|one_invoice`, `retail|repeat`, `retail|one_invoice`), `label_es` |
+| `dim_segment` | **`segment_key`** (`bulk\|repeat`, `bulk\|one_invoice`, `retail\|repeat`, `retail\|one_invoice`), `label_es` |
 | `dim_covariate` | **`covariate_key`**, `label_es`, `unit_es` |
 | `dim_criterion` | **`criterion_key`**, `name_es`, `threshold_es` |
 | `dim_pipeline_run` | **`run_key`** y las columnas de `pipeline_runs` |
