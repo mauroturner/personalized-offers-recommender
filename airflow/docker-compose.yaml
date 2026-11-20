@@ -45,6 +45,9 @@ x-airflow-common:
     PERSONALOFFERS_HOME: /opt/personaloffers
     PERSONALOFFERS_CONFIG: ${PERSONALOFFERS_CONFIG:-/opt/personaloffers/config/pipeline.docker.toml}
     PERSONALOFFERS_CRM_TOKEN: ${PERSONALOFFERS_CRM_TOKEN:?set PERSONALOFFERS_CRM_TOKEN in airflow/.env (see .env.example)}
+    # RNF01: one thread of BLAS, so the refitted lists are the same bytes as from the command line (the DAG loads numpy before personaloffers.pipeline sets them)
+    OPENBLAS_NUM_THREADS: '1'
+    MKL_NUM_THREADS: '1'
   volumes:
     - ./dags:/opt/airflow/dags:ro
     - ./logs:/opt/airflow/logs

@@ -24,7 +24,14 @@ the model's tasks stay where they were written (``launch.run_launch``, ``weekly.
 
 from __future__ import annotations
 
-import dataclasses
+import os
+
+# RNF01 (plan section 2; B3 of the evaluation, D47): one thread of BLAS, set before the first import below loads numpy, scipy or implicit (the library reads it when it is loaded). With more threads the
+# refitted scores change in their last bits, so a rebuild would not give the issued lists byte for byte. A value from outside is replaced: the flow is the same bytes on every machine.
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
+import dataclasses  # noqa: E402  (every import of the module comes after the two variables)
 import json
 import logging
 import re
