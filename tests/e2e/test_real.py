@@ -56,6 +56,11 @@ TEXT_SUFFIXES = {".md", ".json", ".html", ".svg", ".toml", ".txt", ".sql", ".py"
 GENERATED_FOLDERS = ("outputs/powerbi", "outputs/site", "reports", "dashboard", "docs/figures")
 GENERATED_PREFIXES = tuple(f"{folder}/" for folder in GENERATED_FOLDERS)
 NOT_VERSIONED = ("outputs/private/", "data/", "reports/validation/history/")
+# D30's exception (D48; B2 of the evaluation): the seal is the audit record of what was frozen before the test and cannot be rewritten (D21). Its strata sizes, ``launch.holdout.sizes.strata``, hold 8
+# cells under the minimum; no site file, Parquet file or the design shows a stratum's size.
+AUDIT_RECORD, AUDIT_RECORD_CELLS_UNDER_THE_MINIMUM = "reports/model_seal.json", 8
+SITE_CUSTOMER_COUNTS = {"customers_in_segment", "customers", "offer", "control", "holdout_size", "bulk", "customers_in_the_launch_base", "with_a_purchase", "with_two_or_more_invoices", "base", "delivered",
+                        "buyers"}      # the fields of the site files that count customers (``site_export._cell`` and the operation of each round)
 
 
 def require(path: Path) -> Path:
@@ -273,7 +278,8 @@ def test_no_real_customer_number_in_anything_versioned_or_published_and_no_cell_
     No customer number of the archive is in a published file (the Parquet files, the six site files and the seal, the summary, the design and the figures): a five-digit number that equals one is a
     coincidence only as a count under a key, a product code in a product-code field or a token inside a description that the source gives a product (63 customer numbers are also codes of the
     catalogue, and some descriptions end in one), and a leak in a key, a list, any other text or a field that identifies a customer. In the hand-written files (code, tests, notes) the numbers that
-    are there today are pinned by file and count in ``HAND_WRITTEN_WITH_REAL_NUMBERS``: a number in another file, or one more, fails. And no published cell counts fewer customers than the minimum."""
+    are there today are pinned by file and count in ``HAND_WRITTEN_WITH_REAL_NUMBERS``: a number in another file, or one more, fails. And no published cell counts fewer customers than the minimum, with
+    one exception named here: the seal (``AUDIT_RECORD``), whose strata sizes no other published file shows (D48)."""
     root = Path(__file__).resolve().parents[2]
     customers = {int(c) for (c,) in outputs["conn"].execute("SELECT DISTINCT customer_id FROM lines WHERE customer_id IS NOT NULL")}
     descriptions = {d for (d,) in outputs["conn"].execute("SELECT DISTINCT description FROM lines WHERE description IS NOT NULL")} | \
@@ -315,3 +321,46 @@ def test_no_real_customer_number_in_anything_versioned_or_published_and_no_cell_
         if table in HIDDEN_WHOLE:          # the round's operation and the product's purchases hide a column at a time (K02): a shown number of theirs is checked above
             assert frame.loc[frame["suppressed"], list(columns)].isna().all().all(), f"{table}: a hidden cell holds a number"
     assert len(coincidences) < 200, "a count equal to a customer number is a coincidence; this many would deserve a look"
+    _the_seal_is_the_one_exception_of_the_minimum(cfg, outputs)
+
+
+def _the_seal_is_the_one_exception_of_the_minimum(cfg, outputs) -> None:
+    """D30's exception, named (D48; B2 of the evaluation): the seal is an audit record of what was frozen before the test and is never rewritten (D21), so its strata sizes keep their cells under the
+    minimum. It is the only published file that shows them: no site file, Parquet file or the design shows a stratum's size, and no customer count of the site files is under the minimum."""
+    seal = outputs["seal"]
+    strata = seal["launch"]["holdout"]["sizes"]["strata"]
+    small = [(s, g) for s, groups in strata.items() for g, n in groups.items() if n < MIN_CELL_CUSTOMERS]
+    assert (AUDIT_RECORD, len(small)) == ("reports/model_seal.json", AUDIT_RECORD_CELLS_UNDER_THE_MINIMUM), "the exception is this file and these cells, and no more"
+    pairs = {(groups["offer"], groups["control"]) for groups in strata.values()}
+    found: list[str] = []
+    site = outputs["site"]
+    for name in ("summary", "data", "algorithms", "operation", "control", "validation_rules"):
+        for where, key, value in _walk(getattr(site, name), name):
+            if key is not None and "strat" in key.lower() and not (name, where) == ("control", "control/holdout/strata"):
+                found.append(f"{where}: a field of the strata")
+            if isinstance(value, dict) and isinstance(value.get("offer"), int) and isinstance(value.get("control"), int) and (value["offer"], value["control"]) in pairs:
+                found.append(f"{where}: the size of a stratum")
+            if key in SITE_CUSTOMER_COUNTS and isinstance(value, int) and not isinstance(value, bool) and value < MIN_CELL_CUSTOMERS:
+                found.append(f"{where}={value}: a count of customers under the minimum")
+    assert site.control["holdout"]["strata"] == len(strata), "the control file says how many strata there are, never their sizes"
+    for path in sorted(outputs["powerbi"].glob("*.parquet")):
+        frame = pd.read_parquet(path)
+        found += [f"{path.name}[{c}]: a column of the strata" for c in frame.columns if "strat" in c.lower()]
+        if {"offer", "control"} <= set(frame.columns):
+            shown = {tuple(int(v) for v in row) for row in frame[["offer", "control"]].dropna().itertuples(index=False)}
+            found += [f"{path.name}: the size of a stratum {pair}" for pair in sorted(shown & pairs)]
+    design = Path(cfg.paths.dashboard_html).read_text(encoding="utf-8").lower()
+    found += ["the design names the strata"] if re.search(r"estrato|strat", design) else []
+    assert found == [], found
+
+
+def _walk(node, where: str):
+    """(location, key, value) of every member of a parsed JSON, the containers included."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield f"{where}/{key}", key, value
+            yield from _walk(value, f"{where}/{key}")
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield f"{where}[{index}]", None, value
+            yield from _walk(value, f"{where}[{index}]")
