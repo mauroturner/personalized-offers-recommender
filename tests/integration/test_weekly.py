@@ -339,6 +339,28 @@ def test_a_round_cut_after_its_artifacts_and_before_its_transaction_is_issued_by
         made.conn.close()
 
 
+def test_a_folder_of_a_component_that_is_not_the_recipes_and_that_nobody_registered_is_removed_too(cut_template, workbook, quick_cfg, tmp_path, caplog):
+    """A8 of the evaluation: a folder named as a component that the sealed recipe does not use (``cosine`` when the recipe is ALS, ``als`` when it is the cosine), left by nobody the registry knows, stayed
+    beside the round's components. It is removed like the unregistered folders of the recipe's own components; a registered folder of another round is never touched."""
+    made = copy_world(cut_template, workbook, quick_cfg, tmp_path / "foreign")
+    try:
+        recipe = registry.read_seal(made.seal_path)["launch"]["recipe"]["model"]
+        foreign = next(c for c in artifacts.COMPONENTS if c not in (recipe, "popularity"))
+        planted = made.models_dir / "R2011-04-04" / foreign
+        planted.mkdir()
+        (planted / "factors.npy").write_bytes(b"left by a probe")
+        (made.models_dir / "R2011-04-04" / "notes.txt").write_text("not a component", encoding="utf-8")
+        registered_before = {p.relative_to(made.models_dir).as_posix(): p.read_bytes() for p in (made.models_dir / "R2011-03-28").rglob("*") if p.is_file()}
+        with caplog.at_level("WARNING", logger="personaloffers.weekly"):
+            result = weekly.emit_round(made.conn, made.view, "run-2", cal.monday_of("R2011-04-04"), models_dir=made.models_dir, seal_path=made.seal_path)
+        (made.models_dir / "R2011-04-04" / "notes.txt").unlink()      # anything that is no component is reported and left
+        _assert_issued_and_verified(made, result)
+        assert not planted.exists() and "notes.txt, which is no component" in caplog.text
+        assert {p.relative_to(made.models_dir).as_posix(): p.read_bytes() for p in (made.models_dir / "R2011-03-28").rglob("*") if p.is_file()} == registered_before
+    finally:
+        made.conn.close()
+
+
 @pytest.mark.parametrize("damage", ["other_content", "manifest_missing", "extra_file"])
 def test_a_component_folder_nobody_registered_is_replaced_by_the_next_run_whatever_it_holds(damage, cut_template, workbook, quick_cfg, tmp_path):
     """What a cut leaves is not registered, so nothing depends on it: a folder with other content (a manifest that is not what the round writes), one cut inside its own write (arrays and no

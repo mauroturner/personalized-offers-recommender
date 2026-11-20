@@ -90,8 +90,8 @@ def _exact_keys(item: Any, keys: set[str]) -> dict[str, Any]:
     return item
 
 
-def _offers_of(raw: Any) -> list[dict[str, Any]]:
-    if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_OFFERS:
+def _offers_of(raw: Any, length: int | None = None) -> list[dict[str, Any]]:
+    if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_OFFERS or (length is not None and len(raw) != length):
         raise Fault("bad_request")
     found = []
     for position, item in enumerate(raw, start=1):
@@ -105,8 +105,9 @@ def _offers_of(raw: Any) -> list[dict[str, Any]]:
     return found
 
 
-def _contacts_of(body: Any, batch_size: int) -> list[tuple[int, str]]:
-    """The ``(contact_id, canonical offers)`` of a batch, validated: the keys are exactly the plan's, the ranks run 1, 2, 3... in order, a product and a contact appear once."""
+def _contacts_of(body: Any, batch_size: int, list_length: int | None = None) -> list[tuple[int, str]]:
+    """The ``(contact_id, canonical offers)`` of a batch, validated: the keys are exactly the plan's, the ranks run 1, 2, 3... in order, a product and a contact appear once and, with `list_length`, every
+    list has exactly that many products (A2 of the evaluation)."""
     document = _exact_keys(body, {"contacts"})
     raw = document["contacts"]
     if not isinstance(raw, list) or not 1 <= len(raw) <= batch_size:
@@ -114,7 +115,7 @@ def _contacts_of(body: Any, batch_size: int) -> list[tuple[int, str]]:
     found = []
     for item in raw:
         contact = _exact_keys(item, {"contact_id", "offers"})
-        found.append((_int_in(contact["contact_id"], 1, MAX_CONTACT_ID), _canonical(_offers_of(contact["offers"]))))
+        found.append((_int_in(contact["contact_id"], 1, MAX_CONTACT_ID), _canonical(_offers_of(contact["offers"], list_length))))
     if len({contact_id for contact_id, _ in found}) != len(found):
         raise Fault("bad_request")
     return found
@@ -188,8 +189,9 @@ async def _body(request: Request, limit: int) -> bytes:
 # --- the application ---------------------------------------------------------------------------------------------------------
 
 
-def standin_app(db_path: Path, token: str | None, *, batch_size: int = 500, max_body_bytes: int = 2_000_000) -> FastAPI:
-    """The stand-in over the SQLite file `db_path` (created with its folder) that answers only to ``Authorization: Bearer <token>``. Without a token it does not start (and creates nothing)."""
+def standin_app(db_path: Path, token: str | None, *, batch_size: int = 500, max_body_bytes: int = 2_000_000, list_length: int | None = None) -> FastAPI:
+    """The stand-in over the SQLite file `db_path` (created with its folder) that answers only to ``Authorization: Bearer <token>``. Without a token it does not start (and creates nothing). With
+    `list_length` a list of another length is 400 for its whole batch; without it a list has 1 to ``MAX_OFFERS`` products."""
     if not isinstance(token, str) or not token.strip():
         raise ValueError("el sustituto del CRM necesita un token (sin él no arranca)")
     if batch_size < 1 or max_body_bytes < 1:
@@ -234,7 +236,7 @@ def standin_app(db_path: Path, token: str | None, *, batch_size: int = 500, max_
         known(round_id)
         raw = await _body(request, max_body_bytes)
         try:
-            contacts = _contacts_of(json.loads(raw), batch_size)
+            contacts = _contacts_of(json.loads(raw), batch_size, list_length)
         except (ValueError, RecursionError):
             raise Fault("bad_request") from None
         return _reply(200, await run_in_threadpool(_apply, db_path, round_id, contacts))
@@ -265,9 +267,9 @@ def standin_app(db_path: Path, token: str | None, *, batch_size: int = 500, max_
 
 def create_app(cfg: Any, env: Mapping[str, str] | None = None) -> FastAPI:
     """The stand-in of a configuration: the file of ``[paths] crm_db``, the limits of ``[crm]`` and the token of the variable ``[crm] token_env`` names in `env` (the process's by default). Without the
-    token it does not start."""
+    token it does not start. A list has ``[recommend] k`` products (A2 of the evaluation)."""
     environment = os.environ if env is None else env
-    return standin_app(cfg.paths.crm_db, environment.get(cfg.crm.token_env), batch_size=cfg.crm.batch_size, max_body_bytes=cfg.crm.max_body_bytes)
+    return standin_app(cfg.paths.crm_db, environment.get(cfg.crm.token_env), batch_size=cfg.crm.batch_size, max_body_bytes=cfg.crm.max_body_bytes, list_length=cfg.recommend.k)
 
 
 def create_app_from_environment() -> FastAPI:

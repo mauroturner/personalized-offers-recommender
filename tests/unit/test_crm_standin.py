@@ -324,6 +324,21 @@ def test_the_app_of_the_configuration_reads_its_token_from_the_variable_the_conf
             create_app(cfg, env)
 
 
+def test_the_served_stand_in_refuses_a_list_that_is_not_of_the_configured_length_and_applies_nothing_of_its_batch(quick_cfg, tmp_path):
+    """A2 of the evaluation: the stand-in that ``serve-crm`` and the compose file serve (``create_app``) took a list of 9 products with 200 ``created``. A list has ``[recommend] k`` products: one of
+    another length is 400 for the whole batch, as any other malformed list, and nothing of the batch is applied. ``standin_app`` without a length keeps the old bound (1 to 50)."""
+    cfg = dataclasses.replace(quick_cfg, paths=dataclasses.replace(quick_cfg.paths, crm_db=tmp_path / "crm" / "standin.sqlite"), crm=dataclasses.replace(quick_cfg.crm, token_env="TEST_CRM_TOKEN"))
+    app = TestClient(create_app(cfg, {"TEST_CRM_TOKEN": TOKEN}), raise_server_exceptions=False)
+    k = cfg.recommend.k
+    for count in (k - 1, k + 1):
+        body = {"contacts": [{"contact_id": 1, "offers": offers(1)}, {"contact_id": 2, "offers": offers(2, count)}]}
+        assert put(app, body).status_code == 400 and put(app, body).json() == {"code": "bad_request"}, count
+    assert app.get(f"/api/v1/rounds/{ROUND}/offers", headers=AUTH).json()["total"] == 0, "nothing of a refused batch is applied"
+    assert put(app, batch([1, 2])).json() == {"created": 2, "unchanged": 0}
+    loose = TestClient(standin_app(tmp_path / "loose.sqlite", TOKEN), raise_server_exceptions=False)
+    assert put(loose, {"contacts": [{"contact_id": 1, "offers": offers(1, k - 1)}]}).status_code == 200
+
+
 def test_the_app_of_the_environment_serves_the_file_of_the_configuration_with_the_token_of_the_process(quick_cfg, tmp_path, monkeypatch):
     """U20, D26: in Docker uvicorn calls ``create_app_from_environment`` (``--factory``) in the ``crm`` service; without the token it does not start."""
     from personaloffers import config as config_module

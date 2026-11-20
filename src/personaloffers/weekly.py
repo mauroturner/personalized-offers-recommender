@@ -15,6 +15,7 @@ that it is the same (AC17) instead of writing it. ``write_round_ops`` is the las
 
 from __future__ import annotations
 
+import logging
 import shutil
 import time
 from dataclasses import dataclass
@@ -31,6 +32,8 @@ from personaloffers import launch as launch_module
 from personaloffers import calendar as cal
 from personaloffers.deliveries import DeliverySpec
 from personaloffers.recommend import artifacts, blend, context
+
+logger = logging.getLogger(__name__)
 
 PRODUCTS_CHUNK = 500
 BASELINE_CHUNK = 100_000
@@ -223,11 +226,16 @@ def emit_round(conn: Any, view: Any, run_key: str, monday: Any, *, models_dir: P
 
 def _clear_unregistered(models_dir: Path, round_id: str, components: Any, registered: dict[str, Any]) -> None:
     """Remove the folder of a component of the round that the registry does not hold: it is what a run cut after writing its artifacts and before its transaction left, and nothing depends on it. Without this
-    a folder with other content (or a stray file) would stop the round for good, because ``write_component`` never rewrites what is there. A registered component is never touched."""
-    for component in components:
+    a folder with other content (or a stray file) would stop the round for good, because ``write_component`` never rewrites what is there. A registered component is never touched. A folder named as a component
+    that this recipe does not use and nobody registered is removed too (A8 of the evaluation): it is no artifact of the round; anything else in the round's folder is only reported."""
+    for component in (*components, *(c for c in artifacts.COMPONENTS if c not in components)):
         folder = models_dir / round_id / component
         if component not in registered and folder.exists():
             shutil.rmtree(folder)
+    folder = models_dir / round_id
+    others = sorted(p.name for p in folder.iterdir() if p.name not in artifacts.COMPONENTS) if folder.is_dir() else []
+    if others:
+        logger.warning("the folder of the models of %s holds %s, which is no component: it is left as it is", round_id, ", ".join(others))
 
 
 def _take(iterator: Any, count: int):
