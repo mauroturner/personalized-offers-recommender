@@ -147,9 +147,9 @@ def c05_preregistered_line(c05: Mapping[str, Any]) -> str:
 def c05_p01_line(c05: Mapping[str, Any]) -> str:
     """Why the test's coverage is not the plan's validation figure: mostly the numerator (D49)."""
     return (f"Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de "
-            f"la ronda), la prueba da {es(c05['p01_definition']['value'], 3)}, comparable con el {es(PLAN_VALIDATION_C05, 3)} de la validación. La distancia con la cifra sellada es sobre todo el "
-            f"numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es {es(c05['p01_denominator']['value'], 3)}; con solo las listas de los clientes evaluados, "
-            f"{es(c05['p01_definition']['value'], 3)}.")
+            f"la ronda), la prueba da {es(c05['p01_definition']['value'], 3)}, comparable con el {es(PLAN_VALIDATION_C05, 3)} de esa validación. La distancia entre la cifra sellada, "
+            f"{es(c05['sealed']['value'], 3)}, y ese {es(PLAN_VALIDATION_C05, 3)} es sobre todo el numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es "
+            f"{es(c05['p01_denominator']['value'], 3)}; con solo las listas de los clientes evaluados, {es(c05['p01_definition']['value'], 3)}.")
 
 
 # --- the labels of the dimensions of the star schema (plan section 19) ------------------------------------------------------------------------------------------------------
