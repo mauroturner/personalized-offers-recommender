@@ -1,6 +1,6 @@
 # Paso a paso: cómo se hizo el proyecto
 
-La cronología real, desde el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L134) y `git log` de esta carpeta: qué se hizo en cada paso, quién (qué agente y con qué modelo, S8), con qué prueba y en qué commit. Todo lo que dice este documento consta en el registro o en el historial; lo que el registro no dice, no se afirma (RNF14). Los commits son 43 hasta la corrida real y se citan todos.
+La cronología real, desde el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L136) y `git log` de esta carpeta: qué se hizo en cada paso, quién (qué agente y con qué modelo, S8), con qué prueba y en qué commit. Todo lo que dice este documento consta en el registro o en el historial; lo que el registro no dice, no se afirma (RNF14). Los commits son 43 hasta la corrida real y se citan todos.
 
 El dueño del portafolio pidió que cuando se termina un proyecto se siga con el siguiente sin preguntar (S12), que la estructura sea la del proyecto 01 (S10), que se acepten de forma automática las revisiones de Gentle AI (S11) y los modelos de los agentes: Opus para planes, arquitectura y evaluación, Sonnet para programar y Haiku para tareas acotadas como investigar (S8). El proyecto 08 empezó mientras se construía la página del proyecto 07 en marca-personal (L117); esa página se aplicó después (L119) y no es parte de este proyecto. Todo lo que sigue pasó el 2026-11-19, salvo el cierre de la corrida real, que terminó el 2026-11-20.
 
@@ -56,9 +56,17 @@ La revisión nativa de Gentle AI revisó las unidades de riesgo alto con el cons
 
 **Qué.** Este paso: el README, la ficha del modelo, el diccionario (con las tablas escritas por `docs-sync` desde el modelo semántico), el runbook, este paso a paso y las advertencias de las revisiones, con la prueba primero (`tests/docs/test_docs.py`): la corrida en rojo se observó antes de escribir ningún documento. Las filas del 08 en `SITE-UPDATES.md` y en `LANDING-EXPANSION.md` las escribió el mismo agente, y `PENDING_LANDING_ROWS` quedó vacío porque las dos filas que debía U22 ya están. Las cifras salen de los archivos sellados y una prueba las compara a los decimales que cada documento escribe.
 
-## 8. Lo que falta
+## 8. La evaluación independiente (L136)
 
-- **La evaluación independiente, sus correcciones y la comprobación de las correcciones todavía no se hicieron** (plan, sección 28): un agente con Opus que no construyó el proyecto, en solo lectura y en un clon aparte, recalcula cada cifra con su propio código, sondea cada clase de defecto de la sección 24.2, corre `-m docker` y sigue R11; sigue un agente de corrección con la prueba primero, otro que comprueba con un diferencial de la CLI y de la API del CRM, y la documentación sincronizada con la última corrección. Hasta entonces ninguna cifra es definitiva.
+**Qué.** Un agente con Opus que no construyó el proyecto, en solo lectura, en un clon aparte con su propio entorno y una copia del estado sellado, recalculó las cifras con lectores propios que no importan `personaloffers`, sondeó cada clase de defecto de la sección 24.2, corrió `-m docker`, repitió una semanal real y siguió R11 tal como está escrito. El núcleo numérico se reproduce exacto. Dio seis bloqueantes, ninguno de los cuales cambia un veredicto, y nueve advertencias. Lo cuenta `docs/evaluation.md`.
+
+## 9. Las correcciones
+
+**Qué.** Un agente con Opus corrigió los seis bloqueantes y dos advertencias con la prueba primero, sin tocar el sello: las listas de ejemplo son agregados del perfil (`a7a265a`, D46), el flujo corre con un hilo de BLAS (`f1b0a4b`, D47), el sello es la excepción con nombre de D30 (`6c07167`, D48), C05 como lo fija el preregistro se publica al lado de lo sellado (`d496a88` y `6b7d650`, D49), un rechazo escribe su informe como el último (`c6d31e1`, D50) y las pruebas con datos reales valen después de una reconstrucción (`5edb032`, D51); el CRM sustituto rechaza una lista de otro largo y una ronda borra una carpeta de modelos ajena (`4d18d86`). Las salidas que esas correcciones cambian se regeneraron desde una copia del estado sellado con los pasos de exportación y de cierre de la corrida del cierre (`324b444`); todo lo demás salió idéntico byte por byte.
+
+## 10. Lo que falta
+
+- **La comprobación de las correcciones** (plan, sección 28, ítem 3): otro agente con Opus rehace los bloqueantes en copias del commit evaluado y del corregido, con un diferencial de la CLI y de la API del CRM. Después, la documentación sincronizada con la última corrección. Hasta entonces ninguna cifra es definitiva.
 - **La página del sitio**, con la estructura del proyecto 01 (S10): **No aplicado en el sitio todavía**.
 - **El `.pbix`**, que arma quien tenga Power BI Desktop siguiendo el HTML.
 - **Los pendientes del dueño** del plan, sección 29: la cadencia (decidida por defecto), los ítems 2 a 7 (sellados con su valor por defecto), una herramienta de correo o un CRM reales, el contenido de la oferta, el límite y el presupuesto de la suite, entre otros.

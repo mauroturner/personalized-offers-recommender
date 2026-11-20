@@ -39,7 +39,7 @@ MODEL_CARD_HEADINGS = [   # what plan section 25 lists for the model card, in th
 FAILED = ["C03"]   # what the sealed run says (L133)
 PASSED = ["C01", "C02", "C04", "C05", "C06", "C07", "C08", "C09"]
 RESULTS_HEADING = "## Resumen de la evaluación"   # the first line of the summary, copied as it is
-DOCS = ("data-dictionary.md", "runbook.md", "paso-a-paso.md", "review-advisories.md")   # evaluation.md joins them when the independent evaluation exists (plan section 28.4)
+DOCS = ("data-dictionary.md", "runbook.md", "paso-a-paso.md", "review-advisories.md", "evaluation.md")   # evaluation.md joined them with the independent evaluation (plan section 28)
 LOG = "odd/tasks/portfolio-projects.md"
 FIRST_LOG_ENTRY = 117   # L117 starts project 08
 UNITS_DONE = [f"U{n:02d}" for n in range(1, 23)]   # U01 to U22 have their entry in the log (U21 in L133; U22 is named there as the next unit)
@@ -158,15 +158,19 @@ def test_the_model_card_has_the_contents_of_the_plan_and_says_every_verdict(mode
 
 
 def test_the_documents_say_what_is_pending_and_the_open_findings(readme: str, model_card: str, project_root: Path) -> None:
-    """RNF14: the independent evaluation, its corrections and its recheck are not done yet, and no figure is called final; the two findings of L133 are open and said plainly, with their numbers; the
-    seal and the credit of the source are complete; nothing local is published."""
+    """RNF14: the independent evaluation and its corrections are done and the recheck is not, so no figure is called final; the two findings of L133 are told with their numbers and with what corrected
+    them (D46, D49); ``docs/evaluation.md`` has its three parts; the seal and the credit of the source are complete; nothing local is published."""
     text = readme.lower()
     assert "evaluación independiente" in text and "todavía no" in text and ".pbix" in text and "no aplicado en el sitio todavía" in text
-    assert "ninguna cifra es definitiva" in text and "ninguna cifra es definitiva" in model_card.lower()
+    assert "ninguna cifra es definitiva hasta la comprobación de las correcciones" in text and "ninguna cifra es definitiva hasta la comprobación de las correcciones" in model_card.lower()
     for name, document in (("README.md", readme), ("docs/model-card.md", model_card), ("docs/review-advisories.md", read(project_root, "review-advisories.md"))):
         lowered = document.lower()
-        assert "algorithms.json" in lowered and "5, 5 y 6" in lowered and "10 clientes" in lowered, name   # the three example lists can single out a customer: groups of 5, 5 and 6 under D30's 10
-        assert "0,158" in lowered and "denominador" in lowered, name   # C05's denominator is not the plan's validation figure
+        assert "algorithms.json" in lowered and "5, 5 y 6" in lowered and "10 clientes" in lowered and "d46" in lowered, name   # the example lists: groups of 5, 5 and 6 under D30's 10, now aggregates
+        assert "0,158" in lowered and "denominador" in lowered and "numerador" in lowered and "d49" in lowered, name   # C05: the distance with the plan's validation figure is mostly the numerator
+    for name, document in (("README.md", readme), ("docs/model-card.md", model_card)):
+        assert "5, 1 y 2" in document and "0,588" in document and "0,153" in document, name   # the evaluation's count within the profile, and C05 preregistered and with p01's definition
+    evaluation = read(project_root, "evaluation.md")
+    assert [title for title in ("La evaluación", "Las correcciones", "Comprobación") if f"\n## {title}\n" not in evaluation] == [] and "todavía no se hizo" in section(evaluation, "Comprobación").lower()
     assert SEAL_SHA256 in readme and SEAL_SHA256[:8] in model_card and "5ef462a0" in readme
     tail = section(readme, "Fuente y licencia")
     for piece in ("Chen, D. (2012)", "Online Retail II", "UCI", "CC BY 4.0", "10.24432/C5CG6D", "572e3627", "implicit", "mlxtend", "MIT", "BSD"):
@@ -506,7 +510,7 @@ def test_open_advisories_match_review_file(project_root: Path, readme: str) -> N
     opened = [block for block in blocks if "Estado: **abierta**" in block]
     assert len(fixed) + len(left) + len(opened) == ADVISORIES_IN_ALL and all(re.search(r"Estado: \*\*abierta\*\*\. \S", block) for block in opened)
     [stated] = re.findall(r"^Advertencias abiertas: (\d+)\b", readme, flags=re.MULTILINE)
-    assert int(stated) == len(opened) and len(opened) >= 1   # the finding of D30 is open
+    assert int(stated) == len(opened) and len(opened) >= 1   # the three suggestions L131 left out are open; the finding of D30 was corrected with D46
     for number in (f"{ADVISORIES_IN_ALL} en total", f"{ADVISORIES_IN_ALL} hallazgos"):
         assert number in text or number in readme or number in read(project_root, "paso-a-paso.md"), number
     for document in (readme, read(project_root, "paso-a-paso.md"), read(project_root, "model-card.md")):

@@ -47,6 +47,13 @@ El archivo no tiene ofertas: ninguna cifra es el efecto de una oferta; las lista
 | C09 | Lo entregado al CRM es lo decidido | el 100 % de las listas entregadas se lee de vuelta igual, ningún cliente del control llega al CRM ni al CSV y repetir la última ronda no crea ningún registro | 65.959 de 65.959 listas leídas de vuelta iguales; 0 del control en el CRM o en el CSV; 0 nuevas al repetir la última ronda | 65.959 de 65.959 listas entregadas se leyeron de vuelta del CRM iguales; 0 clientes del control llegaron al CRM y 0 a los archivos de correo; repetir la última ronda (R2011-12-05, 3.433 contactos) creó 0 registros nuevos; debían leerse todas iguales y no llegar ni crearse ninguno. |
 | C10 | Variantes y seguimiento (informativo) | sin umbral | sin umbral | Informativo: sin umbral. Las líneas base, el modelo elegido y la lista con hit@10, recall@10, precisión@10, NDCG@10 y cobertura, sin restricción y solo nuevos, por ronda y por segmento, las pruebas normales sin ajustar del A/A, el menor efecto detectable con 10, 20 y 30 % de control y la ronda censurada están en el resumen (17 variantes). |
 
+### Análisis posteriores al sello
+
+No reemplazan ninguna cifra sellada: se calcularon después del sello, sobre las mismas listas emitidas y las mismas líneas, y se publican al lado de lo sellado (D49).
+
+- C05 como lo fija el preregistro: en 18 rondas, las listas de cada ronda cubrieron en promedio 0,588 de los productos con alguna línea de compra (`purchase`) en los 365 días anteriores; el umbral era 0,10 y se cumple. La cifra sellada, 0,559, tiene otro denominador: los productos con alguna de las líneas de canasta (las compras de clientes y las de invitados) en esos 365 días.
+- Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de la ronda), la prueba da 0,153, comparable con el 0,158 de esa validación. La distancia entre la cifra sellada, 0,559, y ese 0,158 es sobre todo el numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es 0,466; con solo las listas de los clientes evaluados, 0,153.
+
 Cifras de la validación (no son la prueba; se midieron en 13 rondas, de R2011-05-02 a R2011-07-25, con el hit@10 solo nuevos sobre los clientes que compraron):
 
 - Receta elegida entre 48 candidatas, `als_128_r0.1_w1`: hit@10 solo nuevos 0,346 sobre 3.219 pares, cobertura 0,101.
@@ -61,7 +68,7 @@ Cómo se lee, con las cifras del bloque (hit@10 es la parte de los clientes que 
 - **C02 se cumple.** La lista tiene 1,2 puntos menos que la recompra propia (B3, 79,2 %): intervalo del 95 %, −1,9 a −0,4, y el límite era −5,0. Se esperaba que probablemente se cumpliera.
 - **C03 no se cumple.** Es la misma diferencia (−1,2 puntos) contra un umbral de 0: el intervalo del 95 %, −1,9 a −0,4, queda entero por debajo. Se esperaba que probablemente no se cumpliera. Dicho sin rodeos: repetir lo que el cliente ya compra acierta más que la lista que mezcla recompra y descubrimiento.
 - **C04 se cumple** y era incierto. Entre los productos que el cliente nunca había comprado, el modelo elegido acierta al 33,8 % y lo más vendido (B2) al 28,1 %: 5,8 puntos más, con un intervalo del 95 %, 4,6 a 7,0. En la validación la diferencia era de 3,8 puntos.
-- **C05 se cumple.** Las listas de cada ronda cubren en promedio 0,559 de los productos con compras en los 365 días anteriores, contra un umbral de 0,10. Esa cifra tiene otro denominador que el 0,158 de la validación del plan (ver «Dos hallazgos abiertos»).
+- **C05 se cumple.** Lo sellado: las listas de cada ronda cubren en promedio 0,559 de los productos con alguna línea de canasta (compras de clientes e invitados) en los 365 días anteriores, contra un umbral de 0,10. Con el denominador que fija el preregistro, los productos con alguna línea de compra, la cobertura es 0,588 y también se cumple (análisis posterior al sello, D49).
 - **C06 se cumple.** La mayor diferencia estandarizada de las cinco covariables entre oferta y control es 0,048, contra 0,10.
 - **C07 y C08 se cumplen.** La prueba preregistrada rechaza 4,8 % y 6,2 % de 500 sorteos nuevos del control (la banda es de 3,1 % a 6,9 %), y con el control sellado, sin ofertas, da p = 0,294 y p = 0,735. Lo que muestra el A/A es cómo quedó armado el control, no un resultado.
 - **C09 se cumple.** 65.959 de 65.959 listas se leyeron de vuelta del CRM iguales, 0 clientes del control llegaron al CRM o a los archivos de correo, y repetir la última ronda creó 0 registros.
@@ -82,14 +89,14 @@ Cómo se lee, con las cifras del bloque (hit@10 es la parte de los clientes que 
 
 ![La calibración de la prueba preregistrada](docs/figures/calibration.png)
 
-### Dos hallazgos abiertos
+### Los dos hallazgos de la corrida real, corregidos
 
-Los encontró el escritor de la corrida real (L133) y los resuelve la evaluación independiente. Ninguno cambia un veredicto ni lo sellado.
+Los encontró el escritor de la corrida real (L133), la evaluación independiente los confirmó (L136, B1 y B5) y las correcciones los resolvieron sin tocar el sello. Ninguno cambia un veredicto.
 
-- **Las tres listas de ejemplo de `algorithms.json` pueden señalar a un cliente.** Cada lista completa de 10 es única de un cliente en su ronda, y solo 5, 5 y 6 clientes habían comprado antes de la ventana los siete productos de recompra de cada una. Es menos que el mínimo de 10 clientes de D30. No se publica ningún número de cliente, pero la combinación acota quién puede ser. Se trata como un bloqueante para el sitio, por la intención de D30; el sitio no lo muestra hasta entonces.
-- **El denominador de C05 no es el de la validación del plan.** La cobertura de 0,559 es sobre los productos comprados en los 365 días anteriores; la cifra de 0,158 de la validación usaba otro. La comparación entre las dos no vale, y la decide la evaluación.
+- **Las listas de ejemplo de `algorithms.json` ya no son la lista de un cliente.** Eran la lista de un cliente real cada una: L133 contó 5, 5 y 6 clientes que habían comprado antes de la ventana sus siete productos de recompra, y la evaluación, dentro del perfil publicado, 5, 1 y 2, menos que el mínimo de 10 clientes de D30. Ahora cada una es la lista agregada de su perfil, rotulada como tal: los 7 productos de recompra y los 3 de descubrimiento que más aparecen en las listas del perfil en la primera ronda, cada uno con cuántos clientes lo tienen (de 14 a 954), sin rangos. Ningún cliente tiene la lista entera (D46).
+- **La distancia de C05 con el 0,158 de la validación del plan es sobre todo el numerador.** El preregistro cuenta en el denominador los productos con alguna línea de compra (`purchase`); con esa definición la cobertura de la prueba es 0,588, y se cumple igual. La validación del plan (`p01`) contó solo las listas de los clientes evaluados: con su definición, la prueba da 0,153. Las dos cifras están en «Análisis posteriores al sello», al lado de la sellada (D49).
 
-**Ninguna cifra es definitiva hasta que termine la evaluación independiente, sus correcciones y su comprobación.** Todo lo que está arriba es lo que dice el sello.
+**Ninguna cifra es definitiva hasta la comprobación de las correcciones.** Todo lo que está arriba es lo que dice el sello, y lo de «Análisis posteriores al sello» se calculó después, al lado del sello y atado a sus bytes.
 
 ## En qué consiste
 
@@ -145,7 +152,7 @@ Las 8 columnas, los roles, las covariables y una tabla por Parquet están en [do
 
 **La elección.** 48 recetas (ALS, reglas y coseno, con cuatro pesos de la tendencia, de 0 a 2: 24 de ALS, 12 de coseno y 12 de reglas) se miden en 13 rondas de validación por hit@10 solo nuevos, con una tolerancia de medio punto a favor de la cobertura. Salió `als_128_r0.1_w1`: 128 factores, regularización 0,1 y la tendencia con peso 1; en la validación acierta al 34,6 % de 3.219 pares con una cobertura de 0,101. Se sella antes de abrir la prueba.
 
-**La lista.** 7 de recompra y 3 nuevos como mínimo cuando el modelo tiene candidatos, con un orden de desempate fijo (puntaje, popularidad, código). La lista que se entrega acierta al 78,0 % y cubre 0,559 de los productos.
+**La lista.** 7 de recompra y 3 nuevos como mínimo cuando el modelo tiene candidatos, con un orden de desempate fijo (puntaje, popularidad, código). La lista que se entrega acierta al 78,0 % y cubre 0,559 de los productos con alguna línea de canasta en el año anterior.
 
 **El grupo de control y su prueba.** Estratificado en 18 estratos, con los primeros `round(0,20 × n)` de cada uno en el control: 865 clientes de control y 3.461 de oferta entre los 4.326 de la cohorte. La prueba preregistrada es la diferencia de medias ajustada con CUPED y una permutación estratificada de 2.000 asignaciones, sobre las semanas con compra (M1) y el gasto (M2). La prueba normal sin ajustar rechaza 1,4 % y 9,4 % en los mismos 500 sorteos, así que no sirve para esto.
 
@@ -175,15 +182,16 @@ Las 8 columnas, los roles, las covariables y una tabla por Parquet están en [do
 | [docs/data-dictionary.md](docs/data-dictionary.md) | Diccionario de datos: las columnas de la fuente, los roles, la base, los orígenes de la lista y una tabla por Parquet |
 | [docs/runbook.md](docs/runbook.md) | Qué hacer cuando algo no sale como se esperaba: R1 a R12 |
 | [docs/paso-a-paso.md](docs/paso-a-paso.md) | La cronología real del proyecto, commit por commit, desde el registro y `git log` |
-| [docs/review-advisories.md](docs/review-advisories.md) | Los 26 hallazgos de las revisiones nativas, cada uno con su ubicación y su estado |
+| [docs/review-advisories.md](docs/review-advisories.md) | Los 26 hallazgos de las revisiones nativas, cada uno con su ubicación y su estado, y las nueve advertencias de la evaluación |
+| [docs/evaluation.md](docs/evaluation.md) | La evaluación independiente, sus correcciones y la comprobación |
 
-**La evaluación independiente, sus correcciones y la comprobación de las correcciones todavía no se hicieron** (plan, sección 28): un agente con Opus que no construyó el proyecto recalculará cada cifra con su propio código en un clon aparte, y `docs/evaluation.md` no existe hasta entonces. Mientras tanto, las cifras de este README son las del sello y los dos hallazgos de arriba están abiertos.
+**La evaluación y sus correcciones están hechas** (plan, sección 28, ítems 1 y 2): un agente con Opus que no construyó el proyecto recalculó cada cifra con sus propios lectores en un clon aparte (L136) y encontró seis bloqueantes, ninguno de los cuales cambia un veredicto; otro agente con Opus los corrigió con la prueba primero, sin tocar el sello (`docs/evaluation.md`). La comprobación de las correcciones, el ítem 3, falta: hasta que se haga, ninguna corrección está confirmada por otro agente.
 
-Advertencias abiertas: 4 de las 26 de las revisiones nativas: 20 corregidas, 2 dejadas con su motivo y 4 abiertas (docs/review-advisories.md). Una de ellas es la del hallazgo de `algorithms.json`.
+Advertencias abiertas: 3 de las 26 de las revisiones nativas: 21 corregidas, 2 dejadas con su motivo y 3 abiertas (docs/review-advisories.md). La del hallazgo de `algorithms.json` se corrigió con D46.
 
 ## Con IA, de punta a punta
 
-Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño pidió para su tarea (Opus para los planes, la arquitectura y la evaluación, Sonnet para la programación, Haiku para tareas acotadas como investigar), con una persona definiendo el rumbo. Lo que sigue es lo que consta en el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L134) y en `git log`:
+Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño pidió para su tarea (Opus para los planes, la arquitectura y la evaluación, Sonnet para la programación, Haiku para tareas acotadas como investigar), con una persona definiendo el rumbo. Lo que sigue es lo que consta en el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L136) y en `git log`:
 
 - **Datos e investigación** (L117, L118). Un agente con Haiku bajó el archivo de UCI, comprobó su huella, perfiló las canastas, midió las líneas base con dos cortes de 90 días, midió qué puede medir un grupo de control sin ofertas, reprodujo cifras de los proyectos 02 y 04, midió tres fugas y revisó las afirmaciones del sitio.
 - **Requerimientos y plan** (L120). Un agente con Opus leyó la investigación y midió sin la ventana de prueba que con rondas semanales lo más vendido de cuatro semanas le gana a ALS, a las reglas y a la similitud solos en productos nuevos y que solo la mezcla con la tendencia lo supera; fijó los criterios C01-C10 con lo esperable antes de la primera línea de código y dejó una lista de 17 pendientes del dueño.
@@ -192,7 +200,8 @@ Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño 
 - **Revisión** (L122, L124, L126, L128, L130, L132 y L134, la revisión de U21). La revisión nativa de Gentle AI revisó las unidades de riesgo alto y los tramos que alcanzaron el presupuesto, con el consentimiento aceptado de forma automática por pedido del dueño; dio 26 hallazgos (en `docs/review-advisories.md`). Las unidades con menos líneas que el presupuesto y el commit generado de la corrida real no se revisaron, y el registro lo dice.
 - **La corrida real** (L133). Una vez, con el sello escrito antes de cargar la primera semana: ocho de nueve criterios cumplidos y C03 no.
 - **La documentación** (U22). Este README, la ficha del modelo, el diccionario, el runbook, el paso a paso y las advertencias los escribió un agente con Sonnet con la prueba primero (`tests/docs/test_docs.py`); las cifras salen de los archivos sellados y una prueba las compara.
-- **Lo que no se hizo todavía.** La evaluación independiente con sus correcciones y su comprobación, la página del sitio y el `.pbix`.
+- **La evaluación y sus correcciones** (L136 y las correcciones de la sección 28). Un agente con Opus evaluó el proyecto en solo lectura con lectores propios y dio seis bloqueantes y nueve advertencias; otro agente con Opus los corrigió con la prueba primero, en un commit por cada corrección de riesgo alto, y regeneró desde una copia del estado sellado solo los archivos que las correcciones cambian.
+- **Lo que no se hizo todavía.** La comprobación de las correcciones, la página del sitio y el `.pbix`.
 - **Memoria.** Engram guarda el contexto entre sesiones; el documento de seguimiento conserva las palabras del dueño tal cual.
 
 ## Para qué sirve
@@ -222,7 +231,7 @@ $env:PYTHONPATH = "src"
 .venv\Scripts\python research\s00_download.py
 ```
 
-**2. Pruebas** (sin las que necesitan la fuente real o Docker). La suite por defecto recoge 1.239 pruebas y termina en unos 108 s en el equipo de desarrollo, contra un presupuesto de 120 s y un límite de 180 s (ver la ficha del modelo):
+**2. Pruebas** (sin las que necesitan la fuente real o Docker). La suite por defecto recoge 1.253 pruebas y termina en unos 115 s en el equipo de desarrollo, contra un presupuesto de 120 s y un límite de 180 s (ver la ficha del modelo):
 
 ```powershell
 .venv\Scripts\python -m pytest
@@ -235,7 +244,7 @@ $env:PYTHONPATH = "src"
 .venv\Scripts\python -m personaloffers replay --config config\pipeline.quick.toml
 ```
 
-**4. Corrida real**, con la fuente en su lugar. `replay` corre el lanzamiento, las 18 semanas y el cierre en unos 18 minutos; está hecha y su sello está versionado, y repetirla reescribe las salidas versionadas (cambian las claves y las horas de las corridas):
+**4. Corrida real**, con la fuente en su lugar. `replay` corre el lanzamiento, las 18 semanas y el cierre en unos 18 minutos; está hecha y su sello está versionado, y repetirla reescribe las salidas versionadas (cambian las claves y las horas de las corridas). Para reconstruir desde el sello se sigue R11 del runbook; las pruebas con datos reales pasan también después de una reconstrucción (D51). El flujo corre con un solo hilo de BLAS, que fija él mismo (D47):
 
 ```powershell
 .venv\Scripts\python -m personaloffers replay

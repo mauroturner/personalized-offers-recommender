@@ -66,13 +66,15 @@ Seis JSON y un manifiesto con el tamaño y el SHA-256 de cada uno, escrito al fi
 | Archivo | Qué contiene |
 | --- | --- |
 | `data.json` | El archivo: filas y copias, líneas sin cliente, roles, canastas, mayoristas, el calendario, la recompra y las 173 líneas de descuento |
-| `algorithms.json` | Las líneas base y el modelo elegido con su intervalo, por ronda y por variante; las 48 recetas de la elección; las reglas de ejemplo (`rule_lift`) y tres listas de ejemplo |
+| `algorithms.json` | Las líneas base y el modelo elegido con su intervalo, por ronda y por variante; las 48 recetas de la elección; las reglas de ejemplo (`rule_lift`) y tres listas de ejemplo, cada una la lista agregada de un perfil (`kind: "aggregate"`, `note_es` y, por producto, `stock_code`, `description_es`, `source_key` y `customers`, sin rango; D46) |
 | `operation.json` | Las 19 rondas (clientes de la base, de oferta y de control, lo entregado y los segundos), el CRM (lotes, listas, conflictos) y el correo (archivos y filas) |
 | `control.json` | La asignación (865 de control y 3.461 de oferta, 18 estratos), el equilibrio de las cinco covariables, el A/A, la calibración y el menor efecto detectable con 10, 20 y 30 % de control |
 | `validation_rules.json` | Las reglas V10 a V18 con su severidad y las filas que tocaron |
-| `summary.json` | Los diez criterios con su veredicto y las cifras de cabecera |
+| `summary.json` | Los diez criterios con su veredicto, las cifras de cabecera y `post_seal_analysis`: C05 con sus cuatro definiciones, el análisis posterior al sello (D49) |
 
-Una nota abierta: las tres listas de ejemplo de `algorithms.json` salen de la lista de un cliente real de un perfil con 3.029, 958 y 288 clientes. Cada lista completa es única de un cliente de su ronda, y solo 5, 5 y 6 clientes habían comprado antes de la ventana los siete productos de recompra de cada una: menos que el mínimo de 10 clientes de D30. No se publica ningún número de cliente, pero la combinación acota quién puede ser. Es un hallazgo abierto de la evaluación independiente (L133 y `docs/review-advisories.md`).
+Una nota corregida: hasta las correcciones de la evaluación, las tres listas de ejemplo de `algorithms.json` salían de la lista de un cliente real de un perfil con 3.029, 958 y 288 clientes, y L133 contó que solo 5, 5 y 6 clientes habían comprado antes de la ventana los siete productos de recompra de cada una, menos que el mínimo de 10 clientes de D30. Ahora son agregados del perfil, y cada producto lo tienen 10 clientes o más (D46).
+
+`reports/post_seal_analysis.json`, al lado del sello: `c05` con `sealed`, `preregistered`, `p01_denominator` y `p01_definition` (cada uno con `value` y `definition_es`; los dos primeros con `threshold` y `passed`), `rounds` y `by_round` (los productos distintos de las listas y de las listas de los clientes evaluados, y los de cada catálogo, por ronda), `config_sha256`, `seal_sha256` (el SHA-256 del sello al lado del que se calculó; con otro sello no se publica) y `note_es`.
 
 ## Las tablas del modelo estrella
 
