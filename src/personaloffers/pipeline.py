@@ -299,8 +299,17 @@ def _read_report(path: Path) -> ValidationReport:
     return ValidationReport(document["delivery_id"], document["run_key"], results, tuple(document["skipped"]), document["rows"], document["sha256"])
 
 
-def _write_report(cfg: PipelineConfig, report: ValidationReport) -> None:
+def _write_report(cfg: PipelineConfig, report: ValidationReport, *, latest: bool = False) -> None:
+    """The run's report in ``history/``; with `latest` (a rejection: the runbook's first principle and R3, D50) also as ``latest.json`` and ``latest.md``, after the copy in ``history/``. A report that passed
+    becomes the latest only when ``report`` closes its run."""
     write_atomic(_report_path(cfg, report.run_key), _report_text(report))
+    if latest:
+        _write_latest(cfg, report)
+
+
+def _write_latest(cfg: PipelineConfig, report: ValidationReport) -> None:
+    write_atomic(_validation_dir(cfg) / "latest.json", _report_text(report))
+    write_atomic(_validation_dir(cfg) / "latest.md", report.to_markdown())
 
 
 # --- the meta of a run -------------------------------------------------------------------------------------------------------------
@@ -340,8 +349,13 @@ def source_counts(cfg: PipelineConfig) -> dict[str, Any] | None:
 
 
 def fetch_source(ctx: RunContext) -> dict:
-    """V01 to V07 over the zip and the workbook and the canonical lines (``sources.fetch_source``); when the lines were built now, what the source held (copies, rows of each sheet) is kept for the site."""
-    result = sources.fetch_source(ctx.cfg)
+    """V01 to V07 over the zip and the workbook and the canonical lines (``sources.fetch_source``); when the lines were built now, what the source held (copies, rows of each sheet) is kept for the site. A rejected
+    source writes its report as the latest, with its copy in ``history/`` (D50), and nothing else."""
+    try:
+        result = sources.fetch_source(ctx.cfg)
+    except sources.SourceError as error:
+        _write_report(ctx.cfg, validate.source_report(error.rule_id, error.problems, ctx.run_key), latest=True)
+        raise
     if result.get("built"):
         write_atomic(Path(ctx.cfg.paths.interim_dir) / SOURCE_COUNTS, json.dumps({"copies_removed": result["copies"], "rows_by_sheet": result["rows_by_sheet"], "internal_repeats": result["repeats"]},
                                                                                indent=1, sort_keys=True) + "\n")
@@ -367,7 +381,7 @@ def validate_task(ctx: RunContext) -> dict:
     try:
         report = validate.validate_delivery(spec, dv.delivery_path(cfg, spec), conn, view, run_key=ctx.run_key)
     except ValidationError as error:
-        _write_report(cfg, error.report)
+        _write_report(cfg, error.report, latest=True)
         _mark_rejected(ctx, "validate", error.report)
         raise
     finally:
@@ -565,9 +579,7 @@ def report(ctx: RunContext) -> dict:
     finally:
         conn.close()
     reporting.write_summary(summary, Path(cfg.paths.reports_dir))
-    validation = _read_report(_report_path(cfg, ctx.run_key))
-    write_atomic(_validation_dir(cfg) / "latest.json", _report_text(validation))
-    write_atomic(_validation_dir(cfg) / "latest.md", validation.to_markdown())
+    _write_latest(cfg, _read_report(_report_path(cfg, ctx.run_key)))
     for step in CLOSING_STEPS:
         _CLOSERS[step](ctx)
     return {"summary": "evaluation_summary.json", "evaluation_source": summary["source"], "run_status": "ok"}

@@ -45,6 +45,17 @@ RULES: dict[str, tuple[str, str, str, str]] = {
     "V18": ("Clientes y productos nuevos de la entrega", INFORMATIVE, "entrega", "per_run"),
 }
 CONTENT_RULES = ("V12", "V13", "V14", "V15", "V16", "V17", "V18")
+# the rules of the source (``sources`` and ``workbook`` raise them as ``SourceError``), as in the plan's table: their report is the source's, not a delivery's
+SOURCE_SUBJECT = "fuente"
+SOURCE_RULES: dict[str, str] = {
+    "V01": "El zip existe con su tamaño y su huella",
+    "V02": "Un solo miembro con el nombre exacto, sin rutas, con su tamaño y su huella",
+    "V03": "El libro como zip: partes acotadas, sin macros, vínculos externos ni controles",
+    "V04": "Las dos hojas con los nombres exactos y ninguna más",
+    "V05": "La primera fila de cada hoja tiene las 8 columnas exactas en su orden",
+    "V06": "Cada celda con su tipo; filas dentro del tope",
+    "V07": "Toda fecha dentro del período del archivo",
+}
 
 
 @dataclass(frozen=True)
@@ -88,7 +99,8 @@ class ValidationReport:
         def cell(text: object) -> str:
             return str(text).replace("|", "\\|")
 
-        lines = [f"# Validación de la entrega {self.delivery_id}", "", f"Corrida: {cell(self.run_key)}", "",
+        title = "# Validación de la fuente" if self.delivery_id == SOURCE_SUBJECT else f"# Validación de la entrega {self.delivery_id}"
+        lines = [title, "", f"Corrida: {cell(self.run_key)}", "",
                  "| Regla | Nombre | Severidad | Alcance | Resultado | Líneas |", "| --- | --- | --- | --- | --- | ---: |"]
         for r in self.results:
             lines.append(f"| {r.rule_id} | {cell(r.name_es)} | {r.severity} | {r.scope} | {'pasa' if r.passed else 'falla'} | {r.rows_affected} |")
@@ -105,6 +117,14 @@ class ValidationError(RuntimeError):
     def __init__(self, report: ValidationReport) -> None:
         super().__init__(f"{report.delivery_id}: falla la regla bloqueante {', '.join(report.blocking_failed)}")
         self.report = report
+
+
+def source_report(rule_id: str, problems: list[dict[str, Any]], run_key: str) -> ValidationReport:
+    """The report of a source that a rule of V01 to V07 rejected (the runbook's first principle; B6 of the evaluation, D50): the failing rule with what it found, item by item, without the path of a
+    file (the report is versioned: a path of this machine is never in it) and never a value of a customer; the rules after it were not evaluated."""
+    detail = {"problems": [{key: value for key, value in problem.items() if key != "path"} for problem in problems]}
+    result = RuleResult(rule_id, SOURCE_RULES.get(rule_id, rule_id), BLOCKING, "fuente", "source", False, 0, (), detail)
+    return ValidationReport(SOURCE_SUBJECT, run_key, (result,))
 
 
 def _result(rule_id: str, passed: bool, keys: list[int] | None = None, rows: int = 0, **detail: Any) -> RuleResult:

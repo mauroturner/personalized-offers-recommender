@@ -251,6 +251,39 @@ def test_a_rejected_delivery_or_source_exits_3(before, workbook, tmp_path):
     assert refused.code == 3 and "rechazada" in refused.err
 
 
+def test_a_rejected_delivery_or_source_writes_its_report_as_the_latest_with_its_copy_in_history(before, workbook, tmp_path):
+    """The runbook's first principle and R3, step 1 (B6 of the evaluation, D50): a delivery that V11 rejects and a source that V01 rejects each leave their validation report as
+    ``reports/validation/latest.md`` and ``latest.json``, with a copy in ``history/<run>.json``, so whoever follows R3 reads the rejection and not the report of the delivery that passed before it."""
+    import json
+
+    reports = Path(before.cfg.paths.reports_dir) / "validation"
+    previous = (reports / "latest.json").read_text(encoding="utf-8")
+    assert json.loads(previous)["delivery_id"] != "C2011-04-18", "the latest report is the last loaded delivery's, which passed"
+    for task in ("fetch_source", "deliver"):
+        assert cli("task", task, "--run-key", "r", "--config", config_of(before)).code == 0
+    path = Path(before.cfg.paths.raw_dir) / "deliveries" / "C2011-04-18" / "lines.parquet"
+    path.write_bytes(path.read_bytes()[:-9] + b"corrupted")
+    assert cli("task", "validate", "--run-key", "r", "--config", config_of(before)).code == 3
+    latest = json.loads((reports / "latest.json").read_text(encoding="utf-8"))
+    assert (latest["delivery_id"], latest["run_key"]) == ("C2011-04-18", "r") and [r["rule_id"] for r in latest["results"] if not r["passed"]] == ["V11"]
+    assert (reports / "history" / "r.json").read_text(encoding="utf-8") == (reports / "latest.json").read_text(encoding="utf-8")
+    markdown = (reports / "latest.md").read_text(encoding="utf-8")
+    assert "Validación de la entrega C2011-04-18" in markdown and "| V11 |" in markdown and "| falla |" in markdown
+
+    broken = tmp_path / "broken"
+    write_config_file(broken, dataclasses.replace(workbook, zip_sha256="0" * 64))      # the same workbook, with a hash that is not its own
+    assert cli("task", "fetch_source", "--run-key", "s", "--config", str(broken / "config" / "test.toml")).code == 3
+    from personaloffers.config import load_config
+
+    folder = Path(load_config(broken / "config" / "test.toml").paths.reports_dir) / "validation"
+    source = json.loads((folder / "latest.json").read_text(encoding="utf-8"))
+    assert (source["delivery_id"], source["run_key"]) == ("fuente", "s") and [(r["rule_id"], r["passed"], r["severity"]) for r in source["results"]] == [("V01", False, "bloqueante")]
+    assert (folder / "history" / "s.json").read_text(encoding="utf-8") == (folder / "latest.json").read_text(encoding="utf-8")
+    text = (folder / "latest.md").read_text(encoding="utf-8")
+    assert "Validación de la fuente" in text and "| V01 |" in text and "| falla |" in text
+    assert str(tmp_path) not in text + json.dumps(source) and tmp_path.as_posix() not in text + json.dumps(source), "a report is versioned: it names no path of this machine"
+
+
 def test_a_held_lock_exits_2_and_writes_nothing(before):
     from personaloffers.lock import sole_writer
 
