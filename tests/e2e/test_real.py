@@ -27,7 +27,7 @@ from personaloffers.evaluation import criteria_from_seal
 from personaloffers.export import verify_star_schema
 from personaloffers.site_export import read_site, verify_site
 from personaloffers.sysinfo import POSIX_COUNTER, WINDOWS_COUNTER
-from tests.fixtures.published import LOCAL_PATH, example_list_problems
+from tests.fixtures.published import LOCAL_PATH, example_list_problems, stratum_leaks
 
 pytestmark = pytest.mark.real_data
 
@@ -335,20 +335,16 @@ def _the_seal_is_the_one_exception_of_the_minimum(cfg, outputs) -> None:
     found: list[str] = []
     site = outputs["site"]
     for name in ("summary", "data", "algorithms", "operation", "control", "validation_rules"):
-        for where, key, value in _walk(getattr(site, name), name):
-            if key is not None and "strat" in key.lower() and not (name, where) == ("control", "control/holdout/strata"):
-                found.append(f"{where}: a field of the strata")
-            if isinstance(value, dict) and isinstance(value.get("offer"), int) and isinstance(value.get("control"), int) and (value["offer"], value["control"]) in pairs:
-                found.append(f"{where}: the size of a stratum")
-            if key in SITE_CUSTOMER_COUNTS and isinstance(value, int) and not isinstance(value, bool) and value < MIN_CELL_CUSTOMERS:
-                found.append(f"{where}={value}: a count of customers under the minimum")
+        found += stratum_leaks(getattr(site, name), name, strata, allowed={"control/holdout/strata"})      # by field or key, never by the value of a pair alone: an aggregate can hold the same two numbers
+        found += [f"{where}={value}: a count of customers under the minimum" for where, key, value in _walk(getattr(site, name), name)
+                  if key in SITE_CUSTOMER_COUNTS and isinstance(value, int) and not isinstance(value, bool) and value < MIN_CELL_CUSTOMERS]
     assert site.control["holdout"]["strata"] == len(strata), "the control file says how many strata there are, never their sizes"
     for path in sorted(outputs["powerbi"].glob("*.parquet")):
         frame = pd.read_parquet(path)
         found += [f"{path.name}[{c}]: a column of the strata" for c in frame.columns if "strat" in c.lower()]
         if {"offer", "control"} <= set(frame.columns):
             shown = {tuple(int(v) for v in row) for row in frame[["offer", "control"]].dropna().itertuples(index=False)}
-            found += [f"{path.name}: the size of a stratum {pair}" for pair in sorted(shown & pairs)]
+            found += [f"{path.name}: holds the size of every stratum"] if pairs <= shown else []      # a pair alone can be an aggregate's; every stratum's at once is not
     design = Path(cfg.paths.dashboard_html).read_text(encoding="utf-8").lower()
     found += ["the design names the strata"] if re.search(r"estrato|strat", design) else []
     assert found == [], found

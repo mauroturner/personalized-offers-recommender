@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 
 from personaloffers import calendar as cal
-from personaloffers import evaluation, reporting, texts
+from personaloffers import evaluation, registry, reporting, texts
 from tests.fixtures.sites import export_site_of
 from tests.fixtures.stars import export_world
 from tests.fixtures.worlds import copy_world
@@ -29,7 +29,7 @@ def world(evaluated, workbook, quick_cfg, tmp_path):
 
 
 def _by_hand(world) -> dict[str, float]:
-    """The three coverages of the test rounds, mean over the rounds, from the tables with SQL and pandas only."""
+    """The four coverages of the test rounds, mean over the rounds, from the tables with SQL and pandas only."""
     lines = pd.read_sql_query("SELECT customer_id, stock_code, role, invoice_date FROM lines WHERE role IN ('purchase', 'guest_purchase')", world.conn, parse_dates=["invoice_date"])
     shares: dict[str, list[float]] = {"sealed": [], "preregistered": [], "p01_denominator": [], "p01_definition": []}
     for day in cal.rounds(world.view, "test"):
@@ -78,6 +78,20 @@ def test_an_analysis_computed_beside_another_seal_is_not_published(world):
     path.write_text(json.dumps({**document, "seal_sha256": "0" * 64}), encoding="utf-8")
     assert reporting.read_post_seal_analysis(Path(world.seal_path)) is None
     assert "post_seal_analysis" not in reporting.build_summary(world.conn, world.view, seal_path=Path(world.seal_path))
+
+
+def test_when_the_sealed_coverage_does_not_reproduce_the_seals_nothing_is_written_and_it_is_a_seal_error(world):
+    """The guard of ``write_post_seal_analysis`` (L138's warning): the analysis must be of what was sealed. A seal whose ``coverage_list`` is not the recomputed sealed coverage to six decimals refuses it: no
+    file is written, and the seal is not touched."""
+    seal_path = Path(world.seal_path)
+    seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    seal["test"]["metrics"]["coverage_list"] = round(seal["test"]["metrics"]["coverage_list"] + 0.001, 6)
+    seal_path.write_text(json.dumps(seal, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    tampered = seal_path.read_bytes()
+    with pytest.raises(registry.SealError, match="el análisis no es de lo sellado"):
+        reporting.write_post_seal_analysis(world.conn, world.view, seal_path=seal_path)
+    assert not seal_path.with_name("post_seal_analysis.json").exists() and seal_path.read_bytes() == tampered
+
 
 
 def test_before_the_test_part_of_the_seal_nothing_is_written(launched, workbook, quick_cfg, tmp_path):

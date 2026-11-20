@@ -139,7 +139,7 @@ def post_seal_path(seal_path: Path) -> Path:
 
 
 def write_post_seal_analysis(conn: sqlite3.Connection, view: Any, *, seal_path: Path) -> Path | None:
-    """Write ``post_seal_analysis.json`` beside the seal, bound to its bytes (``seal_sha256``), once the seal has its test part; before, nothing (None). C05 with its three definitions
+    """Write ``post_seal_analysis.json`` beside the seal, bound to its bytes (``seal_sha256``), once the seal has its test part; before, nothing (None). C05 with its four definitions
     (``evaluation.coverage_definitions``; B5 of the evaluation): the sealed one must give the seal's ``coverage_list`` to 6 decimals, or nothing is written (``SealError``: the analysis would not be of what was
     sealed). Each has its verdict against the sealed threshold but the plan's, which has none. A repetition writes the same bytes; the seal is never touched."""
     seal_path = Path(seal_path)

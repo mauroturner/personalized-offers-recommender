@@ -229,7 +229,7 @@ COVERAGE_DEFINITIONS_ES = {
 
 
 def coverage_definitions(conn: Any, view: Any, *, lines: pd.DataFrame | None = None) -> dict[str, Any]:
-    """C05's coverage in the test rounds, mean over the rounds, with three definitions (``COVERAGE_DEFINITIONS_ES``), from what was issued and the lines, and nothing refitted: ``sealed`` is the one the seal
+    """C05's coverage in the test rounds, mean over the rounds, with four definitions (``COVERAGE_DEFINITIONS_ES``), from what was issued and the lines, and nothing refitted: ``sealed`` is the one the seal
     holds (``coverage_list``), ``preregistered`` the one requirements 8.1 fix (a purchase line is ``purchase``, RF04), ``p01_definition`` the one of the plan's validation figure (0.158) and
     ``p01_denominator`` the sealed numerator over ``p01``'s denominator, which splits the distance between the sealed figure and the validation's into its two parts. Each with its rounds."""
     lines = warehouse.read_lines(conn) if lines is None else lines

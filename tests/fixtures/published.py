@@ -45,3 +45,33 @@ def example_list_problems(conn, examples: list[dict], minimum: int) -> list[str]
             elif count < minimum:
                 problems.append(f"{where}: {p['stock_code']} is held by {count} customers, under the minimum of {minimum}")
     return problems
+
+
+def stratum_leaks(node, where: str, strata: dict, allowed=()) -> list[str]:
+    """What shows the holdout's strata in a parsed JSON, matched by **field or key**, never by the value of an offer and control pair alone (an aggregate can hold the same two numbers as a stratum by
+    chance): a field whose name says «strat» (but the ``allowed`` paths, such as the control file's count of strata), a member keyed by a stratum's id whose offer and control are that stratum's, or a
+    container that holds the pair of **every** stratum (a list of sizes with no id). ``strata`` is the seal's ``launch.holdout.sizes.strata`` (id to ``{"offer", "control"}``). ``[]`` when none."""
+    pairs = {(groups["offer"], groups["control"]) for groups in strata.values()}
+    found: list[str] = []
+
+    def pair_of(value) -> tuple[int, int] | None:
+        if isinstance(value, dict) and isinstance(value.get("offer"), int) and isinstance(value.get("control"), int):
+            return value["offer"], value["control"]
+        return None
+
+    def visit(value, path: str) -> None:
+        members = value.items() if isinstance(value, dict) else enumerate(value) if isinstance(value, list) else ()
+        held = {pair for pair in (pair_of(member) for _, member in members) if pair is not None}
+        if pairs and pairs <= held:
+            found.append(f"{path}: holds the size of every stratum")
+        for key, member in members:
+            child = f"{path}/{key}" if isinstance(value, dict) else f"{path}[{key}]"
+            if isinstance(key, str):
+                if "strat" in key.lower() and child not in allowed:
+                    found.append(f"{child}: a field of the strata")
+                if key in strata and pair_of(member) == (strata[key]["offer"], strata[key]["control"]):
+                    found.append(f"{child}: the size of a stratum")
+            visit(member, child)
+
+    visit(node, where)
+    return found
