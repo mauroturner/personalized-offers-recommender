@@ -20,7 +20,7 @@ from tests.fixtures.stars import RUN, export_world
 
 ENVELOPE = ("schema_version", "run_key", "as_of", "config_sha256", "source_sha256", "attribution", "no_effect_note_es")
 KEYS = {
-    "summary": {"status", "evaluation_status", "headline", "criteria", "seal", "sealed_from"},
+    "summary": {"status", "evaluation_status", "headline", "criteria", "seal", "sealed_from", "post_seal_analysis"},
     "data": {"source", "roles", "countries", "products", "baskets", "customers", "repurchase", "bulk", "discount_lines", "calendar"},
     "algorithms": {"methods", "by_round", "choice", "rules_example", "example_lists"},
     "operation": {"rounds", "crm", "email"},

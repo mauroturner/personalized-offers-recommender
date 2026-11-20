@@ -163,7 +163,8 @@ def _summary(conn: sqlite3.Connection, run: reporting.RunMeta, view: Any, summar
     sealed_part = None if launch is None else {
         "launch": {"config_sha256": launch["config_sha256"], "as_of": launch["as_of"], "recipe": launch["recipe"]["name"]},
         "test": {"run_key": test["run_key"], "as_of": test["as_of"]} if sealed and test is not None else None}
-    return {"status": row[0] if row else "running", "evaluation_status": status, "headline": headline, "criteria": criteria, "seal": sealed_part, "sealed_from": summary["source"] if sealed else None}
+    return {"status": row[0] if row else "running", "evaluation_status": status, "headline": headline, "criteria": criteria, "seal": sealed_part, "sealed_from": summary["source"] if sealed else None,
+            "post_seal_analysis": summary.get("post_seal_analysis") if sealed else None}
 
 
 # --- data.json ------------------------------------------------------------------------------------------------------------------------------

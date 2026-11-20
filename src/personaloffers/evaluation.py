@@ -216,6 +216,46 @@ def evaluate_rankings(conn: Any, view: Any, *, lines: pd.DataFrame | None = None
     return RankingResult(tuple(r.round_id for r in in_test), tuple(r.round_id for r in rounds if r.period == "censored"), pd.concat(chunks, ignore_index=True), method_rows, segment_rows, figures)
 
 
+# --- C05 after the seal (B5 of the evaluation, D49) --------------------------------------------------------------------------------------------------------------------
+
+
+COVERAGE_DEFINITIONS_ES = {
+    "sealed": "Lo sellado: los productos distintos de todas las listas de la ronda sobre los productos con alguna línea de canasta (compras de clientes e invitados) en los 365 días anteriores.",
+    "preregistered": "Lo preregistrado (requerimientos, 8.1): los productos distintos de todas las listas de la ronda sobre los productos con alguna línea de compra (`purchase`) en los 365 días anteriores.",
+    "p01_denominator": "Solo el denominador de `p01`: los productos distintos de todas las listas de la ronda sobre todos los productos con alguna línea de canasta antes de la ronda.",
+    "p01_definition": "La definición de la validación del plan (`p01`): los productos distintos de las listas de los clientes evaluados (los que compraron en la semana) sobre todos los productos con alguna "
+                      "línea de canasta antes de la ronda.",
+}
+
+
+def coverage_definitions(conn: Any, view: Any, *, lines: pd.DataFrame | None = None) -> dict[str, Any]:
+    """C05's coverage in the test rounds, mean over the rounds, with three definitions (``COVERAGE_DEFINITIONS_ES``), from what was issued and the lines, and nothing refitted: ``sealed`` is the one the seal
+    holds (``coverage_list``), ``preregistered`` the one requirements 8.1 fix (a purchase line is ``purchase``, RF04), ``p01_definition`` the one of the plan's validation figure (0.158) and
+    ``p01_denominator`` the sealed numerator over ``p01``'s denominator, which splits the distance between the sealed figure and the validation's into its two parts. Each with its rounds."""
+    lines = warehouse.read_lines(conn) if lines is None else lines
+    by_round, shares = {}, {key: [] for key in COVERAGE_DEFINITIONS_ES}
+    for monday in cal.rounds(view, "test"):
+        round_id = cal.round_id(monday)
+        history = base.history_before(lines, monday)
+        basket = history[history["role"].isin(PRODUCT_ROLES)]
+        year = basket[basket["invoice_date"] >= pd.Timestamp(monday) - pd.Timedelta(days=CATALOGUE_DAYS)]
+        listed = pd.read_sql_query("SELECT customer_id, stock_code FROM offer_lists WHERE round_id = ?", conn, params=(round_id,))
+        evaluated = pd.read_sql_query("SELECT c.customer_id FROM contact_base c JOIN round_outcomes o ON o.round_id = c.round_id AND o.customer_id = c.customer_id WHERE c.round_id = ? AND o.bought = 1",
+                                      conn, params=(round_id,))["customer_id"]
+        row = {"distinct": int(listed["stock_code"].nunique()), "distinct_evaluated": int(listed.loc[listed["customer_id"].isin(evaluated), "stock_code"].nunique()),
+               "basket_365": int(year["stock_code"].nunique()), "purchase_365": int(year.loc[year["role"] == "purchase", "stock_code"].nunique()), "basket_before": int(basket["stock_code"].nunique())}
+        if not (row["basket_365"] and row["purchase_365"] and row["basket_before"]):
+            raise EvaluationError(f"la ronda {round_id} no tiene productos en el catálogo de la cobertura")
+        by_round[round_id] = row
+        shares["sealed"].append(row["distinct"] / row["basket_365"])
+        shares["preregistered"].append(row["distinct"] / row["purchase_365"])
+        shares["p01_denominator"].append(row["distinct"] / row["basket_before"])
+        shares["p01_definition"].append(row["distinct_evaluated"] / row["basket_before"])
+    if not by_round:
+        raise EvaluationError("la prueba no tiene rondas: no hay cobertura")
+    return {"rounds": len(by_round), "by_round": by_round, **{key: {"value": float(np.mean(values)), "definition_es": COVERAGE_DEFINITIONS_ES[key]} for key, values in shares.items()}}
+
+
 # --- the experiment ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 

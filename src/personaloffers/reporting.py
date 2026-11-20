@@ -8,6 +8,7 @@ project 07). The star schema, the design and the site tell the same text for eac
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import sqlite3
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 CRITERION_COLUMNS = ("criterion_id", "name_es", "tested_value", "tested_value_es", "point_value", "ci_low", "ci_high", "threshold_es", "passed", "seen_by_research", "seen_by_planner", "verdict_es")
 RESULTS_START, RESULTS_END = "<!-- results:start -->", "<!-- results:end -->"
 TABLES = ("eval_pairs", "eval_methods", "eval_segments", "eval_experiment", "eval_mde", "eval_balance", "eval_criteria", "eval_choice")
+POST_SEAL_FILE = "post_seal_analysis.json"
 
 
 @dataclass(frozen=True)
@@ -128,6 +130,45 @@ def evaluate(conn: sqlite3.Connection, view: Any, run: RunMeta, *, seal_path: Pa
     return {"state": state, "seal": outcome, "criteria": criteria, "rows": rows, "figures": figures}
 
 
+# --- the analyses after the seal (D49) -------------------------------------------------------------------------------------------------------------------------------
+
+
+def post_seal_path(seal_path: Path) -> Path:
+    """Where the analyses after the seal live: beside the seal, in a file of their own (never in it: the seal is not rewritten, D21)."""
+    return Path(seal_path).with_name(POST_SEAL_FILE)
+
+
+def write_post_seal_analysis(conn: sqlite3.Connection, view: Any, *, seal_path: Path) -> Path | None:
+    """Write ``post_seal_analysis.json`` beside the seal, bound to its bytes (``seal_sha256``), once the seal has its test part; before, nothing (None). C05 with its three definitions
+    (``evaluation.coverage_definitions``; B5 of the evaluation): the sealed one must give the seal's ``coverage_list`` to 6 decimals, or nothing is written (``SealError``: the analysis would not be of what was
+    sealed). Each has its verdict against the sealed threshold but the plan's, which has none. A repetition writes the same bytes; the seal is never touched."""
+    seal_path = Path(seal_path)
+    seal = registry.read_seal(seal_path)
+    if seal is None or seal.get("test") is None:
+        return None
+    found = evaluation.coverage_definitions(conn, view)
+    sealed = seal["test"]["metrics"]["coverage_list"]
+    if round(found["sealed"]["value"], 6) != round(sealed, 6):
+        raise registry.SealError(f"la cobertura con la definición sellada da {found['sealed']['value']:.6f} y el sello dice {sealed:.6f}: el análisis no es de lo sellado y no se escribe (runbook R7)")
+    limit = seal["launch"]["config"]["criteria"]["c05_min_coverage"]
+    c05 = {**found, **{key: {**found[key], "threshold": limit, "passed": bool(found[key]["value"] >= limit)} for key in ("sealed", "preregistered")}}
+    document = {"c05": c05, "config_sha256": seal["launch"]["config_sha256"], "seal_sha256": hashlib.sha256(seal_path.read_bytes()).hexdigest(),
+                "note_es": "Se calculó después del sello, sobre las mismas listas emitidas y las mismas líneas; no reemplaza ninguna cifra sellada (D49)."}
+    return write_atomic(post_seal_path(seal_path), json.dumps(document, indent=1, ensure_ascii=False, sort_keys=True, allow_nan=False) + "\n")
+
+
+def read_post_seal_analysis(seal_path: Path) -> dict[str, Any] | None:
+    """The analyses after the seal, or None when there are none or they were computed beside another seal (a stale file is never published)."""
+    path, seal = post_seal_path(seal_path), Path(seal_path)
+    if not path.is_file() or not seal.is_file():
+        return None
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if document.get("seal_sha256") != hashlib.sha256(seal.read_bytes()).hexdigest():
+        logger.warning("%s was computed beside another seal: it is not published", path.name)
+        return None
+    return document
+
+
 # --- the summary -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -196,6 +237,9 @@ def build_summary(conn: sqlite3.Connection, view: Any, *, seal_path: Path) -> di
         summary["headline"] = _headline(document["test"]["metrics"])
         if summary["evaluation_status"] == "pending":
             summary["evaluation_status"] = "sealed"
+        analysis = read_post_seal_analysis(seal_path) if summary["evaluation_status"] == "sealed" else None
+        if analysis is not None:
+            summary["post_seal_analysis"] = analysis
     return summary
 
 
@@ -220,6 +264,14 @@ def _validation_lines(validation: Mapping[str, Any]) -> list[str]:
     return out
 
 
+def _post_seal_lines(analysis: Mapping[str, Any] | None) -> list[str]:
+    if not analysis:
+        return []
+    c05 = analysis["c05"]
+    return ["", "### Análisis posteriores al sello", "", "No reemplazan ninguna cifra sellada: se calcularon después del sello, sobre las mismas listas emitidas y las mismas líneas, y se publican al lado de lo "
+            "sellado (D49).", "", f"- {texts.c05_preregistered_line(c05)}", f"- {texts.c05_p01_line(c05)}"]
+
+
 def summary_markdown(summary: Mapping[str, Any]) -> str:
     """The summary as Markdown: the table of C01-C10 with the threshold, what the threshold tests and each verdict, what does not pass named with its number, the validation figures and, before the close, when the test
     is evaluated."""
@@ -233,6 +285,7 @@ def summary_markdown(summary: Mapping[str, Any]) -> str:
     lines += ["| ID | Criterio | Umbral | Lo que prueba el umbral | Veredicto |", "| --- | --- | --- | --- | --- |"]
     for c in summary["criteria"]:
         lines.append(f"| {c['criterion_id']} | {_cell(c['name_es'])} | {_cell(c['threshold_es'])} | {_cell(c['tested_value_es'])} | {_cell(c['verdict_es'])} |")
+    lines += _post_seal_lines(summary.get("post_seal_analysis"))
     lines += _validation_lines(summary.get("validation") or {})
     return "\n".join(lines) + "\n"
 

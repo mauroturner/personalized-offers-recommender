@@ -575,6 +575,8 @@ def report(ctx: RunContext) -> dict:
     cfg, view = ctx.cfg, _view(ctx)
     conn = connect(cfg.paths.warehouse)
     try:
+        if _spec(ctx).kind == "close":       # the analyses after the seal, beside it and bound to its bytes (D49): once the test part exists
+            reporting.write_post_seal_analysis(conn, view, seal_path=Path(cfg.paths.seal))
         summary = reporting.build_summary(conn, view, seal_path=Path(cfg.paths.seal))
     finally:
         conn.close()

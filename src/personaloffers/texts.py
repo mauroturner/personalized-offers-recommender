@@ -131,6 +131,27 @@ def verdict(cid: str, passed: bool, **f: Any) -> str:
     raise KeyError(cid)
 
 
+PLAN_VALIDATION_C05 = 0.158      # the plan's validation figure (requirements, section 8.1; research/p01.out, «offer_7_3_blend_als_trend_1 unrestricted»): the lists of the evaluated customers over every product with a basket line before the round
+
+
+def c05_preregistered_line(c05: Mapping[str, Any]) -> str:
+    """C05 as requirements 8.1 define it, from ``evaluation.coverage_definitions`` (D49): one quantity per sentence, each named with its own lines, so the sealed figure is never told with the other's
+    denominator."""
+    pre, sealed = c05["preregistered"], c05["sealed"]
+    mark = " y se cumple" if pre["passed"] else "; no se cumple"
+    return (f"C05 como lo fija el preregistro: en {c05['rounds']} rondas, las listas de cada ronda cubrieron en promedio {es(pre['value'], 3)} de los productos con alguna línea de compra "
+            f"(`purchase`) en los 365 días anteriores; el umbral era {es(pre['threshold'], 2)}{mark}. La cifra sellada, {es(sealed['value'], 3)}, tiene otro denominador: los productos con alguna de las "
+            f"líneas de canasta (las compras de clientes y las de invitados) en esos 365 días.")
+
+
+def c05_p01_line(c05: Mapping[str, Any]) -> str:
+    """Why the test's coverage is not the plan's validation figure: mostly the numerator (D49)."""
+    return (f"Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de "
+            f"la ronda), la prueba da {es(c05['p01_definition']['value'], 3)}, comparable con el {es(PLAN_VALIDATION_C05, 3)} de la validación. La distancia con la cifra sellada es sobre todo el "
+            f"numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es {es(c05['p01_denominator']['value'], 3)}; con solo las listas de los clientes evaluados, "
+            f"{es(c05['p01_definition']['value'], 3)}.")
+
+
 # --- the labels of the dimensions of the star schema (plan section 19) ------------------------------------------------------------------------------------------------------
 
 ATTRIBUTION = ("Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). "
