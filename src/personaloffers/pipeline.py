@@ -475,7 +475,7 @@ def deliver_offers(ctx: RunContext) -> dict:
     started = time.perf_counter()
     conn = connect(cfg.paths.warehouse)
     try:
-        done = deliver_round(conn, make_client(cfg.crm, cfg.paths), round_id, run_key=ctx.run_key, batch_size=cfg.crm.batch_size)
+        done = deliver_round(conn, make_client(cfg.crm, cfg.paths, list_length=cfg.recommend.k), round_id, run_key=ctx.run_key, batch_size=cfg.crm.batch_size)
         write_email_csv(conn, round_id, email_path(cfg.paths.private_dir, round_id), view)
         if conn.execute("SELECT 1 FROM round_ops WHERE round_id = ?", (round_id,)).fetchone() is None:
             weekly.write_round_ops(conn, round_id, ctx.run_key, delivered=done.delivered, seconds=round(issued["round_seconds"]["total"] + time.perf_counter() - started, 3))
@@ -494,7 +494,7 @@ def evaluate(ctx: RunContext) -> dict:
     cfg, view = ctx.cfg, _view(ctx)
     conn = connect(cfg.paths.warehouse)
     try:
-        evidence = evaluation.crm_evidence(conn, make_client(cfg.crm, cfg.paths), private_dir=Path(cfg.paths.private_dir), batch_size=cfg.crm.batch_size)
+        evidence = evaluation.crm_evidence(conn, make_client(cfg.crm, cfg.paths, list_length=cfg.recommend.k), private_dir=Path(cfg.paths.private_dir), batch_size=cfg.crm.batch_size)
         try:
             done = reporting.evaluate(conn, view, _meta(ctx), seal_path=Path(cfg.paths.seal), crm=evidence)
         except EvaluationRefusedError as error:

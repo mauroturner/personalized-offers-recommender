@@ -6,6 +6,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import sqlite3
+from pathlib import Path
 
 import httpx
 import pytest
@@ -433,6 +434,31 @@ def test_the_http_mode_needs_an_address_and_a_token_and_the_stand_in_mode_works_
     assert str(http_client._http.base_url).startswith("http://crm:8001") and http_client._http.timeout.read == cfg.crm.timeout_s
     alone = make_client(cfg.crm, dataclasses.replace(cfg.paths, crm_db=tmp_path / "alone" / "crm.sqlite"), env={})
     assert alone.health() is True, "in process the token of the process is made when the variable is not set"
+
+
+def test_the_in_process_stand_in_refuses_a_list_that_is_not_of_the_configured_length_as_the_served_one_does(world, tmp_path):
+    """A2 of the evaluation, the residue the recheck left: the served stand-in refuses a list that is not ``[recommend] k`` long; the in-process one (``mode = standin``, the default) is told the length by
+    the pipeline, which passes ``cfg.recommend.k`` to ``make_client``. The 82,343 real lists all have 10, so the sealed delivery does not change. Without a length the old bound stays (1 to 50)."""
+    cfg, k = world.cfg, world.cfg.recommend.k
+    env = {cfg.crm.token_env: TOKEN}
+
+    def put(client, count):
+        return client.put_offers("R2011-03-28", [ContactOffers(7, tuple(Offer(rank, f"{20000 + rank}", "repeat") for rank in range(1, count + 1)))])
+
+    strict = make_client(cfg.crm, dataclasses.replace(cfg.paths, crm_db=tmp_path / "strict" / "standin.sqlite"), env=env, list_length=k)
+    for count in (k - 1, k + 1):
+        with pytest.raises(CrmRejected):
+            put(strict, count)
+    assert list(strict.read_round("R2011-03-28")) == [], "nothing of a refused batch is applied"
+    assert put(strict, k).created == 1
+    loose = make_client(cfg.crm, dataclasses.replace(cfg.paths, crm_db=tmp_path / "loose" / "standin.sqlite"), env=env)
+    assert put(loose, k - 1).created == 1
+    import re
+
+    from personaloffers import pipeline
+
+    calls = re.findall(r"make_client\((.*)\)", Path(pipeline.__file__).read_text(encoding="utf-8"))
+    assert len(calls) == 2 and all("list_length=cfg.recommend.k" in call for call in calls), "the pipeline's two uses of the in-process stand-in tell it the length of a list"
 
 
 def test_a_batch_larger_than_the_configuration_allows_is_refused_by_the_crm_and_not_split_by_the_client(world, tmp_path):

@@ -222,9 +222,10 @@ class CrmClient:
 # --- making a client ---------------------------------------------------------------------------------------------------------------
 
 
-def make_client(crm: Any, paths: Any, *, env: Mapping[str, str] | None = None) -> CrmClient:
+def make_client(crm: Any, paths: Any, *, env: Mapping[str, str] | None = None, list_length: int | None = None) -> CrmClient:
     """The client of ``[crm] mode``: ``standin`` is the stand-in over ``[paths] crm_db`` called in this process (its token from ``[crm] token_env`` or, if the variable is not set, one made for this process:
-    nobody else can call it); ``http`` is ``[crm] base_url`` with the token of ``token_env`` (``CrmConfigError`` without it), with ``[crm] timeout_s``."""
+    nobody else can call it); ``http`` is ``[crm] base_url`` with the token of ``token_env`` (``CrmConfigError`` without it), with ``[crm] timeout_s``. With `list_length` (the pipeline passes ``[recommend] k``) the in-process stand-in refuses a list of another length with 400, as the served one does (A2 of the
+    evaluation); without it a list has 1 to 50 products. The ``http`` mode's server decides for itself."""
     environment = os.environ if env is None else env
     token = environment.get(crm.token_env, "")
     if crm.mode == "http":
@@ -240,7 +241,7 @@ def make_client(crm: Any, paths: Any, *, env: Mapping[str, str] | None = None) -
     from personaloffers.crm.standin import standin_app
 
     token = token if token.strip() else f"standin-{secrets.token_hex(16)}"
-    app = standin_app(paths.crm_db, token, batch_size=crm.batch_size, max_body_bytes=crm.max_body_bytes)
+    app = standin_app(paths.crm_db, token, batch_size=crm.batch_size, max_body_bytes=crm.max_body_bytes, list_length=list_length)
     return CrmClient(TestClient(app, raise_server_exceptions=False, base_url="http://standin"), token, page_size=crm.batch_size)
 
 
