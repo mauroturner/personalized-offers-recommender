@@ -158,11 +158,12 @@ def test_the_model_card_has_the_contents_of_the_plan_and_says_every_verdict(mode
 
 
 def test_the_documents_say_what_is_pending_and_the_open_findings(readme: str, model_card: str, project_root: Path) -> None:
-    """RNF14: the independent evaluation and its corrections are done and the recheck is not, so no figure is called final; the two findings of L133 are told with their numbers and with what corrected
-    them (D46, D49); ``docs/evaluation.md`` has its three parts; the seal and the credit of the source are complete; nothing local is published."""
+    """RNF14: the independent evaluation, its corrections and the recheck of the corrections (L139) are done, so no document says the recheck is pending and each says it is done; the two findings of L133
+    are told with their numbers and with what corrected them (D46, D49); ``docs/evaluation.md`` has its three parts; the seal and the credit of the source are complete; nothing local is published."""
     text = readme.lower()
     assert "evaluación independiente" in text and "todavía no" in text and ".pbix" in text and "no aplicado en el sitio todavía" in text
-    assert "ninguna cifra es definitiva hasta la comprobación de las correcciones" in text and "ninguna cifra es definitiva hasta la comprobación de las correcciones" in model_card.lower()
+    assert "la comprobación de las correcciones está hecha" in text and "la comprobación de las correcciones están hechas" in model_card.lower()
+    assert "ninguna cifra es definitiva" not in text and "ninguna cifra es definitiva" not in model_card.lower()
     for name, document in (("README.md", readme), ("docs/model-card.md", model_card), ("docs/review-advisories.md", read(project_root, "review-advisories.md"))):
         lowered = document.lower()
         assert "algorithms.json" in lowered and "5, 5 y 6" in lowered and "10 clientes" in lowered and "d46" in lowered, name   # the example lists: groups of 5, 5 and 6 under D30's 10, now aggregates
@@ -170,7 +171,9 @@ def test_the_documents_say_what_is_pending_and_the_open_findings(readme: str, mo
     for name, document in (("README.md", readme), ("docs/model-card.md", model_card)):
         assert "5, 1 y 2" in document and "0,588" in document and "0,153" in document, name   # the evaluation's count within the profile, and C05 preregistered and with p01's definition
     evaluation = read(project_root, "evaluation.md")
-    assert [title for title in ("La evaluación", "Las correcciones", "Comprobación") if f"\n## {title}\n" not in evaluation] == [] and "todavía no se hizo" in section(evaluation, "Comprobación").lower()
+    assert [title for title in ("La evaluación", "Las correcciones", "Comprobación") if f"\n## {title}\n" not in evaluation] == [] and "todavía no se hizo" not in section(evaluation, "Comprobación").lower()
+    recheck = section(evaluation, "Comprobación")
+    assert all(f"**N{n}." in recheck for n in range(1, 6)) and all(f"| B{n}," in recheck for n in range(1, 7)) and "Lo que queda" in recheck, "the recheck tells its six blockers and its five advisories"
     assert SEAL_SHA256 in readme and SEAL_SHA256[:8] in model_card and "5ef462a0" in readme
     tail = section(readme, "Fuente y licencia")
     for piece in ("Chen, D. (2012)", "Online Retail II", "UCI", "CC BY 4.0", "10.24432/C5CG6D", "572e3627", "implicit", "mlxtend", "MIT", "BSD"):
@@ -520,7 +523,7 @@ def test_open_advisories_match_review_file(project_root: Path, readme: str) -> N
         assert piece in text, piece
 
 
-STALE_PENDING = re.compile(r"pendiente de la (?:evaluaci|comprobaci)|\*\*Pendiente\.\*\*|revisi[oó]n(?:es)? de U2[12][^.\n]{0,40}pendientes?", flags=re.IGNORECASE)
+STALE_PENDING = re.compile(r"ninguna cifra es definitiva|la comprobaci[oó]n de las correcciones[^.\n]{0,40}\bfalta\b|pendiente de la (?:evaluaci|comprobaci)|\*\*Pendiente\.\*\*|revisi[oó]n(?:es)? de U2[12][^.\n]{0,40}pendientes?", flags=re.IGNORECASE)
 
 
 def test_no_document_says_the_evaluation_is_pending_after_it_was_done(project_root: Path, readme: str) -> None:

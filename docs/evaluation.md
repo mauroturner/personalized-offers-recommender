@@ -1,6 +1,6 @@
 # La evaluación independiente del proyecto 08
 
-La evaluación independiente (plan, sección 28, ítem 1; registro L136), sus correcciones (ítem 2) y su comprobación (ítem 3). «La evaluación» transcribe el informe del agente evaluador, en un registro neutro y sin las rutas de la máquina; «Las correcciones» cuenta qué se cambió por cada hallazgo, con su commit, su prueba y su impacto medido.
+La evaluación independiente (plan, sección 28, ítem 1; registro L136), sus correcciones (ítem 2; L137 y L138) y su comprobación (ítem 3; L139). «La evaluación» transcribe el informe del agente evaluador, en un registro neutro y sin las rutas de la máquina; «Las correcciones» cuenta qué se cambió por cada hallazgo, con su commit, su prueba y su impacto medido.
 
 ## La evaluación
 
@@ -299,4 +299,110 @@ Las demás advertencias quedan con su motivo en `docs/review-advisories.md`: A1 
 
 ## Comprobación
 
-Todavía no se hizo. La hace otro agente con Opus (plan, sección 28, ítem 3): rehace los bloqueantes en copias del commit evaluado y del corregido, con un diferencial de la CLI y de la API del CRM, y compara salida, errores y códigos. Una segunda corrección solo si un bloqueante sigue fallando.
+La hizo otro agente con Opus que no construyó ni corrigió el proyecto (plan, sección 28, ítem 3; registro L139). Trabajó en solo lectura sobre dos clones, `old` en el commit evaluado (`7b7da44`) y `new` en el corregido (`99cced6`), con sus propios lectores.
+
+**Veredicto:** los seis bloqueantes B1 a B6 están **corregidos**. Los diferenciales de la CLI y de la API del CRM solo muestran las diferencias pedidas. No hay bloqueantes nuevos: hay cinco advertencias (N1 a N5), que la última corrección y este documento atienden (más abajo).
+
+### El entorno
+
+- Cada clon tiene su propio entorno (Python 3.11.1 y `requirements-dev.txt`); `pip check` sale con 0 en los dos y `pip freeze` da lo mismo. En `old`, un primer `pip install` falló por un error pasajero del índice y el segundo pasó.
+- El estado sellado, `data/` y `outputs/private/` (289 archivos), se copió aparte con los mismos SHA-256 que los de P; de esa copia salieron las de R11 y las de `-m real_data`.
+- Ninguna variable de BLAS estaba definida en el entorno del que se siguió R11.
+- El repositorio no se tocó: `git status` limpio, los 289 hashes iguales al final, el sello con su SHA-256 `fa393815bb5eb6d39a8b29f0167200f0d4f6305da30980b636fee5a9b1c5cc36` en P y en todas las copias, y Docker igual antes y después. Un primer lanzamiento de R11 falló por un escape de rutas y dejó una carpeta vacía fuera del repositorio, que el comprobador borró.
+
+### Los lectores
+
+Ninguno reutiliza un lector del evaluador y ninguno importa `personaloffers`, salvo una sonda que llama a `read_post_seal_analysis` a propósito, para ver si el análisis queda atado a los bytes del sello.
+
+| Lector | Qué hace |
+| --- | --- |
+| `o01_workbook` | Lee el libro con openpyxl en solo lectura: 1.067.371 filas (525.461 y 541.910) |
+| `o02_examples` | B1: dentro del perfil y la ronda, quién tiene cada lista entera, cada producto con su origen, la superposición y quién compró los productos antes de la ronda |
+| `o03_privacy` | B2: recorre cada JSON, Parquet, HTML, MD y SVG publicado y busca campos de estratos, pares oferta y control iguales a un estrato y enteros de 1 a 9 con el nombre de su campo |
+| `o04_c05` | B5: las cuatro definiciones de C05, desde sus propios roles de RF04 y D04 y las listas emitidas |
+| `o05_regen`, `o06_a1` | Qué hojas de cada JSON regenerado cambiaron y el manifiesto del sitio; los productos listados fuera del denominador por ronda |
+| `wh_compare`, `tree_compare` | El almacén tabla por tabla con `EXCEPT` en los dos sentidos y los archivos por contenido, sin las claves de corrida ni los relojes |
+| `cli_diff`, `api_diff` | Los diferenciales de la CLI y de la API del CRM (esta con `urllib` solamente) |
+
+### Los bloqueantes
+
+| Hallazgo | Qué se comprobó | Resultado |
+| --- | --- | --- |
+| B1, listas de ejemplo | En `7b7da44` cada lista es de un solo cliente, también en toda la ronda, y los que compraron antes los siete productos de recompra son 5, 1 y 2. En `99cced6` los 30 conteos `customers` son iguales a los propios, producto por producto y origen por origen, de 14 a 954 clientes y sin rangos; ningún cliente del perfil tiene la lista entera ni los siete de recompra juntos | **Corregido.** Contados como la evaluación, los que compraron antes los siete son 6, 0 y 2; el comprobador acepta la regla del corrector: un agregado que nadie tiene entero no señala a nadie, y cada celda publicada tiene 14 clientes o más |
+| B2, el sello como excepción | El sello tiene exactamente 8 celdas de 1 a 9 clientes, todas en `launch.holdout.sizes.strata` (el estrato 1 con 2 y 8, y los estratos 3, 7, 9, 11, 15 y 17 en el control). Fuera del sello no hay campo ni columna de estratos (salvo la cantidad, 18, en `control.json`), ninguna fila con un par igual al de un estrato, y el diseño y las figuras no los nombran | **Corregido.** Los otros enteros de 1 a 9 son banderas y cuentas de líneas, no de clientes |
+| B3, un hilo de BLAS | R11 seguido como está escrito, sin las variables de BLAS, en las dos copias a la vez. `7b7da44`: aviso de OpenBLAS y 16.234 filas de `offer_lists` distintas en cada sentido. `99cced6`: sin aviso y `offer_lists` idéntica en las 823.430 filas, con el `score` exacto | **Corregido.** 59 de 60 tablas iguales (la otra es `pipeline_runs`, con la corrida `no_delivery` del paso 3); `data/models` (209 archivos), las 21 entregas, el CRM (65.959 listas) y los 19 CSV de correo, byte a byte; el compose fija las dos variables en los seis servicios; en `run`, `task` y `replay`, `pipeline` es el primer módulo que carga numpy |
+| B4, `-m real_data` | `7b7da44`: 1 falla en los datos de P y 2 después de R11. `99cced6`: 8 pasan en los datos de P y, después de R11, 7 pasan y 1 se salta (la caché que movió el paso 1) | **Corregido** |
+| B5, C05 | Las cuatro definiciones sobre 18 rondas coinciden con `post_seal_analysis.json` con diferencias menores que 1e-12: sellada 0,558631 (igual a `coverage_list`), preregistrada 0,588471, solo el denominador de `p01` 0,465621 y la de `p01` 0,152678. Con un byte de más en una copia del sello, `read_post_seal_analysis` devuelve `None` y avisa | **Corregido.** Ninguna frase mezcla las cantidades, y «sobre todo el numerador» es cierto: el denominador explica 0,093 de la distancia y el numerador 0,313 |
+| B6, informes de un rechazo | V11 sembrada: `7b7da44` escribe solo `history/` y `latest.md` sigue mostrando la entrega anterior pasando; `99cced6` muestra W2011-03-28 con V11 «falla» y V12 a V18 sin evaluar. V01 (un byte cambiado en el zip): `7b7da44` no escribe ningún informe; `99cced6` escribe «Validación de la fuente» con la huella esperada y la encontrada | **Corregido.** Los dos salen con 3, `load` se niega después (2) y ningún informe tiene una ruta local |
+
+### Las advertencias
+
+- **A2, corregida para el sustituto servido.** Devuelve 400 para listas de 9, 11 y 1 productos y para un lote mixto, sin aplicar nada; en `7b7da44` daba 200 y las creaba. El sustituto en proceso, que es el modo por defecto, seguía sin exigir el largo (`client.py` llamaba a `standin_app` sin `list_length`); estaba documentado y las 82.343 listas reales tienen 10 productos. La última corrección lo cierra (más abajo).
+- **A8, corregida.** En una ronda de coseno, la carpeta ajena `als/` se borra y `junk/` queda con su aviso.
+- **A3, A4, A5, A6, A7 y A9: los motivos son ciertos.** A7: R11 regenera el CRM idéntico. A4: 48 s contra 60 s. A5: `rules_10_w0` y `rules_20_w0` no están entre las 8 candidatas que quedan para elegir, así que el empate no cambia la elección.
+- **A1, en parte falso:** ver N1.
+
+### Las salidas regeneradas (`324b444`)
+
+Entre `7b7da44` y `99cced6`, bajo `outputs/`, `reports/`, `dashboard/` y `docs/figures`, cambian exactamente los seis archivos que lista el corrector, cada uno por su motivo:
+
+| Archivo | Qué cambia |
+| --- | --- |
+| `algorithms.json` | solo `example_lists` |
+| `summary.json` | solo `post_seal_analysis` |
+| `evaluation_summary.json` | solo `post_seal_analysis` |
+| `evaluation_summary.md` | solo la sección nueva, «Análisis posteriores al sello» |
+| `post_seal_analysis.json` | es nuevo |
+| `manifest.json` del sitio | solo los bytes y el SHA-256 de `algorithms` y `summary`, que coinciden con los archivos |
+
+Todo lo demás es idéntico byte a byte: los 25 Parquet, el manifiesto de Power BI, el diseño, las figuras, el sello y `latest.*`. `figures` y `docs-sync` corridos sobre el clon corregido no cambian nada.
+
+### Los diferenciales
+
+- **La CLI.** 50 casos en modo rápido, en el mismo orden y en una copia nueva de cada commit: las ayudas de los siete comandos, las 14 negativas que salen con 2 (`--only` con `--from`, `--run-key` solo, `--from load` en una corrida nueva, `task load` sin clave, una tarea desconocida, `--until` malo, ya cargado y sin pendientes, una configuración inexistente, `figures` y `docs-sync` sin archivos, y `serve-crm` con `0.0.0.0`, `localhost` y los puertos 0 y 70000), `make-fixture` con semilla, con una negativa y con una ruta fuera del proyecto, el lanzamiento por partes, `run -v`, la secuencia de `task`, `replay --until` y `replay`, `no_delivery`, las tareas de una corrida cerrada, y `figures` y `docs-sync` con las dos configuraciones. **Los 50 tienen el mismo código de salida.** Las diferencias son las pedidas: ya no sale el aviso de OpenBLAS (B3), el sitio pesa 19.359 bytes antes y 19.018 después (B1), `summary` pesa 29 bytes más por `post_seal_analysis: null` (B5) y al cerrar se escribe `data/quick/reports/post_seal_analysis.json` (B5). En `data/quick`, por contenido, solo difieren `example_lists`, `post_seal_analysis` y el resumen en Markdown.
+- **La API del CRM.** 59 llamadas contra un sustituto vacío y 4 sobre una copia del CRM sellado: con y sin token y con uno equivocado; `/docs`, `/openapi.json` y `/redoc` dan 404; lotes nuevos, repetidos y de 500; un conflicto simple y uno mixto (409, sin aplicar el contacto bueno); listas de 0, 1, 9 y 11 productos; los errores de formato, de clave de más, de orden de rangos, de contacto o producto repetido, de origen, de `contact_id`, de 501 contactos y de 413; POST y DELETE (404); la paginación en los bordes y la lectura por contacto. **Las únicas diferencias son las de A2:** las 4 de largo distinto de 10 pasaron de 200 a 400, y el contacto 13 no se aplicó (las páginas difieren solo por esos 5 contactos que `7b7da44` guardó). Sobre el CRM sellado, en los dos commits: 11 páginas de 333, 3.433 contactos únicos y en orden, el reenvío crea 0, el SHA-256 de la base no cambia y las respuestas son idénticas byte a byte.
+
+### Las suites en `99cced6`
+
+| Suite | Resultado |
+| --- | --- |
+| Por defecto en reposo, dos veces | 1.252 pasan, 1 se salta y 10 sin seleccionar, en 120,87 s y 116,07 s (límite 180 s, presupuesto 120 s: ver N5) |
+| `-m real_data` | 8 pasan en los datos de P; 7 pasan y 1 se salta después de R11 |
+| `-m docker` | 2 pasan en 80,18 s, con Docker igual antes y después |
+
+### Hallazgos nuevos
+
+Ninguno cumple la regla de bloqueante: los cinco son advertencias.
+
+- **N1. El motivo de A1 era en parte falso.** `review-advisories.md` y esta evaluación decían «entre 12 y 21 productos por ronda» fuera del denominador; la cuenta propia da de 12 a 41 y crece con las rondas (12, 16, 16, 19, 21, 20, 21, 24, 26, 30, 31, 28, 32, 34, 35, 37, 41 y 39), con las líneas y con la tabla `lines`. El motivo decía que la nota quedaba en D49, y D49 no nombraba la intersección; y «cambiaría lo sellado» no impide un análisis posterior al sello, como el de C05. Ninguna cifra ni veredicto cambia.
+- **N2. En el modo rápido, la frase de C05 después del sello afirmaba algo falso** («la prueba da 0,359, comparable con el 0,158»): el 0,158 está fijo en `texts.PLAN_VALIDATION_C05` y la frase no dependía de la cifra calculada. Es sintético y no se publica.
+- **N3. La frase sellada de C05 se puede leer mal.** «0,559 de los productos con alguna compra», leída sola (README, ficha, `summary.json`, el diseño y el Parquet), se confunde con la línea de compra de RF04, que es el denominador preregistrado. Ya estaba en `7b7da44`, y la frase sellada no se reescribe (D21).
+- **N4. En un clon sin el archivo, una corrida reescribe lo versionado.** `python -m personaloffers run`, con la configuración de siempre, reescribe `reports/validation/latest.md` y `latest.json` con el rechazo V01: es lo que piden D50 y R1, pero el clon nuevo queda modificado.
+- **N5. La suite pasó una vez del presupuesto:** una corrida en reposo tardó 120,87 s contra los 120 s; la otra, 116,07 s. Las dos están dentro del límite de 180 s.
+
+### Lo que se hizo con ellos
+
+La última corrección (escritor acotado, con la prueba primero) y esta sincronización de la documentación. No hubo una segunda corrección de bloqueantes: ninguno seguía fallando. El sello no cambió (SHA-256 `fa393815…5cc36`), nada se reajustó y ninguna salida publicada se regeneró.
+
+| Hallazgo | Qué se hizo | Commit | Prueba |
+| --- | --- | --- | --- |
+| Advertencia de la revisión de `c6` (`reporting.py:151-152`) | Una prueba del camino en que la cobertura sellada recalculada no coincide con el sello: `SealError` y nada escrito | `c0a382c` | Quitar la guarda la hace fallar («DID NOT RAISE SealError») |
+| Sugerencia de `c5` (`test_real.py:357-359`) | Los estratos se buscan por campo o llave, no por el valor de un par; `stratum_leaks` con su prueba unitaria | `c0a382c` | Una sonda con los archivos reales: una fuga con las llaves de los estratos, una lista con todos los pares y un campo que nombra los estratos fallan; un agregado con el par de un estrato pasa |
+| Sugerencia de `c6` | Dos docstrings decían «tres definiciones» donde hay cuatro | `c0a382c` | Sin prueba (comentarios) |
+| N2 | La frase dice «comparable» solo dentro de una tolerancia de 0,01 de 0,158 y, si no, las dos cifras y lo que explican el denominador y el numerador | `dfd3702` | Dos pruebas, una del texto con cifras reales, en el borde y lejos, y otra en modo rápido, que fallaron con `AttributeError` antes del código. Con 0,153 la frase es la misma: ningún archivo publicado cambió |
+| A2, el sustituto en proceso | `make_client` recibe el largo y la tubería le pasa `[recommend] k` en sus dos usos | `20e0167` | La prueba de integración falló con `TypeError` antes del código; con el largo, 400 y nada aplicado; sin él, el límite de siempre |
+| N1, N3, N4 | A1 corregida, la nota de D49 (la cobertura no es una intersección y por qué sigue sellada así; un análisis posterior al sello es posible y no se hizo), la aclaración de la frase sellada en la ficha y el diccionario, y R1 con cómo restaurar `reports/validation` | commit de documentación de la comprobación | `tests/docs` |
+| N5 | Medido de nuevo: 111,33 s y 111,89 s (ver «Las pruebas» abajo) | este commit | La suite, dos veces en reposo |
+
+**Las pruebas, al final.** La suite por defecto en reposo, dos veces: 1.262 pasan y 1 se salta (1.263 recogidas), en 111,33 s y 111,89 s. N5 sigue siendo una decisión del dueño (pendiente 13 del plan): el margen contra los 120 s no es estable, y una unidad que sume pruebas debe volver a medirlo. `pytest -m real_data` en el repositorio y `pytest tests/docs` pasan (ver el registro). El sello mide `fa393815bb5eb6d39a8b29f0167200f0d4f6305da30980b636fee5a9b1c5cc36`.
+
+### Las carpetas de trabajo
+
+El comprobador dejó sus clones, sus copias y sus lectores en una carpeta temporal fuera del repositorio (unos 24 GB), con una copia de sus lectores junto al informe; la carpeta se borró después de leer el informe.
+
+### Lo que queda
+
+- **La página del sitio**, con la estructura del proyecto 01 (S10): **no aplicado en el sitio todavía**.
+- **El `.pbix`**, que arma quien tenga Power BI Desktop siguiendo el HTML.
+- **Lo que decide el dueño**, entre otros: si el sello sigue publicado con su excepción (D48), si la página muestra los agregados (D46), si una versión posterior con su propio sello cuenta C05 como lo fija el preregistro (D49), el límite y el presupuesto de la suite (pendiente 13), una herramienta de correo o un CRM reales y el contenido de la oferta.
+- **Tres sugerencias abiertas** de las revisiones nativas (`u15b` S2 y S4, `u16` S2), sin efecto en ninguna salida.

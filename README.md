@@ -91,12 +91,12 @@ Cómo se lee, con las cifras del bloque (hit@10 es la parte de los clientes que 
 
 ### Los dos hallazgos de la corrida real, corregidos
 
-Los encontró el escritor de la corrida real (L133), la evaluación independiente los confirmó (L136, B1 y B5) y las correcciones los resolvieron sin tocar el sello. Ninguno cambia un veredicto.
+Los encontró el escritor de la corrida real (L133), la evaluación independiente los confirmó (L136, B1 y B5), las correcciones los resolvieron sin tocar el sello y la comprobación (L139) las confirmó con un agente que no las escribió. Ninguno cambia un veredicto.
 
 - **Las listas de ejemplo de `algorithms.json` ya no son la lista de un cliente.** Eran la lista de un cliente real cada una: L133 contó 5, 5 y 6 clientes que habían comprado antes de la ventana sus siete productos de recompra, y la evaluación, dentro del perfil publicado, 5, 1 y 2, menos que el mínimo de 10 clientes de D30. Ahora cada una es la lista agregada de su perfil, rotulada como tal: los 7 productos de recompra y los 3 de descubrimiento que más aparecen en las listas del perfil en la primera ronda, cada uno con cuántos clientes lo tienen (de 14 a 954), sin rangos. Ningún cliente tiene la lista entera (D46).
 - **La distancia de C05 con el 0,158 de la validación del plan es sobre todo el numerador.** El preregistro cuenta en el denominador los productos con alguna línea de compra (`purchase`); con esa definición la cobertura de la prueba es 0,588, y se cumple igual. La validación del plan (`p01`) contó solo las listas de los clientes evaluados: con su definición, la prueba da 0,153. Las dos cifras están en «Análisis posteriores al sello», al lado de la sellada (D49).
 
-**Ninguna cifra es definitiva hasta la comprobación de las correcciones.** Todo lo que está arriba es lo que dice el sello, y lo de «Análisis posteriores al sello» se calculó después, al lado del sello y atado a sus bytes.
+**La comprobación de las correcciones está hecha** (L139): los seis bloqueantes están corregidos y no apareció ninguno nuevo. Todo lo que está arriba es lo que dice el sello, y lo de «Análisis posteriores al sello» se calculó después, al lado del sello y atado a sus bytes. La frase sellada de C05 dice «alguna compra» y cuenta líneas de canasta (`purchase` y `guest_purchase`), no la línea de compra de RF04 (ficha del modelo).
 
 ## En qué consiste
 
@@ -185,13 +185,13 @@ Las 8 columnas, los roles, las covariables y una tabla por Parquet están en [do
 | [docs/review-advisories.md](docs/review-advisories.md) | Los 26 hallazgos de las revisiones nativas, cada uno con su ubicación y su estado, y las nueve advertencias de la evaluación |
 | [docs/evaluation.md](docs/evaluation.md) | La evaluación independiente, sus correcciones y la comprobación |
 
-**La evaluación y sus correcciones están hechas** (plan, sección 28, ítems 1 y 2): un agente con Opus que no construyó el proyecto recalculó cada cifra con sus propios lectores en un clon aparte (L136) y encontró seis bloqueantes, ninguno de los cuales cambia un veredicto; otro agente con Opus los corrigió con la prueba primero, sin tocar el sello (`docs/evaluation.md`). La comprobación de las correcciones, el ítem 3, falta: hasta que se haga, ninguna corrección está confirmada por otro agente.
+**La evaluación, sus correcciones y la comprobación están hechas** (plan, sección 28, ítems 1 a 3): un agente con Opus que no construyó el proyecto recalculó cada cifra con sus propios lectores en un clon aparte (L136) y encontró seis bloqueantes, ninguno de los cuales cambia un veredicto; otro agente con Opus los corrigió con la prueba primero, sin tocar el sello; y un tercero, con clones del commit evaluado y del corregido y diferenciales de la CLI y de la API del CRM, confirmó los seis corregidos y no encontró bloqueantes nuevos (L139; `docs/evaluation.md`). Sus cinco advertencias (N1 a N5) y las de las revisiones de las correcciones tienen su estado en `docs/review-advisories.md`.
 
 Advertencias abiertas: 3 de las 26 de las revisiones nativas: 21 corregidas, 2 dejadas con su motivo y 3 abiertas (docs/review-advisories.md). La del hallazgo de `algorithms.json` se corrigió con D46.
 
 ## Con IA, de punta a punta
 
-Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño pidió para su tarea (Opus para los planes, la arquitectura y la evaluación, Sonnet para la programación, Haiku para tareas acotadas como investigar), con una persona definiendo el rumbo. Lo que sigue es lo que consta en el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L136) y en `git log`:
+Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño pidió para su tarea (Opus para los planes, la arquitectura y la evaluación, Sonnet para la programación, Haiku para tareas acotadas como investigar), con una persona definiendo el rumbo. Lo que sigue es lo que consta en el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L139) y en `git log`:
 
 - **Datos e investigación** (L117, L118). Un agente con Haiku bajó el archivo de UCI, comprobó su huella, perfiló las canastas, midió las líneas base con dos cortes de 90 días, midió qué puede medir un grupo de control sin ofertas, reprodujo cifras de los proyectos 02 y 04, midió tres fugas y revisó las afirmaciones del sitio.
 - **Requerimientos y plan** (L120). Un agente con Opus leyó la investigación y midió sin la ventana de prueba que con rondas semanales lo más vendido de cuatro semanas le gana a ALS, a las reglas y a la similitud solos en productos nuevos y que solo la mezcla con la tendencia lo supera; fijó los criterios C01-C10 con lo esperable antes de la primera línea de código y dejó una lista de 17 pendientes del dueño.
@@ -201,7 +201,8 @@ Este proyecto lo construyen agentes de IA, cada uno con el modelo que el dueño 
 - **La corrida real** (L133). Una vez, con el sello escrito antes de cargar la primera semana: ocho de nueve criterios cumplidos y C03 no.
 - **La documentación** (U22). Este README, la ficha del modelo, el diccionario, el runbook, el paso a paso y las advertencias los escribió un agente con Sonnet con la prueba primero (`tests/docs/test_docs.py`); las cifras salen de los archivos sellados y una prueba las compara.
 - **La evaluación y sus correcciones** (L136 y las correcciones de la sección 28). Un agente con Opus evaluó el proyecto en solo lectura con lectores propios y dio seis bloqueantes y nueve advertencias; otro agente con Opus los corrigió con la prueba primero, en un commit por cada corrección de riesgo alto, y regeneró desde una copia del estado sellado solo los archivos que las correcciones cambian.
-- **Lo que no se hizo todavía.** La comprobación de las correcciones, la página del sitio y el `.pbix`.
+- **Las revisiones de las correcciones y la comprobación** (L138 y L139). La revisión nativa aprobó cinco de los nueve commits de las correcciones y anotó una advertencia y tres sugerencias; un tercer agente con Opus comprobó las correcciones en clones y anotó cinco advertencias. Una última corrección acotada, con la prueba primero, y la documentación sincronizada las atienden.
+- **Lo que no se hizo todavía.** La página del sitio y el `.pbix`.
 - **Memoria.** Engram guarda el contexto entre sesiones; el documento de seguimiento conserva las palabras del dueño tal cual.
 
 ## Para qué sirve
@@ -231,7 +232,7 @@ $env:PYTHONPATH = "src"
 .venv\Scripts\python research\s00_download.py
 ```
 
-**2. Pruebas** (sin las que necesitan la fuente real o Docker). La suite por defecto recoge 1.253 pruebas y termina en unos 115 s en el equipo de desarrollo, contra un presupuesto de 120 s y un límite de 180 s (ver la ficha del modelo):
+**2. Pruebas** (sin las que necesitan la fuente real o Docker). La suite por defecto recoge 1.263 pruebas y termina en unos 112 s en el equipo de desarrollo, contra un presupuesto de 120 s y un límite de 180 s (ver la ficha del modelo):
 
 ```powershell
 .venv\Scripts\python -m pytest

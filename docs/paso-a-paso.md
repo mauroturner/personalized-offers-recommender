@@ -1,6 +1,6 @@
 # Paso a paso: cómo se hizo el proyecto
 
-La cronología real, desde el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L136) y `git log` de esta carpeta: qué se hizo en cada paso, quién (qué agente y con qué modelo, S8), con qué prueba y en qué commit. Todo lo que dice este documento consta en el registro o en el historial; lo que el registro no dice, no se afirma (RNF14). Los commits son 43 hasta la corrida real y se citan todos.
+La cronología real, desde el registro del documento de seguimiento (`odd/tasks/portfolio-projects.md`, L117 a L139) y `git log` de esta carpeta: qué se hizo en cada paso, quién (qué agente y con qué modelo, S8), con qué prueba y en qué commit. Todo lo que dice este documento consta en el registro o en el historial; lo que el registro no dice, no se afirma (RNF14). Los commits son 43 hasta la corrida real y se citan todos.
 
 El dueño del portafolio pidió que cuando se termina un proyecto se siga con el siguiente sin preguntar (S12), que la estructura sea la del proyecto 01 (S10), que se acepten de forma automática las revisiones de Gentle AI (S11) y los modelos de los agentes: Opus para planes, arquitectura y evaluación, Sonnet para programar y Haiku para tareas acotadas como investigar (S8). El proyecto 08 empezó mientras se construía la página del proyecto 07 en marca-personal (L117); esa página se aplicó después (L119) y no es parte de este proyecto. Todo lo que sigue pasó el 2026-11-19, salvo el cierre de la corrida real, que terminó el 2026-11-20.
 
@@ -64,9 +64,25 @@ La revisión nativa de Gentle AI revisó las unidades de riesgo alto con el cons
 
 **Qué.** Un agente con Opus corrigió los seis bloqueantes y dos advertencias con la prueba primero, sin tocar el sello: las listas de ejemplo son agregados del perfil (`a7a265a`, D46), el flujo corre con un hilo de BLAS (`f1b0a4b`, D47), el sello es la excepción con nombre de D30 (`6c07167`, D48), C05 como lo fija el preregistro se publica al lado de lo sellado (`d496a88` y `6b7d650`, D49), un rechazo escribe su informe como el último (`c6d31e1`, D50) y las pruebas con datos reales valen después de una reconstrucción (`5edb032`, D51); el CRM sustituto rechaza una lista de otro largo y una ronda borra una carpeta de modelos ajena (`4d18d86`). Las salidas que esas correcciones cambian se regeneraron desde una copia del estado sellado con los pasos de exportación y de cierre de la corrida del cierre (`324b444`); todo lo demás salió idéntico byte por byte.
 
-## 10. Lo que falta
+## 10. Las revisiones de las correcciones (L138)
 
-- **La comprobación de las correcciones** (plan, sección 28, ítem 3): otro agente con Opus rehace los bloqueantes en copias del commit evaluado y del corregido, con un diferencial de la CLI y de la API del CRM. Después, la documentación sincronizada con la última corrección. Hasta entonces ninguna cifra es definitiva.
-- **La página del sitio**, con la estructura del proyecto 01 (S10): **No aplicado en el sitio todavía**.
+**Qué.** La revisión nativa de Gentle AI, con el consentimiento aceptado de forma automática (S11), aprobó cinco de los nueve commits de las correcciones: `c2` (B3), `c4` (B1, sin hallazgos), `c5` (B2), `c6` (B5) y `c8` (`324b444`, lo regenerado, sin hallazgos). `c1` (B4), `c3` (B6), `c7` (A2 y A8, y una frase de C05) y `c9` (la documentación) quedaron `under_budget`. Anotó una advertencia (el camino del cierre en que la cobertura sellada recalculada no coincide con el sello no tenía prueba) y tres sugerencias.
+
+## 11. La comprobación (L139)
+
+**Qué.** Un agente con Opus que no construyó ni corrigió el proyecto, en solo lectura, con clones del commit evaluado (`7b7da44`) y del corregido (`99cced6`) y lectores propios. Confirmó los seis bloqueantes corregidos, midió una CLI de 50 casos y una API del CRM de 59 llamadas sin más diferencias que las pedidas, y anotó cinco advertencias (N1 a N5). Lo cuenta `docs/evaluation.md`.
+
+## 12. La última corrección y la documentación
+
+**Qué.** Un escritor acotado, con la prueba primero, atendió lo que dejaron las revisiones y la comprobación, sin tocar el sello ni regenerar ninguna salida:
+
+- `c0a382c`: la prueba del camino en que la cobertura sellada no coincide con el sello, la búsqueda de estratos por campo o llave (`stratum_leaks`) y los docstrings que decían «tres definiciones».
+- `dfd3702`: la frase de C05 con la definición de `p01` dice «comparable» solo dentro de una tolerancia de 0,01 de 0,158 (N2); con la cifra real es la misma y ningún archivo publicado cambió.
+- `20e0167`: el CRM sustituto en proceso también rechaza una lista que no tiene `k` productos (A2).
+- La documentación: la cobertura no es una intersección y por qué sigue sellada así (N1, D49), la aclaración de la frase sellada de C05 (N3), R1 con cómo restaurar `reports/validation` (N4), y este documento, el README, la ficha del modelo, las advertencias y `SITE-UPDATES.md` que ya cuentan la evaluación, las correcciones y la comprobación como hechas.
+
+## 13. Lo que falta
+
+- **La página del sitio**, con la estructura del proyecto 01 (S10): **No aplicado en el sitio todavía**. Es lo que sigue.
 - **El `.pbix`**, que arma quien tenga Power BI Desktop siguiendo el HTML.
 - **Los pendientes del dueño** del plan, sección 29: la cadencia (decidida por defecto), los ítems 2 a 7 (sellados con su valor por defecto), una herramienta de correo o un CRM reales, el contenido de la oferta, el límite y el presupuesto de la suite, entre otros.
