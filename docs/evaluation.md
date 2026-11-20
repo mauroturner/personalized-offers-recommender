@@ -230,7 +230,7 @@ Las 87 pruebas nombradas, con los 4 nombres de `RENAMED`, salvo las de datos rea
 
 ### Advertencias
 
-- **A1:** la cobertura no se calcula como intersección. Entre 12 y 21 productos por ronda de las listas no están en el denominador, y la B0 de C10 da 1,20.
+- **A1:** la cobertura no se calcula como intersección. De 12 a 41 productos por ronda de las listas no están en el denominador, y la cuenta crece con las rondas (la comprobación la contó: 12, 16, 16, 19, 21, 20, 21, 24, 26, 30, 31, 28, 32, 34, 35, 37, 41 y 39; la evaluación había escrito de 12 a 21). La B0 de C10 da 1,20.
 - **A2:** el CRM sustituto acepta una lista de 9 productos (200, `created`). M06 cuida el flujo.
 - **A3:** el p del A/A sellado (2.000 permutaciones) se aparta unos 2 errores de Monte Carlo del cálculo con 20.000 (0,294 contra 0,315).
 - **A4:** la semanal crece unos 0,65 s por ronda (de 37 a 48 s) y el pico de `PeakWorkingSetSize` va de 1.728 a 2.057 MB. Sin consecuencias dentro del alcance de 18 rondas.
@@ -287,7 +287,7 @@ Un agente con Opus corrigió con la prueba primero (plan, sección 28, ítem 2),
 | A2 | El CRM sustituto servido rechaza una lista que no tiene `k` productos | `4d18d86` | La prueba del sustituto con listas de 9 y de 11 | 400 para todo el lote, nada aplicado |
 | A8 | Al emitir una ronda se borra una carpeta sin registrar con el nombre de un componente que la receta no usa, y se anota lo que no es un componente | `4d18d86` | La prueba de la ronda con una carpeta ajena | La ronda se emite y la carpeta ya no está |
 
-Las demás advertencias quedan con su motivo en `docs/review-advisories.md`: A1 (calcular la cobertura como intersección cambiaría cifras selladas), A3, A4, A5, A6, A7 y A9.
+Las demás advertencias quedan con su motivo en `docs/review-advisories.md`: A1 (calcular la cobertura como intersección cambiaría cifras selladas; un análisis posterior al sello es posible y no se hizo), A3, A4, A5, A6, A7 y A9.
 
 **Las salidas regeneradas** (`324b444`). Desde una copia del estado sellado, con los pasos de exportación y de cierre de la corrida del cierre y nunca con una corrida nueva. Cambiaron por una corrección y se copiaron: `outputs/site/algorithms.json` (B1), `outputs/site/summary.json`, `reports/evaluation_summary.json` y `reports/evaluation_summary.md` (B5), `reports/post_seal_analysis.json` (nuevo, B5) y `outputs/site/manifest.json` (los tamaños y las huellas de los dos JSON del sitio). El bloque de resultados del README lo copió `docs-sync`. Todo lo demás de `outputs/`, `reports/` y `dashboard/`, y las figuras, salió idéntico byte por byte, y el sello no cambió.
 

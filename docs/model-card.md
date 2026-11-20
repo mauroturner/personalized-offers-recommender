@@ -95,6 +95,8 @@ Lo que dice cada uno: C01 se esperaba y se cumplió con 25,1 puntos. C02 y C03 s
 
 **Un análisis posterior al sello** (`reports/post_seal_analysis.json`, atado a los bytes del sello; D49). No reemplaza ninguna cifra sellada. C05 como lo fija el preregistro, con los productos con alguna línea de compra en los 365 días anteriores como denominador, da 0,588 y se cumple; lo sellado, 0,559, cuenta los productos con alguna línea de canasta. Con la definición de la validación del plan (`p01`), la prueba da 0,153, comparable con su 0,158.
 
+**Qué cuenta «alguna compra» en la frase sellada de C05.** La frase sellada dice «0,559 de los productos con alguna compra en los 365 días anteriores». Ahí «compra» es una línea de canasta, `purchase` o `guest_purchase`; no es la «línea de compra» de RF04 (`purchase` solo), que es el denominador que fija el preregistro y da 0,588. La frase sellada no se reescribe (D21); el análisis posterior al sello dice cada cantidad con su definición.
+
 ## Limitaciones
 
 - **Un solo minorista, de 2009 a 2011.** Lo medido es la lista de una tienda en línea del Reino Unido con una fuerte parte de mayoristas; otro negocio, otro resultado. Los datos son reales, y por eso las cifras valen para ese archivo y no más.

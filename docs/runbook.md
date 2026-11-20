@@ -19,7 +19,7 @@ Tres principios valen para todo el documento:
 
 ## R1 Falta la fuente, o no tiene el tamaño o la huella fijados
 
-**Síntoma.** Cualquier corrida con la configuración por defecto sale con código `3`: `rechazada: …` con la regla V01 o V02 y el texto «runbook R1: research/s00_download.py». El informe `reports/validation/latest.md` («Validación de la fuente») nombra la regla, con una copia en `history/` (D50).
+**Síntoma.** Cualquier corrida con la configuración por defecto sale con código `3`: `rechazada: …` con la regla V01 o V02 y el texto «runbook R1: research/s00_download.py». El informe `reports/validation/latest.md` («Validación de la fuente») nombra la regla, con una copia en `history/` (D50). **En un clon nuevo, sin el archivo, `run` reescribe los `reports/validation/latest.md` y `latest.json` que el repositorio versiona** con ese rechazo de V01, y `git status` los muestra modificados. Para volver a lo versionado: `git checkout -- reports/validation`. Después de bajar el archivo (paso 1), la primera corrida los vuelve a escribir con la entrega que pasó.
 
 **Qué significa.** El flujo no descarga nada (D02): exige `online_retail_ii.zip` (45.622.418 bytes) en `data/raw/`, con el SHA-256 `572e36277c2390fbfde10664750731e0a86f55e33470d91919085f0408e67bfb`, y un solo miembro, `online_retail_II.xlsx`, con su tamaño y su huella. El tamaño se compara antes de calcular la huella. En el modo rápido la huella esperada está vacía a propósito y el primer zip que se ve queda registrado en `data/quick/source.lock.json`.
 
