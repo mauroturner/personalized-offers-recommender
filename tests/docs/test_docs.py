@@ -26,8 +26,8 @@ from personaloffers.reporting import RESULTS_END, RESULTS_START
 README_TITLE = "# Una oferta para cada cliente, armada sola"
 USER_NAMES = {name.lower() for name in (getpass.getuser(), Path.home().name) if name}   # this machine's user, read here and never written in a test
 EMAIL = re.compile(r"\S+@\S+")
-LOCAL_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/Users|Users\\|/home/\w+/")
-TRACKED_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/Users")   # the code and the tests write the patterns that detect a local path, so the tracked files are searched for the paths only
+LOCAL_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/(?:Users)|Users\\|/home/\w+/")
+TRACKED_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/(?:Users)")   # the code and the tests write the patterns that detect a local path, so the tracked files are searched for the paths only
 README_HEADINGS = [   # plan, section 25, in this order (AC39)
     "El problema", "La solución", "Los resultados", "En qué consiste", "Los datos", "Los algoritmos", "El producto", "La documentación",
     "Con IA, de punta a punta", "Para qué sirve", "Cómo correrlo de punta a punta", "Paso a paso", "Fuente y licencia",
