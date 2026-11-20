@@ -138,3 +138,23 @@ def test_no_threshold_verdict_or_name_of_the_criteria_names_an_effect_of_an_offe
             assert "lift" not in text.lower() and "aumento" not in text.lower() and "uplift" not in text.lower(), text
             assert "efecto" not in text.lower().replace("menor efecto detectable", ""), text
     assert "efecto" not in "".join(t.threshold_es for t in texts.CRITERIA.values()).lower()
+
+
+def _c05(sealed: float, denominator: float, definition: float) -> dict:
+    return {"rounds": 18, "sealed": {"value": sealed}, "preregistered": {"value": sealed, "threshold": 0.10, "passed": True}, "p01_denominator": {"value": denominator}, "p01_definition": {"value": definition}}
+
+
+def test_the_p01_sentence_says_comparable_only_within_the_stated_tolerance_and_the_numerator_only_when_it_is():
+    """N2 of the recheck: the plan's validation figure (0.158) is fixed text; whether the test's figure is comparable with it is decided by the computed ``p01_definition`` figure and a stated tolerance, and «sobre todo
+    el numerador» only when the numerator explains more of the distance than the denominator does."""
+    tolerance = texts.PLAN_VALIDATION_TOLERANCE
+    real = texts.c05_p01_line(_c05(0.5586, 0.4656, 0.1527))                       # the real figures (D49)
+    assert "comparable con el 0,158" in real and "sobre todo el numerador" in real
+    edge = texts.c05_p01_line(_c05(0.5586, 0.4656, texts.PLAN_VALIDATION_C05 + tolerance))
+    assert "comparable con el 0,158" in edge, "the tolerance is inclusive"
+    far = texts.c05_p01_line(_c05(0.60, 0.50, 0.359))
+    assert "comparable" not in far and "0,359" in far and "0,158" in far and "sobre todo el numerador" not in far
+    assert "0,01" in far and "0,201" in far, "the tolerance and how far apart the two figures are"
+    assert "0,100" in far and "0,141" in far, "what the denominator and the numerator explain of the distance to the `p01` figure"
+    denominator = texts.c05_p01_line(_c05(0.60, 0.20, 0.159))                  # near the plan's figure, but the denominator explains more than the numerator
+    assert "comparable con el 0,158" in denominator and "sobre todo el numerador" not in denominator and "sobre todo el denominador" in denominator

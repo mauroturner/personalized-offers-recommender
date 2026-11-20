@@ -131,6 +131,7 @@ def verdict(cid: str, passed: bool, **f: Any) -> str:
     raise KeyError(cid)
 
 
+PLAN_VALIDATION_TOLERANCE = 0.01      # two figures of the coverage are told comparable when they differ by at most this much (absolute; the real ones differ by 0.005)
 PLAN_VALIDATION_C05 = 0.158      # the plan's validation figure (requirements, section 8.1; research/p01.out, «offer_7_3_blend_als_trend_1 unrestricted»): the lists of the evaluated customers over every product with a basket line before the round
 
 
@@ -145,11 +146,20 @@ def c05_preregistered_line(c05: Mapping[str, Any]) -> str:
 
 
 def c05_p01_line(c05: Mapping[str, Any]) -> str:
-    """Why the test's coverage is not the plan's validation figure: mostly the numerator (D49)."""
-    return (f"Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de "
-            f"la ronda), la prueba da {es(c05['p01_definition']['value'], 3)}, comparable con el {es(PLAN_VALIDATION_C05, 3)} de esa validación. La distancia entre la cifra sellada, "
-            f"{es(c05['sealed']['value'], 3)}, y ese {es(PLAN_VALIDATION_C05, 3)} es sobre todo el numerador: con el denominador de `p01` y las listas de toda la base, la cobertura es "
-            f"{es(c05['p01_denominator']['value'], 3)}; con solo las listas de los clientes evaluados, {es(c05['p01_definition']['value'], 3)}.")
+    """Why the test's coverage is not the plan's validation figure (D49), from the computed figures only: the test's figure with ``p01``'s definition is told «comparable» with the plan's 0.158 when it is
+    within ``PLAN_VALIDATION_TOLERANCE`` of it, and otherwise both figures are stated; «sobre todo el numerador» (or the denominator) only when the part of the distance it names is the larger one."""
+    sealed, whole, definition = (c05[key]["value"] for key in ("sealed", "p01_denominator", "p01_definition"))
+    denominator_part, numerator_part = sealed - whole, whole - definition
+    head = (f"Con la definición de la validación del plan (`p01`: las listas de los clientes evaluados, los que compraron en la semana, sobre todos los productos con alguna línea de canasta antes de "
+            f"la ronda), la prueba da {es(definition, 3)}")
+    if round(abs(definition - PLAN_VALIDATION_C05), 9) <= PLAN_VALIDATION_TOLERANCE:
+        part = "el numerador" if numerator_part >= denominator_part else "el denominador"
+        return (f"{head}, comparable con el {es(PLAN_VALIDATION_C05, 3)} de esa validación. La distancia entre la cifra sellada, "
+                f"{es(sealed, 3)}, y ese {es(PLAN_VALIDATION_C05, 3)} es sobre todo {part}: con el denominador de `p01` y las listas de toda la base, la cobertura es "
+                f"{es(whole, 3)}; con solo las listas de los clientes evaluados, {es(definition, 3)}.")
+    return (f"{head}; la validación del plan dio {es(PLAN_VALIDATION_C05, 3)}, a {es(abs(definition - PLAN_VALIDATION_C05), 3)} de ella, más que la tolerancia de {es(PLAN_VALIDATION_TOLERANCE, 2)} con la que "
+            f"se darían por iguales. Entre la cifra sellada, {es(sealed, 3)}, y la de `p01`, {es(definition, 3)}, el denominador explica {es(denominator_part, 3)} y el numerador {es(numerator_part, 3)}: "
+            f"con el denominador de `p01` y las listas de toda la base, la cobertura es {es(whole, 3)}.")
 
 
 # --- the labels of the dimensions of the star schema (plan section 19) ------------------------------------------------------------------------------------------------------

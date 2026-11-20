@@ -94,6 +94,17 @@ def test_when_the_sealed_coverage_does_not_reproduce_the_seals_nothing_is_writte
 
 
 
+def test_the_sentence_with_the_plans_figure_calls_it_comparable_only_within_the_stated_tolerance(world):
+    """N2 of the recheck: in quick mode the computed ``p01_definition`` figure is far from the plan's 0.158, and the sentence must not tell it comparable: it states both figures instead."""
+    analysis = evaluation.coverage_definitions(world.conn, world.view)
+    value = analysis["p01_definition"]["value"]
+    sentence = texts.c05_p01_line(analysis)
+    near = abs(value - texts.PLAN_VALIDATION_C05) <= texts.PLAN_VALIDATION_TOLERANCE
+    assert ("comparable" in sentence) is near
+    assert texts.es(value, 3) in sentence and texts.es(texts.PLAN_VALIDATION_C05, 3) in sentence, "both figures are stated"
+    assert not near, "the quick world is synthetic: its figure is not the real data's, which is what this test is about"
+
+
 def test_before_the_test_part_of_the_seal_nothing_is_written(launched, workbook, quick_cfg, tmp_path):
     made = copy_world(launched.root, workbook, quick_cfg, tmp_path / "launched")
     try:
