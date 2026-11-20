@@ -52,7 +52,7 @@ SENTENCE_END = re.compile(r"(?<=\.)\s+")
 LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)#\s]+)(?:#[^)]*)?\)")
 IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 NAMED_TEST = re.compile(r"(tests/[\w/]+\.py)?::(test_\w+)")
-CUSTOMER_NUMBER = re.compile(r"\b1[2-8]\d{3}\b")   # the customers of the archive are 12346 to 18287: a document names none of them (D30)
+CUSTOMER_NUMBER = re.compile(r"\b1[2-8]\d{3}\b")   # five digits from 12000 to 18999, a range that holds every customer number of the archive: a document names none of them (D30)
 SEAL_SHA256 = "fa393815bb5eb6d39a8b29f0167200f0d4f6305da30980b636fee5a9b1c5cc36"
 
 
@@ -259,7 +259,7 @@ def test_the_real_figures_are_not_called_synthetic(project_root: Path, readme: s
 
 
 def test_no_document_names_a_customer_number(project_root: Path, readme: str) -> None:
-    """D30, RNF12: the customers of the archive are numbered 12346 to 18287; no document holds a number in that range (product codes and counts have other shapes)."""
+    """D30, RNF12: every customer number of the archive has five digits from 12000 to 18999; no document holds a number in that range (product codes and counts have other shapes)."""
     found = [f"{name}: {number}" for name, text in all_documents(project_root, readme).items() for number in CUSTOMER_NUMBER.findall(text)]
     assert found == []
 

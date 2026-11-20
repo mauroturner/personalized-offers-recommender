@@ -32,6 +32,7 @@ from tests.fixtures.published import LOCAL_PATH
 pytestmark = pytest.mark.real_data
 
 WEEKLY_RUNS, REPLAY_RUNS = 18, 20                       # one launch, 18 weekly deliveries and the close (D22)
+SEALED_LAUNCH_RUN, SEALED_CLOSE_RUN = "20261119T234941422797Z", "20261120T000628680396Z"     # the runs that wrote the seal (L133); a rebuild (runbook R11) runs under other keys
 # AC03 and AC04: what the real workbook holds (research.md; the counts of the whole file are U21's)
 SHEET_ROWS, COPIES, LINES, INTERNAL_REPEATS = {"Year 2009-2010": 525_461, "Year 2010-2011": 541_910}, 22_523, 1_044_848, 11_812
 GUEST_LINES, NON_PRODUCT_CODE_LINES = 235_287, 5_993
@@ -136,10 +137,16 @@ def test_real_counts_seal_and_summary_consistency(cfg, outputs):
         assert own[criterion.criterion_id][0] == (None if criterion.passed is None else int(criterion.passed)), criterion.criterion_id
     assert site.summary["seal"]["test"]["run_key"] == test["run_key"]
 
-    # The runs: the launch, the 18 weekly deliveries and the close, each ok and in order; the seal's runs are this warehouse's
+    # The runs: the launch, the 18 weekly deliveries and the close, each ok and in order. The seal keeps the keys of the runs that wrote it (L133); this warehouse's runs are those, or a rebuild
+    # (runbook R11) whose launch adopted the sealed models without choosing again and whose close reproduced the seal without writing it
     assert [r["kind"] for r in runs[:REPLAY_RUNS]] == ["launch"] + ["weekly"] * WEEKLY_RUNS + ["close"] and {r["status"] for r in runs[:REPLAY_RUNS]} == {"ok"}
     assert len(runs) == REPLAY_RUNS or {r["status"] for r in runs[REPLAY_RUNS:]} == {"no_delivery"}
-    assert (launch["run_key"], test["run_key"]) == (runs[0]["run_key"], runs[REPLAY_RUNS - 1]["run_key"])
+    assert (launch["run_key"], test["run_key"]) == (SEALED_LAUNCH_RUN, SEALED_CLOSE_RUN)
+    chose, evaluated = _state(outputs, runs[0]["run_key"])["tasks"]["fit_recipe"], _state(outputs, runs[REPLAY_RUNS - 1]["run_key"])["tasks"]["evaluate"]
+    if (runs[0]["run_key"], runs[REPLAY_RUNS - 1]["run_key"]) == (SEALED_LAUNCH_RUN, SEALED_CLOSE_RUN):
+        assert (chose["mode"], chose["sealed"], evaluated["state"], evaluated["seal"]) == ("fresh", True, "first", "written"), "the sealed runs chose, sealed and wrote the test part"
+    else:
+        assert (chose["mode"], chose["seal_state"], evaluated["state"], evaluated["seal"]) == ("adopt", "match", "repeat", "unchanged"), "a rebuild adopts the sealed models and reproduces the seal (R11)"
     assert conn.execute("SELECT COUNT(*) FROM deliveries WHERE status != 'loaded'").fetchone()[0] == 0
 
     # AC37 (RNF03): the peak of the working set with the counter named, the files that were written and their size
