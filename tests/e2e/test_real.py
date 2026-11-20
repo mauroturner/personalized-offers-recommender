@@ -27,7 +27,7 @@ from personaloffers.evaluation import criteria_from_seal
 from personaloffers.export import verify_star_schema
 from personaloffers.site_export import read_site, verify_site
 from personaloffers.sysinfo import POSIX_COUNTER, WINDOWS_COUNTER
-from tests.fixtures.published import LOCAL_PATH
+from tests.fixtures.published import LOCAL_PATH, example_list_problems
 
 pytestmark = pytest.mark.real_data
 
@@ -156,6 +156,15 @@ def test_real_counts_seal_and_summary_consistency(cfg, outputs):
     assert max(r["peak_working_set_mb"] for r in runs[:REPLAY_RUNS]) <= MAX_PEAK_WORKING_SET_MB, f"el pico de {counter} pasa de 6 GB (RNF03)"
     parquets = sorted(outputs["powerbi"].glob("*.parquet"))
     assert {p.stem for p in parquets} == {t.name for t in MODEL.tables} - {PRIVATE_TABLE} and max(p.stat().st_size for p in parquets) <= MAX_PARQUET_BYTES
+
+
+def test_no_example_list_of_the_site_can_single_out_a_customer_of_its_profile(outputs):
+    """B1 of the evaluation (D30, D46): the three example lists of ``algorithms.json`` were one customer's list each, and within the published profile only 5, 1 and 2 customers had bought their seven
+    repeat products. Counted within the profile and its round from the issued lists, no published list may be held whole by fewer than 10 customers, carry a customer's ranks or show a product held by
+    fewer than 10."""
+    examples = outputs["site"].algorithms["example_lists"]
+    assert example_list_problems(outputs["conn"], examples, MIN_CELL_CUSTOMERS) == []
+    assert len(examples) == 3 and all(e["kind"] == "aggregate" for e in examples)
 
 
 def test_every_weekly_run_and_the_close_take_at_most_the_required_seconds(outputs):

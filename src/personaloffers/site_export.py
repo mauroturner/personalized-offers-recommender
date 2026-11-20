@@ -8,8 +8,8 @@ and the balance of the draw were sealed at the launch, so they are not the test.
 
 **No effect is published** (D16): the archive has no offers, so no field is named after an effect, an increase or a lift (the ``rule_lift`` of the association rules is another thing) and every text that says
 «efecto» says «menor efecto detectable» or that something is not one; ``tests/contract/test_site_export.py`` walks every key and string. **Nothing identifies a customer**: no number of a customer is written, a count
-of customers under ``[privacy] min_cell_customers`` is ``null``, a total over cells is ``null`` as soon as one of its cells is hidden, and the three example lists carry no customer, come from a profile with at least
-that many customers and say so (the plan's assumption: if the evaluation judges that a list could identify someone, it is replaced by one for a made-up profile).
+of customers under ``[privacy] min_cell_customers`` is ``null``, a total over cells is ``null`` as soon as one of its cells is hidden, and the three example lists are aggregates of a profile with at least that many
+customers, labelled as such, each product held by at least that many of them (D46: the evaluation found that a customer's own list, with the profile, singled out one customer).
 
 The files are a contract that another repository consumes: a change of shape is a change of ``tests/contract/test_site_export.py``. Floats are rounded to what the site shows; every file is
 ``json.dumps(obj, ensure_ascii=False, sort_keys=True, indent=1)`` with a final newline and the six together stay under ``max_total_bytes`` (``[site]``). They are one export: each is replaced atomically and
@@ -59,6 +59,8 @@ STATUS_WORST_FIRST = ("falla", "advertencia", "pasa")
 LIST_METHODS = ("offer_list", "chosen_discovery", "b2", "b3")
 TOP_COUNTRIES = 10
 EXAMPLE_LISTS = 3
+EXAMPLE_NOTE_ES = ("Lista agregada del perfil: los productos de recompra y de descubrimiento que más aparecen en las listas de sus clientes en la ronda, cada uno con cuántos clientes lo tienen; "
+                   "no es la lista de ningún cliente.")
 RULES_EXAMPLE = 10
 RULES_EXAMPLE_MIN_SUPPORT = 50
 CRITERION_FIELDS = ("criterion_id", "name_es", "threshold_es", "tested_value_es", "point_value", "ci_low", "ci_high", "passed", "verdict_es")
@@ -229,20 +231,43 @@ def _rules_example(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     return _records(frame)
 
 
+def _held(conn: sqlite3.Connection, round_id: str, segment: str, source: str, minimum: int) -> list[tuple[str, str, int]]:
+    """(code, description, customers) of the products that the lists of the profile `segment` hold with the origin `source` in the round, each held by at least `minimum` of its customers, most held first."""
+    return [(code, text or "", int(n)) for code, text, n in conn.execute(
+        "SELECT o.stock_code, p.description_es, COUNT(DISTINCT o.customer_id) AS n FROM offer_lists o JOIN contact_base c ON c.round_id = o.round_id AND c.customer_id = o.customer_id "
+        "LEFT JOIN products p ON p.stock_code = o.stock_code WHERE o.round_id = ? AND c.segment = ? AND o.source = ? GROUP BY o.stock_code HAVING n >= ? ORDER BY n DESC, o.stock_code",
+        (round_id, segment, source, minimum))]
+
+
+def _holders_of_all(conn: sqlite3.Connection, round_id: str, segment: str, codes: list[str]) -> int:
+    """How many customers of the profile hold every product of `codes` in their list of the round."""
+    marks = ", ".join("?" for _ in codes)
+    return conn.execute(f"SELECT COUNT(*) FROM (SELECT o.customer_id FROM offer_lists o JOIN contact_base c ON c.round_id = o.round_id AND c.customer_id = o.customer_id WHERE o.round_id = ? AND c.segment = ? "
+                        f"AND o.stock_code IN ({marks}) GROUP BY o.customer_id HAVING COUNT(DISTINCT o.stock_code) = ?)", (round_id, segment, *codes, len(codes))).fetchone()[0]
+
+
 def _example_lists(conn: sqlite3.Connection, view: Any) -> list[dict[str, Any]]:
-    """Three lists of the first round, for the three biggest profiles that have at least the minimum of customers: the offer-group customer in the middle of the profile's customers by number; no customer is named."""
-    round_id, minimum = cal.round_id(view.calendar.test_first_round), view.privacy.min_cell_customers
+    """Three example lists of the first round, one for each of the three biggest profiles with at least the minimum of customers, each the **profile's aggregate** and never a customer's list (D30, D46; B1 of
+    the evaluation: a customer's list, with the profile and the public archive, narrowed who it was down to one): the ``repeat_slots`` products that appear most as repeat in the lists of the profile's
+    customers that round, then the ``discovery_slots`` that appear most as discovery (a product once), each with how many of those customers hold it with that origin. A product held by fewer than the
+    minimum is not shown, there is no rank, and a profile whose aggregate would be held whole by a handful of customers (1 to the minimum less one) is left out."""
+    round_id, minimum, slots = cal.round_id(view.calendar.test_first_round), view.privacy.min_cell_customers, view.recommend
     profiles = conn.execute("SELECT segment, COUNT(*) AS n FROM contact_base WHERE round_id = ? GROUP BY segment HAVING COUNT(*) >= ? ORDER BY n DESC, segment LIMIT ?", (round_id, minimum, EXAMPLE_LISTS)).fetchall()
     out = []
     for segment, size in profiles:
-        ids = [r[0] for r in conn.execute("SELECT c.customer_id FROM contact_base c JOIN holdout_assignments h ON h.customer_id = c.customer_id WHERE c.round_id = ? AND c.segment = ? AND h.grp = 'offer' "
-                                          "ORDER BY c.customer_id", (round_id, segment))]
-        if not ids:
+        repeat = _held(conn, round_id, segment, "repeat", minimum)[: slots.repeat_slots]
+        taken = {code for code, _, _ in repeat}
+        discovery = [row for row in _held(conn, round_id, segment, "discovery", minimum) if row[0] not in taken][: slots.discovery_slots]
+        chosen = [(row, "repeat") for row in repeat] + [(row, "discovery") for row in discovery]
+        if not chosen:
             continue
-        products = [{"rank": r, "stock_code": code, "description_es": text or "", "source_key": source} for r, code, text, source in conn.execute(
-            "SELECT o.rank, o.stock_code, p.description_es, o.source FROM offer_lists o LEFT JOIN products p ON p.stock_code = o.stock_code WHERE o.round_id = ? AND o.customer_id = ? ORDER BY o.rank",
-            (round_id, ids[len(ids) // 2]))]
-        out.append({"profile_es": texts.SEGMENT_LABELS.get(segment, segment), "segment_key": segment, "round_key": round_id, "customers_in_segment": int(size), "products": products})
+        whole = _holders_of_all(conn, round_id, segment, [code for (code, _, _), _ in chosen])
+        if 0 < whole < minimum:
+            logger.warning("site export: the aggregate list of %s is held whole by %d customers, under the minimum of %d: it is not published", segment, whole, minimum)
+            continue
+        products = [{"stock_code": code, "description_es": text, "source_key": source, "customers": n} for (code, text, n), source in chosen]
+        out.append({"profile_es": texts.SEGMENT_LABELS.get(segment, segment), "segment_key": segment, "round_key": round_id, "customers_in_segment": int(size), "kind": "aggregate",
+                    "note_es": EXAMPLE_NOTE_ES, "products": products})
     return out
 
 

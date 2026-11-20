@@ -14,7 +14,7 @@ import pytest
 from personaloffers import registry, reporting, site_export
 from personaloffers.site_export import SITE_FILES, SiteExportError, SiteSetError
 from personaloffers.warehouse import connect
-from tests.fixtures.published import LOCAL_PATH, customer_numbers_in
+from tests.fixtures.published import LOCAL_PATH, customer_numbers_in, example_list_problems
 from tests.fixtures.sites import SOURCE_COUNTS, export_site_of
 from tests.fixtures.stars import RUN, export_world
 
@@ -231,14 +231,36 @@ def test_the_crm_and_the_email_files_are_counted_and_never_read(sited):
     assert email == {"files": len(csvs), "rows": sum(len(p.read_text(encoding="utf-8").splitlines()) - 1 for p in csvs)} and email["files"] == 4
 
 
-def test_the_example_lists_have_ten_products_with_their_origin_and_no_customer_and_come_from_big_segments(sited):
-    lists = sited.site.algorithms["example_lists"]
-    assert 1 <= len(lists) <= 3
+def test_the_example_lists_are_aggregates_of_a_profile_that_single_out_no_customer(sited):
+    """D46 (B1 of the evaluation): each example is the profile's aggregate, labelled as such, and never a customer's list: the repeat products and then the discovery products that appear most in the
+    lists of the profile's customers in the first round, each with how many of them hold it with that origin (every one at least the minimum), with no rank."""
+    lists, view = sited.site.algorithms["example_lists"], sited.view
+    minimum, repeat, discovery = view.privacy.min_cell_customers, view.recommend.repeat_slots, view.recommend.discovery_slots
+    assert 1 <= len(lists) <= 3 and len({e["segment_key"] for e in lists}) == len(lists), "one list for each profile"
     for example in lists:
-        assert set(example) == {"profile_es", "segment_key", "round_key", "customers_in_segment", "products"} and example["customers_in_segment"] >= 10 and len(example["products"]) == 10
-        assert [p["rank"] for p in example["products"]] == list(range(1, 11)) and {p["source_key"] for p in example["products"]} <= {"repeat", "discovery", "fallback"}
-        assert all(set(p) == {"rank", "stock_code", "description_es", "source_key"} for p in example["products"])
-    assert len({e["segment_key"] for e in lists}) == len(lists), "one list for each profile"
+        assert set(example) == {"profile_es", "segment_key", "round_key", "customers_in_segment", "kind", "note_es", "products"} and example["kind"] == "aggregate"
+        assert example["customers_in_segment"] >= minimum and "no es la lista de ningún cliente" in example["note_es"]
+        products = example["products"]
+        assert products and all(set(p) == {"stock_code", "description_es", "source_key", "customers"} for p in products)
+        origins = [p["source_key"] for p in products]
+        assert origins == sorted(origins, key=["repeat", "discovery"].index) and origins.count("repeat") <= repeat and origins.count("discovery") <= discovery
+        assert len({p["stock_code"] for p in products}) == len(products), "a product once, even when it is a repeat for some customers and a discovery for others"
+        for origin in ("repeat", "discovery"):
+            counts = [p["customers"] for p in products if p["source_key"] == origin]
+            assert counts == sorted(counts, reverse=True), "most held first"
+    assert example_list_problems(sited.conn, lists, minimum) == []
+
+
+def test_a_list_of_one_customer_is_what_the_check_of_the_example_lists_catches(sited):
+    """The check of the test above fires on what the site published before D46: the list of the offer-group customer in the middle of the profile, with its ranks."""
+    example = sited.site.algorithms["example_lists"][0]
+    customer = sited.conn.execute("SELECT c.customer_id FROM contact_base c JOIN holdout_assignments h ON h.customer_id = c.customer_id WHERE c.round_id = ? AND c.segment = ? AND h.grp = 'offer' ORDER BY c.customer_id",
+                                  (example["round_key"], example["segment_key"])).fetchall()
+    chosen = customer[len(customer) // 2][0]
+    products = [{"rank": r, "stock_code": code, "source_key": source} for r, code, source in sited.conn.execute(
+        "SELECT rank, stock_code, source FROM offer_lists WHERE round_id = ? AND customer_id = ? ORDER BY rank", (example["round_key"], chosen))]
+    found = example_list_problems(sited.conn, [{**example, "products": products}], sited.view.privacy.min_cell_customers)
+    assert any("ranks of one customer's list" in p for p in found) and any("hold every product of the list" in p for p in found), found
 
 
 def test_the_rules_example_are_the_ten_of_the_highest_lift_with_the_support_that_the_plan_asks(sited):
@@ -408,14 +430,17 @@ def test_closing_a_run_does_not_write_over_a_set_that_is_not_one_export_or_is_of
 
 @pytest.mark.parametrize("minimum", [32, 60])
 def test_the_minimum_of_a_cell_is_the_sealed_one_and_a_cell_that_reaches_it_is_shown(minimum, sited, evaluated, workbook, quick_cfg, tmp_path):
-    """A count equal to the minimum is shown and one under it is not: the base has profiles of 268 and 32 customers (the second is an example list with a minimum of 32 and not with 60) and the control group has
-    exactly 60 customers."""
+    """A count equal to the minimum is shown and one under it is not: the base has profiles of 268 and 32 customers and the control group has exactly 60 customers. The example lists follow the minimum too
+    (D46): a profile is one only with the minimum of customers, a product only when that many hold it, and an aggregate that a handful of customers hold whole is left out (in the small catalogue of the
+    fixture this can leave no example at these minimums; ``test_the_example_lists_are_aggregates_of_a_profile_that_single_out_no_customer`` checks them at the sealed one)."""
     star = export_world(evaluated.root, workbook, quick_cfg, tmp_path / "star", minimum=minimum)
     star.conn.close()
     made = export_site_of(star.world.warehouse_path, star.world, star.view, tmp_path)
     try:
         lists = made.site.algorithms["example_lists"]
-        assert [(e["segment_key"], e["customers_in_segment"]) for e in lists] == [("retail|repeat", 268), ("retail|one_invoice", 32)][: 2 if minimum == 32 else 1]
+        assert all(e["customers_in_segment"] >= minimum and all(p["customers"] >= minimum for p in e["products"]) for e in lists)
+        assert ("retail|one_invoice" in {e["segment_key"] for e in lists}) <= (minimum == 32), "a profile of 32 customers is never an example with a minimum of 60"
+        assert example_list_problems(made.conn, lists, minimum) == []
         assert made.site.control["holdout"]["groups"] == {"offer": 240, "control": 60} and made.site.data["customers"]["with_a_purchase"] == 300
         assert made.site.data["bulk"]["customers_in_the_launch_base"] == 300
     finally:
