@@ -1,0 +1,199 @@
+# Advertencias de las revisiones nativas
+
+Cada hallazgo de las revisiones nativas de Gentle AI que el registro del documento de seguimiento anota para el proyecto 08 (L122, L124, L126, L128, L130 y L134, la revisión de U21): 26 en total, entre advertencias y sugerencias, con su ubicación y su estado. L124 y L132 no anotan ningún hallazgo. Los números y los estados de este archivo son los que cuentan el README, la ficha del modelo y el paso a paso, y `tests/docs/test_docs.py` los compara.
+
+Los hallazgos se numeran dentro de cada tramo (`W` una advertencia, `S` una sugerencia). Las ubicaciones son las que el registro da; los tramos de L126 no dicen de qué unidad sale cada hallazgo y van juntos. Un bullet del registro que reúne varios hallazgos se cuenta uno por uno (por ejemplo, las cuatro sugerencias de `u15b`). Los estados son cuatro: **corregida** (con su commit), **refutada** o **dejada con evidencia** (con el motivo) y **abierta**.
+
+**Estado.** De los 26: 20 **corregidas** (`165f9e1`, `d60db87`, `49e7cce`, `2e74cd4`, `7cb1511`, `55bee6a`, `eae715f` y `8fa0130`), 2 **dejadas con evidencia**, ninguna **refutada** y 4 **abiertas**: la advertencia de U21 sobre las listas de ejemplo de `algorithms.json` (el mismo hallazgo que L133 anota como abierto, para la evaluación independiente y sus correcciones) y tres que L131 dejó fuera o que ningún commit toca. Las abiertas no cambian ningún veredicto ni lo sellado. Los estados se leyeron de los commits y del registro (L125, L127, L129, L131, L133 y L134); la evaluación independiente los confirma.
+
+**Lo que no se revisó.** La revisión nativa anota como no revisados, por debajo del presupuesto (`under_budget`, de nivel medio) o por encima de él, estos tramos. Lo que ninguna revisión vio lo sondea la evaluación independiente (plan, sección 28).
+
+| Tramo | Commits | Líneas | Motivo | Registro |
+| --- | --- | --- | --- | --- |
+| u02 | `92ae779..dbb2bc5` | 1.435 | `under_budget`: queda pendiente en el tramo abierto | L122 |
+| u03 | `dbb2bc5..1e646b8` | 1.578 | `under_budget` | L122 |
+| u05 | `6b98b3b` | 1.326 | `under_budget` | L124 |
+| u07 | `140693a` | 511 | `under_budget` | L124 |
+| f1 | `103b7aa..165f9e1` | 103 | `under_budget` (las correcciones de L122) | L126 |
+| f2 | `d60db87` | 150 | `under_budget` (las correcciones de L126) | L130 |
+| u19 | `59c9a68` | 1.002 | `under_budget` | L130 |
+| s3 | `2e74cd4..55bee6a` | no consta | `under_budget` (pruebas y un comentario) | L132 |
+| e9ca105 | `e9ca105` | 9.979 | generado y por encima del presupuesto | L133 y L134 |
+
+L124 anota que cada unidad se había evaluado contra su propio padre, así que las de nivel medio que quedaron `under_budget` (U02, U03, U05 y U07) nunca se juntaron en un tramo que llegara al presupuesto; desde U09 el tramo abierto se evalúa antes de cada commit de riesgo alto. Ni L118 ni L120 anotan una revisión nativa de la investigación ni del plan.
+
+Revisadas y aprobadas, con su linaje quemado (el riesgo es el ítem del plan que la revisión escaló): `u01` (ítem 5), `u04` (ítem 2), `u06` y `u08` (ítem 1, sin hallazgos), `u09a` y `u09b` (ítem 6), `u10` (ítem 6, sin hallazgos), `u11a`, `u11b` y `u12` (ítem 1), `u13a` (ítem 2), `u13b` (ítem 3, sin hallazgos), `u14a` y `u14b` (ítem 1), `u15a` (ítem 3), `u15b` (ítem 6), `u16` (ítem 3), `u17` (ítem 3), `u18a` y `u18b` (ítem 4, sin hallazgos), `u20` (ítem 5, sin hallazgos), `s1` (ítem 6, sin hallazgos), `s2` (ítem 1, sin hallazgos) y `u21` (`7238720..f8f80b5`, ítem 2).
+
+## u01 (L122)
+
+Tramo `0677f5b..92ae779` (835 líneas, ítem 5): aprobada con una sugerencia.
+
+- **S1**
+  - Hallazgo: Sugerencia: `tests/unit/test_dependencies.py` y otras pruebas por defecto leen archivos fuera del tramo (`LANDING-EXPANSION.md`, `requirements-research.txt`, `research/`), así que un archivo que falta falla en la corrida y no nombra la regla.
+  - Ubicación: `tests/unit/test_dependencies.py:215-221`.
+  - Estado: **corregida**. `165f9e1`: las pruebas de dependencias que leen archivos de afuera nombran el archivo y la regla cuando falta.
+
+## u04 (L122)
+
+Tramo `1e646b8..555bfec` (1.477 líneas, ítem 2): aprobada con una sugerencia.
+
+- **S1**
+  - Hallazgo: Sugerencia: la guarda de DTD y entidades del libro mira solo los primeros 4.096 bytes de cada parte XML, y un comentario o espacios pueden empujar un `<!DOCTYPE` fuera de la ventana.
+  - Ubicación: `src/personaloffers/workbook.py:44`.
+  - Estado: **corregida**. `165f9e1`: la guarda lee cada parte XML entera, en bloques de 64 KiB que se solapan 4.096 bytes.
+
+## l126 (L126)
+
+Tramos de `103b7aa` a `ef50221`: las correcciones de L122 (`f1`) y U09 a U12, aprobadas con una advertencia y seis sugerencias.
+
+- **W1** (`u12`)
+  - Hallazgo: Advertencia: `emit_round` escribe los artefactos de los modelos de la ronda antes de la transacción que inserta las listas y registra los modelos; una interrupción entre las dos deja la carpeta del componente sin nada en la base y `write_component` se niega a sobrescribirla, así que la ronda no se puede emitir de nuevo hasta quitar la carpeta a mano.
+  - Ubicación: `src/personaloffers/weekly.py:195-211`.
+  - Estado: **corregida**. `d60db87`: la advertencia no se reprodujo como estaba escrita (L129): una ronda interrumpida que se repite adopta las carpetas que quedaron, porque el reajuste es determinista; solo se trababa con una carpeta sin registrar con otro contenido o con un archivo suelto. `emit_round` ahora quita las carpetas de componentes sin registrar antes de escribir y nunca toca una registrada, con una prueba en rojo sobre los dos casos.
+
+- **S1**
+  - Hallazgo: Sugerencia: `not self.weight >= 0` es una guarda contra NaN y no tiene comentario.
+  - Ubicación: `src/personaloffers/recommend/blend.py:33`.
+  - Estado: **corregida**. `d60db87`: un comentario explica que la forma negada es la única que rechaza un peso que no es un número.
+
+- **S2**
+  - Hallazgo: Sugerencia: `check_no_leak` corre dos veces por `prepare`.
+  - Ubicación: `src/personaloffers/recommend/context.py:56`.
+  - Estado: **corregida**. `d60db87`: el corte de la historia se comprueba una vez, con su prueba.
+
+- **S3**
+  - Hallazgo: Sugerencia: el tope `RANK_LIMIT` y la guarda de puntajes NaN de las llaves del orden no tienen prueba.
+  - Ubicación: `src/personaloffers/offers.py:33-36`.
+  - Estado: **corregida**. `d60db87`: pruebas de que 65.535 productos caben, 65.536 no, y de que un puntaje que no es un número no se ordena.
+
+- **S4**
+  - Hallazgo: Sugerencia: `discovery_slots` no se lee nunca: la lista concuerda con lo que dice solo si `repeat_slots + discovery_slots == k`.
+  - Ubicación: `src/personaloffers/offers.py:64`.
+  - Estado: **corregida**. `d60db87`: `build_list` rechaza una vista cuyos lugares no suman `k`, con su prueba.
+
+- **S5**
+  - Hallazgo: Sugerencia: el mensaje de falla de una prueba nombra `SOURCE` y `NAME`, que no están definidos.
+  - Ubicación: `tests/unit/test_offers.py:220`.
+  - Estado: **corregida**. `d60db87`: el mensaje nombra solo lo definido.
+
+- **S6**
+  - Hallazgo: Sugerencia: el rechazo a reemplazar un artefacto instalado con otro hash no tiene prueba.
+  - Ubicación: `src/personaloffers/launch.py:82-89`.
+  - Estado: **corregida**. `d60db87`: una prueba planta una carpeta con otro contenido y comprueba que el lanzamiento se niega, deja el registro vacío, conserva el sello y guarda los candidatos.
+
+## u14a (L128)
+
+Tramo de `f8e3850` (ítem 1): aprobada con dos advertencias y una sugerencia.
+
+- **W1**
+  - Hallazgo: Advertencia: dos copias de la regla de seis decimales `_rounded` deciden «sin cambios» y la reconstrucción desde el sello.
+  - Ubicación: `src/personaloffers/registry.py:164-172` y `src/personaloffers/evaluation.py`.
+  - Estado: **corregida**. `49e7cce`: una sola regla, `registry.rounded`, que usa también la evaluación.
+
+- **W2**
+  - Hallazgo: Advertencia: `criteria_from_seal` y sus tres ramas de `SealError` no tienen prueba.
+  - Ubicación: `src/personaloffers/evaluation.py:448-454`.
+  - Estado: **corregida**. `49e7cce`: pruebas de la reconstrucción de los criterios desde el sello, con la parte del lanzamiento, un criterio de más y el borde de los seis decimales.
+
+- **S1**
+  - Hallazgo: Sugerencia: `evaluate_rankings`, `evaluate_experiment`, `run_experiment` y `crm_evidence` no tenían prueba de sus salidas ni de sus caminos de error en ese tramo.
+  - Ubicación: `src/personaloffers/evaluation.py` (según el registro).
+  - Estado: **corregida**. `55bee6a`: pruebas de los caminos de error de la evaluación y del experimento puro.
+
+## u14b (L128)
+
+Tramo de `bc1932b` (ítem 1): aprobada con una advertencia.
+
+- **W1**
+  - Hallazgo: Advertencia: en `_choice_rows` el acumulador `total` no se lee nunca; la fila «todas» usa los `pairs` y `hits` sellados sin comprobar que las sumas por ronda concuerdan.
+  - Ubicación: `src/personaloffers/reporting.py:49-54`.
+  - Estado: **corregida**. `2e74cd4`: un sello cuyas rondas no suman los `pairs` y `hits` que sella para una candidata se rechaza antes de escribir nada, con su prueba.
+
+## u13a (L128)
+
+Tramo de `24c965a` (ítem 2): aprobada con una sugerencia.
+
+- **S1**
+  - Hallazgo: Sugerencia: `synchronous=NORMAL` con un diario de reversa puede corromper el CRM sustituto en un corte de luz (mitigado por la repetición).
+  - Ubicación: `src/personaloffers/crm/standin.py:73`.
+  - Estado: **dejada con evidencia**. El sustituto se regenera con la repetición y es atómico con el diario de reversa; el código lo dice en el mismo lugar («a stand-in is regenerated by the replay»). El almacén del flujo, que no se regenera, usa `synchronous=FULL`.
+
+## u15a (L128)
+
+Tramo de `a3e995f` (ítem 3): aprobada con una advertencia y dos sugerencias.
+
+- **W1**
+  - Hallazgo: Advertencia: el accesorio `exported` y `export_world` no eran consumidos por ninguna prueba en ese commit, así que el camino de exportación (marts, supresión, manifiesto, `verify_star_schema` y los 27 controles del modelo) no se corrió ahí. El commit siguiente agrega las pruebas de contrato; falta ver si pasan por ese camino.
+  - Ubicación: `tests/fixtures/stars.py:22-29`.
+  - Estado: **corregida**. `7cb1511`: las pruebas de contrato de `tests/contract/test_star_schema.py` consumen `exported`, es decir, el camino de exportación completo.
+
+- **S1**
+  - Hallazgo: Sugerencia: el nombre `names` se reutiliza en `export._serialize`.
+  - Ubicación: `src/personaloffers/export.py` (`_serialize`).
+  - Estado: **corregida**. `eae715f`: `names` pasa a `selected`.
+
+- **S2**
+  - Hallazgo: Sugerencia: una sola celda chica en una (ronda, grupo) falla a salvo por `chk_K04` pero no tiene prueba.
+  - Ubicación: `sql/checks/model/` (`chk_K04`, según el registro).
+  - Estado: **corregida**. `eae715f`: una prueba muestra que una celda chica oculta una segunda, y que sin esa regla `chk_K04` rechaza la exportación.
+
+## u15b (L128)
+
+Tramo de `7cb1511` (ítem 6): aprobada con cuatro sugerencias.
+
+- **S1**
+  - Hallazgo: Sugerencia: aserciones encadenadas con `and` en las pruebas del modelo estrella.
+  - Ubicación: `tests/contract/test_star_schema.py` (según el registro).
+  - Estado: **corregida**. `eae715f`: unas 50 aserciones encadenadas se separan.
+
+- **S2**
+  - Hallazgo: Sugerencia: fichas de requerimientos sin explicar en los textos de documentación de las pruebas.
+  - Ubicación: docstrings de `tests/` (según el registro).
+  - Estado: **abierta**. Ni L129 ni L131 ni ningún commit la tocan; es de legibilidad y no cambia ninguna salida. La evaluación independiente decide si se corrige.
+
+- **S3**
+  - Hallazgo: Sugerencia: el rango de clientes sintéticos de las pruebas está escrito de tres formas.
+  - Ubicación: `tests/` (según el registro).
+  - Estado: **corregida**. `8fa0130`: un solo rango, 90001-90300, y un solo patrón de ruta local, en `tests/fixtures/published.py`.
+
+- **S4**
+  - Hallazgo: Sugerencia: la comprobación del orden del manifiesto usa la hora de modificación con 1 ms de holgura.
+  - Ubicación: `tests/` (según el registro).
+  - Estado: **abierta**. L131 la dejó fuera de la unidad de velocidad y no hay un commit que la cambie.
+
+## u16 (L128)
+
+Tramo de `fe53f04` (ítem 3): aprobada con dos sugerencias.
+
+- **S1**
+  - Hallazgo: Sugerencia: `_fmt`, `_int` y `_pct` devuelven «oculta» para cualquier NaN.
+  - Ubicación: `src/personaloffers/dashboard/render.py`.
+  - Estado: **dejada con evidencia**. Es a propósito: una cifra que falta se muestra oculta antes que como un número inventado; `4362c0d` lo dice en un comentario de `render.py`.
+
+- **S2**
+  - Hallazgo: Sugerencia: `svg.py` tiene ayudas y ramas de `line_chart` que el diseño no usa y ninguna prueba ejercita.
+  - Ubicación: `src/personaloffers/dashboard/svg.py`.
+  - Estado: **abierta**. L131 la dejó fuera de la unidad previa al sello; no cambia ningún byte publicado.
+
+## u17 (L130)
+
+Tramo de `4242f81` (ítem 3): aprobada con dos sugerencias.
+
+- **S1**
+  - Hallazgo: Sugerencia: la prueba vuelve a declarar `ENVELOPE` en lugar de importar `site_export.ENVELOPE`.
+  - Ubicación: `tests/contract/test_site_export.py:24`.
+  - Estado: **corregida**. `8fa0130`: el sobre de la prueba se fija contra el de la exportación.
+
+- **S2**
+  - Hallazgo: Sugerencia: la prueba copia la expresión `LOCAL_PATH` de `test_site_export.py:33`.
+  - Ubicación: `tests/integration/test_published_bytes.py:124`.
+  - Estado: **corregida**. `8fa0130`: el patrón de ruta local se escribe una sola vez, en `tests/fixtures/published.py`.
+
+## u21 (L134)
+
+Tramo `7238720..f8f80b5` (el commit escrito a mano de la corrida real, escalado al ítem 2): aprobado, con el linaje `review-2ad564b917565a2c` reconocido y su autoridad quemada, con una advertencia. El commit generado `e9ca105` (9.979 líneas) está por encima del presupuesto y no se revisó.
+
+- **W1**
+  - Hallazgo: Advertencia: la nota de D30 documenta que las tres listas de ejemplo de `algorithms.json` salen de listas de ofertas de clientes reales y acotan la reidentificación a un puñado de clientes. Cada lista completa de 10 es única de un cliente en su ronda y solo 5, 5 y 6 clientes habían comprado antes de la ventana los siete productos de recompra de cada una, menos que el mínimo de 10 clientes de D30. La prueba de privacidad no lo marca porque ninguna lista lleva un número de cliente. El revisor lo considera previo: el código que produce `algorithms.json` no cambió en U21.
+  - Ubicación: `docs/decisions.md:351` (la nota de D30 de U21) y `outputs/site/algorithms.json` (`example_lists`).
+  - Estado: **abierta**. Es el mismo hallazgo que L133 anota para la evaluación independiente y sus correcciones: se trata como un bloqueante para el sitio, por la intención de D30, y está fuera del sello, así que no cambia ningún veredicto. El otro hallazgo de L133, el denominador de C05 (0,559 sobre los productos comprados en los 365 días anteriores frente al 0,158 de la validación del plan), no es de una revisión nativa y está en el README y en la ficha del modelo.

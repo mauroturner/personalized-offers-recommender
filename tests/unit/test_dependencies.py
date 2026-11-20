@@ -30,7 +30,7 @@ LANDING_DECLARED = {"pandas", "fastapi"}
 # Direct pins with no row in LANDING-EXPANSION.md yet: the rows that add project 08 (implicit, mlxtend) and the 08 in the projects of the existing ones are U22's
 # (plan section 27, decision D34), written with the other documents. U22 writes them and empties this set; until then the test says exactly which rows are
 # owed, and fails if one is not.
-PENDING_LANDING_ROWS = frozenset({"implicit", "mlxtend"})
+PENDING_LANDING_ROWS = frozenset()
 
 def normalize(name: str) -> str:
     """PEP 503 normalization: ``scikit_learn``, ``Scikit-Learn`` and ``scikit-learn`` are one distribution."""
