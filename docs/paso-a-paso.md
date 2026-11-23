@@ -83,6 +83,6 @@ La revisión nativa de Gentle AI revisó las unidades de riesgo alto con el cons
 
 ## 13. Lo que falta
 
-- **La página del sitio**, con la estructura del proyecto 01 (S10): **No aplicado en el sitio todavía**. Es lo que sigue.
+- **La página del sitio**, con la estructura del proyecto 01 (S10): no estaba aplicada cuando se escribió este paso a paso. **2026-11-23:** la página `personal-offers` del sitio ya aplica el proyecto en el esquema numerado (`ESTRUCTURA-PROYECTOS.md`).
 - **El `.pbix`**, que arma quien tenga Power BI Desktop siguiendo el HTML.
 - **Los pendientes del dueño** del plan, sección 29: la cadencia (decidida por defecto), los ítems 2 a 7 (sellados con su valor por defecto), una herramienta de correo o un CRM reales, el contenido de la oferta, el límite y el presupuesto de la suite, entre otros.

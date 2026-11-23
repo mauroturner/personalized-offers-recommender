@@ -402,7 +402,7 @@ El comprobador dejó sus clones, sus copias y sus lectores en una carpeta tempor
 
 ### Lo que queda
 
-- **La página del sitio**, con la estructura del proyecto 01 (S10): **no aplicado en el sitio todavía**.
+- **La página del sitio**, con la estructura del proyecto 01 (S10): al escribir esta evaluación no estaba aplicada en el sitio. **2026-11-23:** la página `personal-offers` del sitio ya aplica el proyecto en el esquema numerado (`ESTRUCTURA-PROYECTOS.md`).
 - **El `.pbix`**, que arma quien tenga Power BI Desktop siguiendo el HTML.
 - **Lo que decide el dueño**, entre otros: si el sello sigue publicado con su excepción (D48), si la página muestra los agregados (D46), si una versión posterior con su propio sello cuenta C05 como lo fija el preregistro (D49), el límite y el presupuesto de la suite (pendiente 13), una herramienta de correo o un CRM reales y el contenido de la oferta.
 - **Tres sugerencias abiertas** de las revisiones nativas (`u15b` S2 y S4, `u16` S2), sin efecto en ninguna salida.

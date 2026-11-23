@@ -1,7 +1,7 @@
 """The documentation is checked like code (AC23, AC39; RF26; RNF14; plan, sections 24.2, 25 and 26). Adapted from project 07's ``tests/docs/test_docs.py``.
 
-The README has the headings of plan section 25 in their order, its results block is the sealed summary that ``docs-sync`` copies (never one written by hand), and it says the unfavourable
-verdict («No se cumple» for C03) in «El problema», «La solución» and «Los resultados»; the model card has the contents the plan lists and every verdict as the summary writes it; every interval
+The README has the headings of the portfolio's common outline (``ESTRUCTURA-PROYECTOS.md``) in their order, its results block is the sealed summary that ``docs-sync`` copies (never one written
+by hand) in the appendix «Resultados completos de la corrida», and it says the unfavourable verdict («No se cumple» for C03) in «1. Resumen ejecutivo», «5. Conclusión» and that appendix; the model card has the contents the plan lists and every verdict as the summary writes it; every interval
 bound the documents quote is the summary's at the decimals the document writes; no document claims the effect of an offer (D16); no figure of the real run is called synthetic; every decision has
 its seven fields; the test count the documents give is the one of the session's collection; every memory figure names its counter; every test the plan names exists; every unit and every log
 entry the documents cite is in the log; the dictionary's tables are the ones ``docs_sync`` writes from the semantic model; the runbook has R1 to R12; the step by step cites commits that exist;
@@ -28,9 +28,15 @@ USER_NAMES = {name.lower() for name in (getpass.getuser(), Path.home().name) if 
 EMAIL = re.compile(r"\S+@\S+")
 LOCAL_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/(?:Users)|Users\\|/home/\w+/")
 TRACKED_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/(?:Users)")   # the code and the tests write the patterns that detect a local path, so the tracked files are searched for the paths only
-README_HEADINGS = [   # plan, section 25, in this order (AC39)
-    "El problema", "La solución", "Los resultados", "En qué consiste", "Los datos", "Los algoritmos", "El producto", "La documentación",
-    "Con IA, de punta a punta", "Para qué sirve", "Cómo correrlo de punta a punta", "Paso a paso", "Fuente y licencia",
+README_HEADINGS = [   # the portfolio's common outline (ESTRUCTURA-PROYECTOS.md), then the appendices, in this order (AC39)
+    "1. Resumen ejecutivo", "2. Datasets y preparación", "3. Arquitectura y metodología", "4. Producto final", "5. Conclusión",
+    "Resultados completos de la corrida", "Cómo correrlo de punta a punta", "Paso a paso", "Fuente y licencia",
+]
+README_SUBHEADINGS = [   # the outline's numbered sub-sections, 1.1 to 5.3; 3.4.3 names only the method the project used
+    "1.1 Problema de negocio y solución", "1.2 Criterios de éxito e impacto", "2.1 Fuentes, alcance y granularidad", "2.2 Saneamiento y reglas de calidad", "3.1 Fuente e ingesta",
+    "3.2 Orquestación y transformación", "3.3 Almacenamiento y modelado de datos", "3.4 Experimentación y Machine Learning", "3.4.1 Ingeniería de características y línea base (baseline)",
+    "3.4.2 Decisiones de modelado y ablación (ADR)", "3.4.3 Protocolo de validación (backtesting)", "3.5 Consumo y gobernanza", "4.1 Entregables operativos", "4.2 Lectura de resultados actuales",
+    "5.1 Evaluación frente a criterios de éxito", "5.2 Limitaciones metodológicas", "5.3 Trabajo futuro",
 ]
 MODEL_CARD_HEADINGS = [   # what plan section 25 lists for the model card, in this order
     "Uso previsto y no previsto", "Datos", "Los recomendadores", "La elección y la lista", "El control y el experimento", "Criterios y resultados", "Limitaciones", "Tiempos y memoria",
@@ -127,8 +133,10 @@ def test_readme_headings_in_order_and_results_block_matches_summary(project_root
     assert re.findall(r"^## (.+)$", head + tail, flags=re.MULTILINE) == README_HEADINGS
     assert block == (project_root / "reports" / "evaluation_summary.md").read_text(encoding="utf-8").strip("\n")   # what docs-sync copies, byte for byte
     assert block.startswith(RESULTS_HEADING + "\n") and re.findall(r"^## (.+)$", block, flags=re.MULTILINE) == ["Resumen de la evaluación"]
-    framing = section(readme, "Los resultados", end=RESULTS_START)   # «Los resultados» frames the block before it and reads it after it
-    assert len(framing.strip()) > 400 and "\n## En qué consiste\n" in tail
+    assert re.findall(r"^#{3,4} (.+)$", head, flags=re.MULTILINE) == README_SUBHEADINGS   # the numbered sub-sections, before the appendix that holds the block
+    assert "Con IA" not in readme and "agente" not in readme.lower()   # no AI-first framing, and no agent is credited
+    framing = section(readme, "Resultados completos de la corrida", end=RESULTS_START)   # the appendix frames the block before it
+    assert len(framing.strip()) > 400 and "\n## Cómo correrlo de punta a punta\n" in tail
     # AC23: the sealed summary is unfavourable, and the README says «no se cumple» outside the block too, in the three sections that tell it
     assert summary["source"] == "warehouse" and summary["evaluation_status"] == "sealed" and "post_seal" not in summary   # the sealed result, with no analysis after the seal
     assert [c["criterion_id"] for c in summary["criteria"] if c["passed"] is False] == FAILED
@@ -137,8 +145,8 @@ def test_readme_headings_in_order_and_results_block_matches_summary(project_root
     for criterion in summary["criteria"]:
         assert criterion["verdict_es"] in block, criterion["criterion_id"]
     assert "No se cumple: C03." in block
-    reading = framing + tail.split("\n## En qué consiste\n")[0]
-    for title, text in (("El problema", section(readme, "El problema")), ("La solución", section(readme, "La solución")), ("Los resultados", reading)):
+    reading = section(readme, "5. Conclusión")   # 5.1 reads each criterion against its result, 5.2 says what is not measured
+    for title, text in (("1. Resumen ejecutivo", section(readme, "1. Resumen ejecutivo")), ("5. Conclusión", reading), ("Resultados completos de la corrida", framing + block)):
         assert "no se cumple" in text.lower(), title
     for criterion in FAILED + PASSED:
         assert re.search(rf"\b{criterion}\b", reading), criterion
@@ -161,7 +169,10 @@ def test_the_documents_say_what_is_pending_and_the_open_findings(readme: str, mo
     """RNF14: the independent evaluation, its corrections and the recheck of the corrections (L139) are done, so no document says the recheck is pending and each says it is done; the two findings of L133
     are told with their numbers and with what corrected them (D46, D49); ``docs/evaluation.md`` has its three parts; the seal and the credit of the source are complete; nothing local is published."""
     text = readme.lower()
-    assert "evaluación independiente" in text and "todavía no" in text and ".pbix" in text and "no aplicado en el sitio todavía" in text
+    assert "evaluación independiente" in text and "todavía no" in text and ".pbix" in text and "no aplicado en el sitio todavía" not in text and "2026-11-23" in text and "aplica el proyecto en el esquema numerado" in text
+    for name in ("evaluation.md", "paso-a-paso.md"):   # the three documents carry the one dated line (2026-11-23) and none says the site page is pending
+        lowered = read(project_root, name).lower()
+        assert "2026-11-23" in lowered and "aplica el proyecto en el esquema numerado" in lowered and "no aplicado en el sitio todavía" not in lowered, name
     assert "la comprobación de las correcciones está hecha" in text and "la comprobación de las correcciones están hechas" in model_card.lower()
     assert "ninguna cifra es definitiva" not in text and "ninguna cifra es definitiva" not in model_card.lower()
     for name, document in (("README.md", readme), ("docs/model-card.md", model_card), ("docs/review-advisories.md", read(project_root, "review-advisories.md"))):
