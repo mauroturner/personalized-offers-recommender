@@ -1,4 +1,4 @@
-# Una oferta para cada cliente, armada sola
+# ¿Es automatizable una oferta por cliente con ALS implícito y recompra?
 
 [English](README.md) · **Español**
 

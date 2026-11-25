@@ -23,7 +23,7 @@ import pytest
 
 from personaloffers.reporting import RESULTS_END, RESULTS_START
 
-README_TITLE = "# Una oferta para cada cliente, armada sola"
+README_TITLE = "# ¿Es automatizable una oferta por cliente con ALS implícito y recompra?"
 USER_NAMES = {name.lower() for name in (getpass.getuser(), Path.home().name) if name}   # this machine's user, read here and never written in a test
 EMAIL = re.compile(r"\S+@\S+")
 LOCAL_PATH = re.compile(r"[A-Za-z]:[\\/]+(?:Users|Documents and Settings)|/c/(?:Users)|Users\\|/home/\w+/")

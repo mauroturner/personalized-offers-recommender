@@ -1,4 +1,4 @@
-# An offer for every customer, built on its own
+# Can an offer per customer be automated with implicit ALS and repeat purchase?
 
 **English** · [Español](README.es.md)
 
