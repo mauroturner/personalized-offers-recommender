@@ -354,3 +354,5 @@ Every operation, with its failures and how to recover, is in the [runbook](docs/
 Data: Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Copy used: `online_retail_ii.zip`, 45,622,418 bytes, SHA-256 `572e3627…7bfb`, size and hash checked before reading. Changes: the copies of the overlap between sheets removed, grouped by weekly round and summed up in aggregate figures; no published file carries customer numbers.
 
 Libraries with their own licence: implicit 0.7.3 (MIT) and mlxtend 0.25.0 (BSD-3, only in tests). The raw data is not versioned.
+
+The code is under the [MIT licence](LICENSE); the source data keeps the licence given above.

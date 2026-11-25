@@ -354,3 +354,5 @@ La cronología completa, con el commit de cada paso, está en [docs/paso-a-paso.
 Datos: Chen, D. (2012). Online Retail II. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Copia usada: `online_retail_ii.zip`, 45.622.418 bytes, SHA-256 `572e3627…7bfb`, con el tamaño y la huella comprobados antes de leer. Modificaciones: se quitaron las copias del solapamiento entre hojas, se agrupó por ronda semanal y se resumió en cifras agregadas; los archivos publicados no tienen números de cliente.
 
 Bibliotecas con licencia propia: implicit 0.7.3 (MIT, factorización ALS y similitud coseno) y mlxtend 0.25.0 (BSD-3, solo en las pruebas, para comprobar las confianzas de las reglas de canasta). Los datos crudos no se versionan.
+
+El código está bajo la [licencia MIT](LICENSE); los datos de origen conservan la licencia indicada arriba.
