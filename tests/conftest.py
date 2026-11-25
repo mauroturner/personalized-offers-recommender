@@ -259,7 +259,7 @@ def quick_clone(tmp_path_factory: pytest.TempPathFactory):
     elsewhere.mkdir()
     for name in ("config", "docs"):
         shutil.copytree(PROJECT_ROOT / name, clone / name)
-    shutil.copyfile(PROJECT_ROOT / "README.md", clone / "README.md")
+    shutil.copyfile(PROJECT_ROOT / "README.es.md", clone / "README.es.md")
     runs: list = []
     real_run_all = pipeline.run_all
 
